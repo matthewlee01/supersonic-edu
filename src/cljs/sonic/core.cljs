@@ -18,10 +18,6 @@
 
 (def foo 22)
 
-(defn gamescreen
-  []
-  [:div [:p "hi"]])
-
 (defn ^:export init []
   (rf/dispatch-sync [::events/initialize-db])
   (dev-setup)
