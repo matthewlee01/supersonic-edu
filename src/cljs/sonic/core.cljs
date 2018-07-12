@@ -6,19 +6,22 @@
    [sonic.views :as views]
    [sonic.config :as config]))
    
-(defn dev-setup []
+(defn dev-setup 
+  []
   (when config/debug?
     (enable-console-print!)
     (println "dev mode")))
 
-(defn mount-root []
+(defn mount-root 
+  []
   (rf/clear-subscription-cache!)
   (r/render [views/main-panel]
             (.getElementById js/document "app")))
 
 (def foo 22)
 
-(defn ^:export init []
+(defn ^:export init 
+  []
   (rf/dispatch-sync [::events/initialize-db])
   (dev-setup)
   (mount-root))
