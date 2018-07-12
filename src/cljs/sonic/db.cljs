@@ -1,9 +1,9 @@
 (ns sonic.db)
 
 (def default-db
-  {:playerSystems {:weapons [1 1]}
-                 :shields [1 1]
-                 :engines [1 1]
+  {:playerSystems {:weapons [1 1]
+                   :shields [1 1]
+                   :engines [1 1]}
    :enemySystems {:weapons [1 1]
                   :shields [1 1]
                   :engines [1 1]}

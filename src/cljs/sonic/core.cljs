@@ -18,8 +18,6 @@
   (r/render [views/main-panel]
             (.getElementById js/document "app")))
 
-(def foo 22)
-
 (defn ^:export init 
   []
   (rf/dispatch-sync [::events/initialize-db])
