@@ -36,3 +36,8 @@
   :turn 
   (fn [db _]
     (:turn db)))
+
+(rf/reg-sub
+  :firing?
+  (fn [db _]
+    (:firing? db)))

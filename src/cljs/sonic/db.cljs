@@ -11,4 +11,5 @@
    :playerShields 100
    :enemyHP 100
    :enemyShields 100
-   :turn 0})
+   :turn 0
+   :firing? false})
