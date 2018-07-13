@@ -98,7 +98,7 @@
        :dispatch [:changeTurn]})))
 
 (defn newHP
-  [[defender attacker]]
+  [[defender attacker system]]
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
         attackRank (-> attacker
@@ -109,11 +109,12 @@
         HPDamage (if (> (- defenderShields attackDamage) 0)
                      0
                      (- attackDamage defenderShields))]
-    [(assoc defender :HP (- defenderHP HPDamage)) attacker]))
+    [(assoc defender :HP (- defenderHP HPDamage)) 
+     attacker system]))
          
 
 (defn newShields 
-  [[defender attacker]]
+  [[defender attacker system]]
   (let [defenderShields (:shields defender)
         attackRank (-> attacker
                        (:systems)
@@ -123,8 +124,30 @@
         shieldsDamage (if (> (- defenderShields attackDamage) 0)
                         attackDamage
                         defenderShields)]
-    [(assoc defender :shields (- defenderShields shieldsDamage)) attacker]))
+    [(assoc defender :shields (- defenderShields shieldsDamage)) 
+     attacker system]))
 
+(defn newSystemHP
+  [[defender attacker system]]
+  (let [systemHP (-> defender
+                     (:systems)
+                     (system)
+                     (get 0))
+        attackRank (-> attacker
+                       (:systems)
+                       (:weapons)
+                       (get 1))
+        systemDamage (if (> (- systemHP attackRank) 0)
+                       attackRank
+                       systemHP)
+        systemRank (-> defender
+                       (:systems)
+                       (system)
+                       (get 1))]
+    [(assoc defender :systems (assoc (:systems defender) system [(- systemHP systemDamage) systemRank])) 
+     attacker system]))
+    
+    
 (rf/reg-event-fx
   :damageSystem
   (fn [cofx [_ system type]]
@@ -133,9 +156,10 @@
           attacker (if (= type :playerShip)
                     @(rf/subscribe [:playerShip])
                     @(rf/subscribe [:enemyShip]))]
-         (let [newDamagedShip (-> [defender attacker] 
+         (let [newDamagedShip (-> [defender attacker system] 
                                   (newHP)
                                   (newShields)
+                                  (newSystemHP)
                                   (get 0))]
               {:db (assoc (:db cofx) type newDamagedShip)}))))
       
