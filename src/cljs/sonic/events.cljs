@@ -4,10 +4,12 @@
    [sonic.db :as db]))
    
 (defn actionDispatch
+  "dispatches the given action event from button"
   [event]
   (fn [] (rf/dispatch [event])))
 
 (defn damageDispatch
+  "dispatches the damage system event with parameters"
   [system type]
   (fn [] (rf/dispatch [:damageSystem system type])))
   
@@ -59,11 +61,41 @@
 
 (rf/reg-event-fx
   :damageSystem
-  (fn [cofx [_ system type]]
-    (let [playerSystems @(rf/subscribe [:playerSystems])
-          enemySystems @(rf/subscribe [:enemySystems])]
-      {:db (:db cofx)
-       :dispatch [:changeTurn]}))) 
+  (fn [cofx [_ system target]]
+    (let [attackerSystems (if (= "player" target)
+                            @(rf/subscribe [:enemySystems])
+                            @(rf/subscribe [:playerSystems])) 
+          defenderSystemsTag (if (= "player" target)
+                               :playerSystems
+                               :enemySystems)
+          defenderSystems @(rf/subscribe [defenderSystemsTag])
+          attackPower (get (:weapons attackerSystems) 1)
+          vitalDamage (* 20 attackPower)
+          systemHP (get (system defenderSystems) 0)
+          defenderShieldsTag (if (= "player" target)
+                               :playerShields
+                               :enemyShields)
+          defenderHPTag (if (= "player" target)
+                          :playerHP
+                          :enemyHP)
+          defenderShields @(rf/subscribe [defenderShieldsTag])
+          defenderHP @(rf/subscribe [defenderHPTag])
+          HPDamage (if (> (- defenderShields vitalDamage) 0)
+                     0
+                     (- vitalDamage defenderShields))
+          shieldDamage (if (> (- defenderShields vitalDamage) 0)
+                         vitalDamage
+                         defenderShields)] 
+
+      (println "damaged" target "'s system for" (str attackPower))
+      (println "damaged" target "'s ship for" (str vitalDamage))
+      {:db (-> (:db cofx)
+               (assoc defenderShieldsTag (- defenderShields shieldDamage))
+               (assoc defenderHPTag (- defenderHP HPDamage))
+               (assoc defenderSystemsTag (assoc defenderSystems system [(- systemHP attackPower)
+                                                                        (get (system defenderSystems) 1)]))
+               (assoc :firing? false))
+       :dispatch [:changeTurn]})))
       
 
 (rf/reg-event-db
