@@ -3,34 +3,14 @@
    [re-frame.core :as rf]))
 
 (rf/reg-sub
-  :playerSystems
+  :playerShip
   (fn [db _]
-    (:playerSystems db)))
+    (:playerShip db)))
 
 (rf/reg-sub
-  :enemySystems
+  :enemyShip
   (fn [db _]
-    (:enemySystems db)))
-
-(rf/reg-sub 
-  :playerHP
-  (fn [db _]
-    (:playerHP db)))
-
-(rf/reg-sub 
-  :playerShields
-  (fn [db _]
-    (:playerShields db)))
-
-(rf/reg-sub
-  :enemyHP
-  (fn [db _]
-    (:enemyHP db)))
-
-(rf/reg-sub
-  :enemyShields 
-  (fn [db _]
-    (:enemyShields db)))
+    (:enemyShip db)))
 
 (rf/reg-sub
   :turn 

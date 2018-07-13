@@ -60,7 +60,7 @@
         (assoc db :firing? true)))))
 
 (rf/reg-event-fx
-  :damageSystem
+  :damageSystemOld
   (fn [cofx [_ system target]]
     (let [attackerSystems (if (= "player" target)
                             @(rf/subscribe [:enemySystems])
@@ -96,6 +96,48 @@
                                                                         (get (system defenderSystems) 1)]))
                (assoc :firing? false))
        :dispatch [:changeTurn]})))
+
+(defn newHP
+  [[defender attacker]]
+  (let [defenderHP (:HP defender)
+        defenderShields (:shields defender)
+        attackRank (-> attacker
+                       (:systems)
+                       (:weapons)
+                       (get 1))
+        attackDamage (* 20 attackRank)
+        HPDamage (if (> (- defenderShields attackDamage) 0)
+                     0
+                     (- attackDamage defenderShields))]
+    [(assoc defender :HP (- defenderHP HPDamage)) attacker]))
+         
+
+(defn newShields 
+  [[defender attacker]]
+  (let [defenderShields (:shields defender)
+        attackRank (-> attacker
+                       (:systems)
+                       (:weapons)
+                       (get 1))
+        attackDamage (* 20 attackRank)
+        shieldsDamage (if (> (- defenderShields attackDamage) 0)
+                        attackDamage
+                        defenderShields)]
+    [(assoc defender :shields (- defenderShields shieldsDamage)) attacker]))
+
+(rf/reg-event-fx
+  :damageSystem
+  (fn [cofx [_ system type]]
+    (println "damaging ship")
+    (let [defender @(rf/subscribe [type])
+          attacker (if (= type :playerShip)
+                    @(rf/subscribe [:playerShip])
+                    @(rf/subscribe [:enemyShip]))]
+         (let [newDamagedShip (-> [defender attacker] 
+                                  (newHP)
+                                  (newShields)
+                                  (get 0))]
+              {:db (assoc (:db cofx) type newDamagedShip)}))))
       
 
 (rf/reg-event-db

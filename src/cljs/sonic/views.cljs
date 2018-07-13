@@ -23,7 +23,7 @@
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])]
     [:button.system
-     (if (= type "player")
+     (if (= type :playerShip)
        {:disabled firing?}
        (if firing?
          {:on-click (events/damageDispatch system type)}
@@ -32,10 +32,10 @@
 
 (defn main-panel 
   []
-  (let [playerHP @(rf/subscribe [:playerHP])
-        playerShields @(rf/subscribe [:playerShields])
-        enemyHP @(rf/subscribe [:enemyHP])
-        enemyShields @(rf/subscribe [:enemyShields])]
+  (let [playerHP (:HP @(rf/subscribe [:playerShip]))
+        playerShields (:shields @(rf/subscribe [:playerShip]))
+        enemyHP (:HP @(rf/subscribe [:enemyShip]))
+        enemyShields (:shields @(rf/subscribe [:enemyShip]))]
     [:div
      [:div.flexContainer
       [:div.ships
@@ -43,16 +43,16 @@
         [:div.vitalityDisplayArea
          [shipVitalityDisplay playerShields "Shields"]
          [shipVitalityDisplay playerHP "HP"]]
-        [systemButton :weapons "player" "Weapons"]
-        [systemButton :shields "player" "Shields"]
-        [systemButton :engines "player" "Engines"]]
+        [systemButton :weapons :playerShip "Weapons"]
+        [systemButton :shields :playerShip "Shields"]
+        [systemButton :engines :playerSHip "Engines"]]
        [:div.enemyShip
         [:div.vitalityDisplayArea
          [shipVitalityDisplay enemyShields "Shields"]
          [shipVitalityDisplay enemyHP "HP"]]
-        [systemButton :weapons "enemy" "Weapons"]
-        [systemButton :shields "enemy" "Shields"]
-        [systemButton :engines "enemy" "Engines"]]]
+        [systemButton :weapons :enemyShip "Weapons"]
+        [systemButton :shields :enemyShip "Shields"]
+        [systemButton :engines :enemyShip "Engines"]]]
       [:div.actionBar
        [actionButton :actionFire "Fire"]
        [actionButton :actionChargeShields "Charge Shields"]
