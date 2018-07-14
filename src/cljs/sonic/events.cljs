@@ -11,7 +11,10 @@
 (defn damageDispatch
   "dispatches the damage system event with parameters"
   [system type]
-  (fn [] (rf/dispatch [:damageSystem system type])))
+  (fn [] 
+    (js/prompt "Test Question" "Answer...")
+    (rf/dispatch [:damageSystem system type])))
+
   
 (rf/reg-event-db
  ::initialize-db
@@ -37,12 +40,6 @@
     (println "fleeing")
     db))
 
-(rf/reg-event-fx
-  :lowerHPTest
-  (fn [cofx event]
-    {:db (assoc (:db cofx) :enemyHP 50)
-     :dispatch [:actionFire]}))
-
 (rf/reg-event-db
   :changeTurn
   (fn [db _]
@@ -58,44 +55,6 @@
       (if firing?
         (assoc db :firing? false)
         (assoc db :firing? true)))))
-
-(rf/reg-event-fx
-  :damageSystemOld
-  (fn [cofx [_ system target]]
-    (let [attackerSystems (if (= "player" target)
-                            @(rf/subscribe [:enemySystems])
-                            @(rf/subscribe [:playerSystems])) 
-          defenderSystemsTag (if (= "player" target)
-                               :playerSystems
-                               :enemySystems)
-          defenderSystems @(rf/subscribe [defenderSystemsTag])
-          attackPower (get (:weapons attackerSystems) 1)
-          vitalDamage (* 20 attackPower)
-          systemHP (get (system defenderSystems) 0)
-          defenderShieldsTag (if (= "player" target)
-                               :playerShields
-                               :enemyShields)
-          defenderHPTag (if (= "player" target)
-                          :playerHP
-                          :enemyHP)
-          defenderShields @(rf/subscribe [defenderShieldsTag])
-          defenderHP @(rf/subscribe [defenderHPTag])
-          HPDamage (if (> (- defenderShields vitalDamage) 0)
-                     0
-                     (- vitalDamage defenderShields))
-          shieldDamage (if (> (- defenderShields vitalDamage) 0)
-                         vitalDamage
-                         defenderShields)] 
-
-      (println "damaged" target "'s system for" (str attackPower))
-      (println "damaged" target "'s ship for" (str vitalDamage))
-      {:db (-> (:db cofx)
-               (assoc defenderShieldsTag (- defenderShields shieldDamage))
-               (assoc defenderHPTag (- defenderHP HPDamage))
-               (assoc defenderSystemsTag (assoc defenderSystems system [(- systemHP attackPower)
-                                                                        (get (system defenderSystems) 1)]))
-               (assoc :firing? false))
-       :dispatch [:changeTurn]})))
 
 (defn newHP
   [[defender attacker system]]
