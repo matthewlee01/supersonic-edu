@@ -21,6 +21,19 @@
  (fn [_ _]
    db/default-db))
 
+(defn chargeShields [ship]
+  (let [shieldsSystem (-> ship
+                        (:systems)
+                        (:shields))
+        shieldsCurrentValue (:shields ship)
+        shieldsMax (+ 100 (* (- (get shieldsSystem 1) 1) 20))
+        shieldsStrength (* (get shieldsSystem 1) 15)]
+    (assoc ship :shields (if (> (+ shieldsCurrentValue shieldsStrength) shieldsMax)
+                           shieldsMax
+                           (+ shieldsCurrentValue shieldsStrength)))))
+    
+    
+
 (rf/reg-event-fx
   :actionFire
   (fn [cofx event]
@@ -32,7 +45,8 @@
   :actionChargeShields
   (fn [db _]
     (println "shielding")
-    db))
+    
+    (assoc db :playerShip (chargeShields @(rf/subscribe [:playerShip])))))
 
 (rf/reg-event-db
   :actionFlee
