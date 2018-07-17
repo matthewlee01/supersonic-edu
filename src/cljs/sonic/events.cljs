@@ -12,7 +12,6 @@
   "dispatches the damage system event with parameters"
   [system type]
   (fn [] 
-    (js/prompt "Test Question" "Answer...")
     (rf/dispatch [:damageSystem system type])))
 
   
@@ -31,8 +30,6 @@
     (assoc ship :shields (if (> (+ shieldsCurrentValue shieldsStrength) shieldsMax)
                            shieldsMax
                            (+ shieldsCurrentValue shieldsStrength)))))
-    
-    
 
 (rf/reg-event-fx
   :actionFire
@@ -41,30 +38,80 @@
     {:db (:db cofx)
      :dispatch [:toggleFiringMode]}))
     
-(rf/reg-event-db
+(rf/reg-event-fx
   :actionChargeShields
-  (fn [db _]
+  (fn [cofx events]
     (println "shielding")
-    
-    (assoc db :playerShip (chargeShields @(rf/subscribe [:playerShip])))))
+    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
+     :dispatch [:changeTurn]}))
 
-(rf/reg-event-db
-  :actionFlee
+(rf/reg-event-db 
+  :actionFlee 
   (fn [db _]
     (println "fleeing")
     db))
 
-(rf/reg-event-db
+(defn playerSystemsActive?
+  [systemtype]
+  (let [ship @(rf/subscribe [:playerShip])
+        system (systemtype (:systems ship))]
+    (if (> (get system 0) 0)
+      systemtype
+      false)))
+
+(rf/reg-event-fx 
+  :enemyChargeShields
+  (fn [cofx events]
+    (println "enemy charging shields")
+    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip])))
+     :dispatch [:changeTurn]}))
+
+(defn enemyChooseAction
+  [enemyShip playerShip]
+  (println "enemy choosing target")
+  (let [enemySystems (:systems enemyShip)
+        enemyShields (:shields enemyShip)
+        playerSystems (-> playerShip
+                          (:systems)
+                          (keys))
+        playerActiveSystems (->> playerSystems
+                                (map playerSystemsActive?)
+                                (remove false?))]
+    (if (> (get (:weapons enemySystems) 0) 0)
+      [:damageSystem (rand-nth playerActiveSystems) :playerShip]
+      (if (> (get (:shields enemySystems) 0) 0)
+        [:enemyChargeShields]
+        [:changeTurn]))))
+      
+
+(rf/reg-event-fx
   :changeTurn
-  (fn [db _]
+  (fn [cofx effects]
+    (println "changing turn")
     (let [turn @(rf/subscribe [:turn])]
       (if (= turn 0)
-        (assoc db :turn 1)
-        (assoc db :turn 0)))))
+        {:db (assoc (:db cofx) :turn 1)
+         :dispatch [:enemyTurn]}
+        {:db (assoc (:db cofx) :turn 0)
+         :dispatch [:playerTurn]}))))
+
+(rf/reg-event-fx
+  :enemyTurn
+  (fn [cofx effects]
+    (let [playerShip @(rf/subscribe [:playerShip])
+          enemyShip @(rf/subscribe [:enemyShip])]
+      {:db (:db cofx)
+       :dispatch (enemyChooseAction enemyShip playerShip)})))
+          
+(rf/reg-event-fx
+  :playerTurn
+  (fn [cofx effects]
+    {:db (:db cofx)}))
 
 (rf/reg-event-db
   :toggleFiringMode
   (fn [db _]
+    (println "toggling firing mode")
     (let [firing? @(rf/subscribe [:firing?])]
       (if firing?
         (assoc db :firing? false)
@@ -124,7 +171,8 @@
 (rf/reg-event-fx
   :damageSystem
   (fn [cofx [_ system type]]
-    (println "damaging ship")
+    (if (= type :enemyShip)
+      (rf/dispatch [:toggleFiringMode]))
     (let [defender @(rf/subscribe [type])
           attacker (if (= type :playerShip)
                     @(rf/subscribe [:playerShip])
@@ -134,7 +182,8 @@
                                   (newShields)
                                   (newSystemHP)
                                   (get 0))]
-              {:db (assoc (:db cofx) type newDamagedShip)}))))
+              {:db (assoc (:db cofx) type newDamagedShip)
+               :dispatch [:changeTurn]}))))
       
 
 (rf/reg-event-db

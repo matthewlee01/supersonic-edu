@@ -45,7 +45,7 @@
          [shipVitalityDisplay playerHP "HP"]]
         [systemButton :weapons :playerShip "Weapons"]
         [systemButton :shields :playerShip "Shields"]
-        [systemButton :engines :playerSHip "Engines"]]
+        [systemButton :engines :playerShip "Engines"]]
        [:div.enemyShip
         [:div.vitalityDisplayArea
          [shipVitalityDisplay enemyShields "Shields"]
