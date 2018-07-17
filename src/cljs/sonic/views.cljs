@@ -46,9 +46,26 @@
         enemyHP (:HP @(rf/subscribe [:enemyShip]))
         enemyShields (:shields @(rf/subscribe [:enemyShip]))
         enemySystems (:systems @(rf/subscribe [:enemyShip]))
-        playerSystems (:systems @(rf/subscribe [:playerShip]))]
+        playerSystems (:systems @(rf/subscribe [:playerShip]))
+        turn (if (= @(rf/subscribe [:turn]) 0)
+               "Player"
+               "Enemy")
+        firingMode (if (= @(rf/subscribe [:firing?]) false)
+                     "Inactive"
+                     "Active")]
     [:div
      [:div.flexContainer
+      [:div.infoDisplayArea 
+       [:textarea.infoDisplay {:value (str turn "'s Turn")
+                               :readOnly true
+                               :style {:color (if (= turn "Player")
+                                                "blue"
+                                                "red")}}]
+       [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
+                               :readOnly true
+                               :style {:color (if @(rf/subscribe [:firing?])
+                                                 "red"
+                                                 "green")}}]]
       [:div.ships
        [:div.playerShip
         [:div.vitalityDisplayArea

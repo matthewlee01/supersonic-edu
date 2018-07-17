@@ -54,7 +54,7 @@
     justify-content: space-around;
     align-items: center;
     width: 900px;
-    height: 300px;
+    height: 150px;
     background: orange;
 }
 
@@ -62,8 +62,12 @@
     font-size: 60px;
 }
 
-
-
+.infoDisplay {
+    height: 50px;
+    width: 400px;
+    font-size: 25px;
+    text-align: center;
+}
 
 
 

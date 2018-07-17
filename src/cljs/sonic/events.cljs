@@ -34,8 +34,9 @@
                         (:systems)
                         (:shields))
         shieldsCurrentValue (:shields ship)
-        shieldsMax (+ 100 (* (- (get shieldsSystem 1) 1) 20))
-        shieldsStrength (* (get shieldsSystem 1) 15)]
+        shieldsSystemRank (get shieldsSystem 1)
+        shieldsMax (+ 100 (* (- shieldsSystemRank 1) 20))
+        shieldsStrength (* shieldsSystemRank 15)]
     (assoc ship :shields (if (> (+ shieldsCurrentValue shieldsStrength) shieldsMax)
                            shieldsMax
                            (+ shieldsCurrentValue shieldsStrength)))))
