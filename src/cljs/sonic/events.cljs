@@ -18,6 +18,7 @@
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
+   (println "initializing")
    db/default-db))
 
 (defn chargeShields [ship]
@@ -34,21 +35,21 @@
 (rf/reg-event-fx
   :actionFire
   (fn [cofx event]
-    (println "fire")
+    (println "player toggling firing mode")
     {:db (:db cofx)
      :dispatch [:toggleFiringMode]}))
     
 (rf/reg-event-fx
   :actionChargeShields
   (fn [cofx events]
-    (println "shielding")
+    (println "player charging shields")
     {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
      :dispatch [:changeTurn]}))
 
 (rf/reg-event-db 
   :actionFlee 
   (fn [db _]
-    (println "fleeing")
+    (println "player fleeing")
     db))
 
 (defn playerSystemsActive?
@@ -68,7 +69,7 @@
 
 (defn enemyChooseAction
   [enemyShip playerShip]
-  (println "enemy choosing target")
+  (println "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
         enemyShields (:shields enemyShip)
         playerSystems (-> playerShip
@@ -78,10 +79,14 @@
                                 (map playerSystemsActive?)
                                 (remove false?))]
     (if (> (get (:weapons enemySystems) 0) 0)
-      [:damageSystem (rand-nth playerActiveSystems) :playerShip]
+      (do (println "enemy has decided to fire")
+          [:damageSystem (rand-nth playerActiveSystems) :playerShip])
+
       (if (> (get (:shields enemySystems) 0) 0)
-        [:enemyChargeShields]
-        [:changeTurn]))))
+        (do (println "enemy has decided to charge their shields") 
+            [:enemyChargeShields])
+        (do (println "enemy has decided to pass their turn")
+            [:changeTurn])))))
       
 
 (rf/reg-event-fx
@@ -98,6 +103,7 @@
 (rf/reg-event-fx
   :enemyTurn
   (fn [cofx effects]
+    (println "start of enemy turn")
     (let [playerShip @(rf/subscribe [:playerShip])
           enemyShip @(rf/subscribe [:enemyShip])]
       {:db (:db cofx)
@@ -106,6 +112,7 @@
 (rf/reg-event-fx
   :playerTurn
   (fn [cofx effects]
+    (println "start of player turn")
     {:db (:db cofx)}))
 
 (rf/reg-event-db
