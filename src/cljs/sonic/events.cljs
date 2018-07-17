@@ -13,7 +13,15 @@
   [system type]
   (fn [] 
     (rf/dispatch [:damageSystem system type])))
-
+   
+(defn systemDisabled?
+  [system type]
+  (if (>= 0 (-> @(rf/subscribe [type])
+                (:systems)
+                (system)
+                (get 0)))
+    true
+    false))
   
 (rf/reg-event-db
  ::initialize-db
@@ -78,11 +86,10 @@
         playerActiveSystems (->> playerSystems
                                 (map playerSystemsActive?)
                                 (remove false?))]
-    (if (> (get (:weapons enemySystems) 0) 0)
+    (if (false? (systemDisabled? :weapons :enemyShip))
       (do (println "enemy has decided to fire")
           [:damageSystem (rand-nth playerActiveSystems) :playerShip])
-
-      (if (> (get (:shields enemySystems) 0) 0)
+      (if (false? (systemDisabled? :shields :enemyShip))
         (do (println "enemy has decided to charge their shields") 
             [:enemyChargeShields])
         (do (println "enemy has decided to pass their turn")
