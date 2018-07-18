@@ -29,17 +29,28 @@
    (println "initializing")
    db/default-db))
 
+(defn calcShieldsMax
+  [shieldsSystemRank]
+  (-> shieldsSystemRank
+      (- 1)
+      (* 15)
+      (+ 100)))
+
+(defn calcShieldsStrength
+  [shieldsSystemRank]
+  (* shieldsSystemRank 15))
 (defn chargeShields [ship]
   (let [shieldsSystem (-> ship
                         (:systems)
                         (:shields))
         shieldsCurrentValue (:shields ship)
         shieldsSystemRank (get shieldsSystem 1)
-        shieldsMax (+ 100 (* (- shieldsSystemRank 1) 20))
-        shieldsStrength (* shieldsSystemRank 15)]
-    (assoc ship :shields (if (> (+ shieldsCurrentValue shieldsStrength) shieldsMax)
+        shieldsMax (calcShieldsMax shieldsSystemRank)
+        shieldsStrength (calcShieldsStrength shieldsSystemRank)
+        newShields (+ shieldsCurrentValue shieldsStrength)]
+    (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
-                           (+ shieldsCurrentValue shieldsStrength)))))
+                           newShields))))
 
 (rf/reg-event-fx
   :actionFire
@@ -55,11 +66,12 @@
     {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
      :dispatch [:changeTurn]}))
 
-(rf/reg-event-db 
+(rf/reg-event-fx
   :actionFlee 
-  (fn [db _]
+  (fn [cofx effects]
     (println "player fleeing")
-    db))
+    {:db (:db cofx)
+     :dispatch [:changeTurn]}))
 
 (defn playerSystemsActive?
   [systemtype]
@@ -132,6 +144,10 @@
         (assoc db :firing? false)
         (assoc db :firing? true)))))
 
+(defn calcDamage
+  [attackRank]
+  (* attackRank 20))
+
 (defn newHP
   [[defender attacker system]]
   (let [defenderHP (:HP defender)
@@ -140,7 +156,7 @@
                        (:systems)
                        (:weapons)
                        (get 1))
-        attackDamage (* 20 attackRank)
+        attackDamage (calcDamage attackRank)
         HPDamage (if (> (- defenderShields attackDamage) 0)
                      0
                      (- attackDamage defenderShields))]
@@ -155,7 +171,7 @@
                        (:systems)
                        (:weapons)
                        (get 1))
-        attackDamage (* 20 attackRank)
+        attackDamage (calcDamage attackRank)
         shieldsDamage (if (> (- defenderShields attackDamage) 0)
                         attackDamage
                         defenderShields)]
@@ -178,8 +194,10 @@
         systemRank (-> defender
                        (:systems)
                        (system)
-                       (get 1))]
-    [(assoc defender :systems (assoc (:systems defender) system [(- systemHP systemDamage) systemRank])) 
+                       (get 1))
+        newSystem [(- systemHP systemDamage) systemRank]       
+        newSystemsMap (assoc (:systems defender) system newSystem)]
+    [(assoc defender :systems newSystemsMap) 
      attacker system]))
     
     
