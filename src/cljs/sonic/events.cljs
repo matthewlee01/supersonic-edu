@@ -29,6 +29,24 @@
    (println "initializing")
    db/default-db))
 
+(rf/reg-event-db
+  ::gameStart
+  (fn [db _]
+    (println "start of game")
+    (let [playerName (js/prompt "Enter your name:")]
+      (assoc db :playerName (if (= playerName "")
+                              "Player"
+                              playerName)))))
+
+(rf/reg-event-db
+  :gameEnd
+  (fn [db [_ destroyedShip]]
+    (println "end of game")
+    (js/alert (str "Game Over! " (if (= destroyedShip :playerShip)
+                                   @(rf/subscribe [:playerName])
+                                   "Enemy") "'s ship was destroyed!"))
+    (assoc db :gameOver? true)))
+
 (defn calcShieldsMax
   [shieldsSystemRank]
   (-> shieldsSystemRank
@@ -38,7 +56,11 @@
 
 (defn calcShieldsStrength
   [shieldsSystemRank]
-  (* shieldsSystemRank 15))
+  (-> (rand-int 6)
+      (+ 1)
+      (* shieldsSystemRank)
+      (* 8)))
+
 (defn chargeShields [ship]
   (let [shieldsSystem (-> ship
                         (:systems)
@@ -146,7 +168,10 @@
 
 (defn calcDamage
   [attackRank]
-  (* attackRank 20))
+  (-> (rand-int 6)
+      (+ 1)
+      (* attackRank)
+      (* 10)))
 
 (defn newHP
   [[defender attacker system]]
@@ -159,7 +184,13 @@
         attackDamage (calcDamage attackRank)
         HPDamage (if (> (- defenderShields attackDamage) 0)
                      0
-                     (- attackDamage defenderShields))]
+                     (- attackDamage defenderShields))
+        newHPVal (- defenderHP HPDamage)
+        destroyed? (if (<= newHPVal 0)
+                     true
+                     false)]
+    (if destroyed?
+      (rf/dispatch [:gameEnd defender]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
      attacker system]))
          
@@ -180,25 +211,28 @@
 
 (defn newSystemHP
   [[defender attacker system]]
-  (let [systemHP (-> defender
-                     (:systems)
-                     (system)
-                     (get 0))
-        attackRank (-> attacker
-                       (:systems)
-                       (:weapons)
-                       (get 1))
-        systemDamage (if (> (- systemHP attackRank) 0)
-                       attackRank
-                       systemHP)
-        systemRank (-> defender
-                       (:systems)
-                       (system)
-                       (get 1))
-        newSystem [(- systemHP systemDamage) systemRank]       
-        newSystemsMap (assoc (:systems defender) system newSystem)]
-    [(assoc defender :systems newSystemsMap) 
-     attacker system]))
+  (let [defenderShields (:shields defender)]
+    (if (<= defenderShields 0)
+      (let [systemHP (-> defender
+                         (:systems)
+                         (system)
+                         (get 0))
+            attackRank (-> attacker
+                           (:systems)
+                           (:weapons)
+                           (get 1))
+            systemDamage (if (> (- systemHP attackRank) 0)
+                           attackRank
+                           systemHP)
+            systemRank (-> defender
+                           (:systems)
+                           (system)
+                           (get 1))
+            newSystem [(- systemHP systemDamage) systemRank]       
+            newSystemsMap (assoc (:systems defender) system newSystem)]
+        [(assoc defender :systems newSystemsMap) 
+         attacker system])
+      [defender attacker system])))
     
     
 (rf/reg-event-fx

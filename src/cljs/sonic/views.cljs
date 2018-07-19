@@ -53,16 +53,17 @@
         enemySystems (:systems @(rf/subscribe [:enemyShip]))
         playerSystems (:systems @(rf/subscribe [:playerShip]))
         turn (if (= @(rf/subscribe [:turn]) 0)
-               "Player"
+               @(rf/subscribe [:playerName])
                "Enemy")
         firingMode (if (= @(rf/subscribe [:firing?]) false)
                      "Inactive"
                      "Active")]
+    [:fieldset {:disabled @(rf/subscribe [:gameOver?])}
      [:div.flexContainer
       [:div.infoDisplayArea 
        [:textarea.infoDisplay {:value (str turn "'s Turn")
                                :readOnly true
-                               :style {:color (if (= turn "Player")
+                               :style {:color (if (= @(rf/subscribe [:turn]) 0)
                                                 "blue"
                                                 "red")}}]
        [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
@@ -88,6 +89,6 @@
       [:div.actionBar
        [actionButton :weapons :actionFire "Fire"]
        [actionButton :shields :actionChargeShields "Charge Shields"]
-       [actionButton :engines :actionFlee "Flee"]]]))
+       [actionButton :engines :actionFlee "Flee"]]]]))
       
      

@@ -12,4 +12,6 @@
                :HP 100
                :shields 100}
    :turn 0
-   :firing? false}) 
+   :firing? false
+   :playerName "Player"
+   :gameOver? false}) 

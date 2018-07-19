@@ -21,3 +21,13 @@
   :firing?
   (fn [db _]
     (:firing? db)))
+
+(rf/reg-sub
+  :playerName
+  (fn [db _]
+    (:playerName db)))
+
+(rf/reg-sub
+  :gameOver?
+  (fn [db _]
+    (:gameOver? db)))
