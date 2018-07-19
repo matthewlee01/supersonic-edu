@@ -1,19 +1,21 @@
 (ns sonic.events
   (:require
    [re-frame.core :as rf]
-   [sonic.db :as db]))
+   [sonic.db :as db])
    
-(defn actionDispatch
+;dispatches an action based on which action button was pressed (defn actionDispatch
   "dispatches the given action event from button"
   [event]
   (fn [] (rf/dispatch [event])))
 
+;dispatches :damageSystem with the targeted system and ship
 (defn damageDispatch
   "dispatches the damage system event with parameters"
   [system type]
   (fn [] 
     (rf/dispatch [:damageSystem system type])))
    
+;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
   (if (>= 0 (-> @(rf/subscribe [type])
@@ -22,13 +24,15 @@
                 (get 0)))
     true
     false))
-  
+
+;initializes default db  
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
    (println "initializing")
    db/default-db))
 
+;prompts player for playerName value
 (rf/reg-event-db
   ::gameStart
   (fn [db _]
@@ -38,6 +42,7 @@
                               "Player"
                               playerName)))))
 
+;sends an alert and disables main view
 (rf/reg-event-db
   :gameEnd
   (fn [db [_ destroyedShip]]
@@ -47,6 +52,7 @@
                                    "Enemy") "'s ship was destroyed!"))
     (assoc db :gameOver? true)))
 
+;calculates the maximum shields the ship can have
 (defn calcShieldsMax
   [shieldsSystemRank]
   (-> shieldsSystemRank
@@ -54,13 +60,19 @@
       (* 15)
       (+ 100)))
 
+;selects a random number from 1-6
+(defn diceRoll
+  []
+  (+ 1 (rand-int 6)))
+  
+;calculates strength of shield charge
 (defn calcShieldsStrength
   [shieldsSystemRank]
-  (-> (rand-int 6)
-      (+ 1)
+  (-> (diceRoll)
       (* shieldsSystemRank)
       (* 8)))
 
+;returns ship with increases shields
 (defn chargeShields [ship]
   (let [shieldsSystem (-> ship
                         (:systems)
@@ -74,6 +86,7 @@
                            shieldsMax
                            newShields))))
 
+;toggles firing mode for player to select target
 (rf/reg-event-fx
   :actionFire
   (fn [cofx event]
@@ -81,6 +94,8 @@
     {:db (:db cofx)
      :dispatch [:toggleFiringMode]}))
     
+;calls chargeShields on playerShip when corresponding button is pressed, 
+;then ends player turn
 (rf/reg-event-fx
   :actionChargeShields
   (fn [cofx events]
@@ -88,6 +103,8 @@
     {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
      :dispatch [:changeTurn]}))
 
+;attempt to escape the battle 
+;(does nothing right now)
 (rf/reg-event-fx
   :actionFlee 
   (fn [cofx effects]
@@ -95,6 +112,7 @@
     {:db (:db cofx)
      :dispatch [:changeTurn]}))
 
+;used with map to create a list of all active player systems
 (defn playerSystemsActive?
   [systemtype]
   (let [ship @(rf/subscribe [:playerShip])
@@ -103,6 +121,7 @@
       systemtype
       false)))
 
+;calls chargeShields on enemyShip and updates value
 (rf/reg-event-fx 
   :enemyChargeShields
   (fn [cofx events]
@@ -110,6 +129,7 @@
     {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip])))
      :dispatch [:changeTurn]}))
 
+;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
   (println "enemy choosing action")
@@ -130,7 +150,7 @@
         (do (println "enemy has decided to pass their turn")
             [:changeTurn])))))
       
-
+;toggles turn between player and enemy after each action
 (rf/reg-event-fx
   :changeTurn
   (fn [cofx effects]
@@ -142,6 +162,7 @@
         {:db (assoc (:db cofx) :turn 0)
          :dispatch [:playerTurn]}))))
 
+;initiates enemy AI
 (rf/reg-event-fx
   :enemyTurn
   (fn [cofx effects]
@@ -151,12 +172,14 @@
       {:db (:db cofx)
        :dispatch (enemyChooseAction enemyShip playerShip)})))
           
+;initiates player turn, saves a copy of current state
 (rf/reg-event-fx
   :playerTurn
   (fn [cofx effects]
     (println "start of player turn")
     {:db (:db cofx)}))
 
+;toggles firing mode when player pushes fire or ends their turn
 (rf/reg-event-db
   :toggleFiringMode
   (fn [db _]
@@ -166,13 +189,15 @@
         (assoc db :firing? false)
         (assoc db :firing? true)))))
 
+;formula for damage: randomfactor x weaponrank x 10dmg
 (defn calcDamage
   [attackRank]
-  (-> (rand-int 6)
-      (+ 1)
+  (-> (diceRoll)
       (* attackRank)
       (* 10)))
 
+;calculates new HP after taking damage, 
+;triggers game over if necessary
 (defn newHP
   [[defender attacker system]]
   (let [defenderHP (:HP defender)
@@ -194,7 +219,7 @@
     [(assoc defender :HP (- defenderHP HPDamage)) 
      attacker system]))
          
-
+;calculates new shield value
 (defn newShields 
   [[defender attacker system]]
   (let [defenderShields (:shields defender)
@@ -209,6 +234,8 @@
     [(assoc defender :shields (- defenderShields shieldsDamage)) 
      attacker system]))
 
+;calculates new system status if shields are down, 
+;otherwise no system damage taken
 (defn newSystemHP
   [[defender attacker system]]
   (let [defenderShields (:shields defender)]
@@ -234,7 +261,8 @@
          attacker system])
       [defender attacker system])))
     
-    
+;performs all the steps of damaging the ship 
+;(and systems if necessary)
 (rf/reg-event-fx
   :damageSystem
   (fn [cofx [_ system type]]
@@ -252,7 +280,7 @@
               {:db (assoc (:db cofx) type newDamagedShip)
                :dispatch [:changeTurn]}))))
       
-
+;test handler for trying new things and placeholding
 (rf/reg-event-db
   :doNothing
   (fn [db _]

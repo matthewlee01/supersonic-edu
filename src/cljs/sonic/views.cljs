@@ -27,21 +27,28 @@
 (defn systemButton
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
-        systemRank (-> @(rf/subscribe [type])
+        ship @(rf/subscribe [type])
+        systemRank (-> ship
                        (:systems)
                        (system)
                        (get 1))
-        systemHP (-> @(rf/subscribe [type])             
+        systemHP (-> ship             
                      (:systems)
                      (system)
-                     (get 0))]
+                     (get 0))
+        shieldedStatus (if (> (:shields ship) 0)
+                         "lightblue"
+                         "orange")]
     [:button.system
      (if (= type :playerShip)
        {:disabled (or firing? 
-                      (events/systemDisabled? system type))}
+                      (events/systemDisabled? system type))
+        :style {:background-color shieldedStatus}}
        (if firing?
-         {:on-click (events/damageDispatch system type)}
-         {:on-click (fn [] (rf/dispatch [:doNothing]))}))
+         {:on-click (events/damageDispatch system type)
+          :style {:background-color shieldedStatus}}
+         {:on-click (fn [] (rf/dispatch [:doNothing]))
+          :style {:background-color shieldedStatus}}))
      (str "Rank " systemRank " " text " (" systemHP " HP)")]))
 
 (defn main-panel 
@@ -65,12 +72,13 @@
                                :readOnly true
                                :style {:color (if (= @(rf/subscribe [:turn]) 0)
                                                 "blue"
-                                                "red")}}]
-       [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
-                               :readOnly true
-                               :style {:color (if @(rf/subscribe [:firing?])
-                                                 "red"
-                                                 "green")}}]]
+                                                "red")}}]]
+       
+      [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
+                              :readOnly true
+                              :style {:color (if @(rf/subscribe [:firing?])
+                                                "red"
+                                                "green")}}]
       [:div.ships
        [:div.playerShip
         [:div.vitalityDisplayArea
