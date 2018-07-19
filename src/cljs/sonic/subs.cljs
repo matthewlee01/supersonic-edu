@@ -31,3 +31,13 @@
   :gameOver?
   (fn [db _]
     (:gameOver? db)))
+
+(rf/reg-sub
+  :history
+  (fn [db _]
+    (:history db)))
+
+(rf/reg-sub
+  :phase
+  (fn [db _]
+    (:phase db)))

@@ -1,9 +1,10 @@
 (ns sonic.events
   (:require
    [re-frame.core :as rf]
-   [sonic.db :as db])
+   [sonic.db :as db]))
    
-;dispatches an action based on which action button was pressed (defn actionDispatch
+;dispatches an action based on which action button was pressed 
+(defn actionDispatch
   "dispatches the given action event from button"
   [event]
   (fn [] (rf/dispatch [event])))
@@ -33,23 +34,27 @@
    db/default-db))
 
 ;prompts player for playerName value
-(rf/reg-event-db
+(rf/reg-event-fx
   ::gameStart
-  (fn [db _]
+  (fn [cofx effects]
     (println "start of game")
     (let [playerName (js/prompt "Enter your name:")]
-      (assoc db :playerName (if (= playerName "")
-                              "Player"
-                              playerName)))))
+      {:db (assoc (:db cofx) :playerName (if (or 
+                                               (= playerName "")
+                                               (= playerName nil))
+                                            "Player"
+                                            playerName))
+       :dispatch [:playerPhase]})))
 
 ;sends an alert and disables main view
 (rf/reg-event-db
   :gameEnd
-  (fn [db [_ destroyedShip]]
+  (fn [db [_ loser]]
     (println "end of game")
-    (js/alert (str "Game Over! " (if (= destroyedShip :playerShip)
+    (js/alert (str "Game Over! " (if (= loser :playerShip)
                                    @(rf/subscribe [:playerName])
-                                   "Enemy") "'s ship was destroyed!"))
+                                   "Enemy") 
+                   "'s ship was destroyed!"))
     (assoc db :gameOver? true)))
 
 ;calculates the maximum shields the ship can have
@@ -72,7 +77,7 @@
       (* shieldsSystemRank)
       (* 8)))
 
-;returns ship with increases shields
+;rephases ship with increases shields
 (defn chargeShields [ship]
   (let [shieldsSystem (-> ship
                         (:systems)
@@ -95,13 +100,13 @@
      :dispatch [:toggleFiringMode]}))
     
 ;calls chargeShields on playerShip when corresponding button is pressed, 
-;then ends player turn
+;then ends player phase
 (rf/reg-event-fx
   :actionChargeShields
   (fn [cofx events]
     (println "player charging shields")
     {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
-     :dispatch [:changeTurn]}))
+     :dispatch [:changePhase]}))
 
 ;attempt to escape the battle 
 ;(does nothing right now)
@@ -110,7 +115,7 @@
   (fn [cofx effects]
     (println "player fleeing")
     {:db (:db cofx)
-     :dispatch [:changeTurn]}))
+     :dispatch [:changePhase]}))
 
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
@@ -127,7 +132,7 @@
   (fn [cofx events]
     (println "enemy charging shields")
     {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip])))
-     :dispatch [:changeTurn]}))
+     :dispatch [:changePhase]}))
 
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
@@ -147,39 +152,58 @@
       (if (false? (systemDisabled? :shields :enemyShip))
         (do (println "enemy has decided to charge their shields") 
             [:enemyChargeShields])
-        (do (println "enemy has decided to pass their turn")
-            [:changeTurn])))))
+        (do (println "enemy has decided to pass their phase")
+            [:changePhase])))))
       
-;toggles turn between player and enemy after each action
+;toggles phase between player and enemy after each action
 (rf/reg-event-fx
-  :changeTurn
+  :changePhase
   (fn [cofx effects]
-    (println "changing turn")
-    (let [turn @(rf/subscribe [:turn])]
-      (if (= turn 0)
-        {:db (assoc (:db cofx) :turn 1)
-         :dispatch [:enemyTurn]}
-        {:db (assoc (:db cofx) :turn 0)
-         :dispatch [:playerTurn]}))))
+    (println "changing phase")
+    (let [phase @(rf/subscribe [:phase])]
+      (if (= phase 0)
+        {:db (assoc (:db cofx) :phase 1)
+         :dispatch [:enemyPhase]}
+        {:db (assoc (:db cofx) :phase 0)
+         :dispatch [:playerPhase]}))))
 
 ;initiates enemy AI
 (rf/reg-event-fx
-  :enemyTurn
+  :enemyPhase
   (fn [cofx effects]
-    (println "start of enemy turn")
+    (println "start of enemy phase")
     (let [playerShip @(rf/subscribe [:playerShip])
           enemyShip @(rf/subscribe [:enemyShip])]
       {:db (:db cofx)
        :dispatch (enemyChooseAction enemyShip playerShip)})))
           
-;initiates player turn, saves a copy of current state
-(rf/reg-event-fx
-  :playerTurn
-  (fn [cofx effects]
-    (println "start of player turn")
-    {:db (:db cofx)}))
+(rf/reg-event-db
+  :logHistory
+  (fn [db _]
+    (println "logging turn")
+    (let [newHistory (-> @(rf/subscribe [:history])
+                         (concat [db])
+                         (vec))]
+      (assoc db :history newHistory))))
 
-;toggles firing mode when player pushes fire or ends their turn
+;initiates player phase, 
+;saves a copy of current state
+(rf/reg-event-fx
+  :playerPhase
+  (fn [cofx effects]
+    (let [newTurn (inc @(rf/subscribe [:turn]))]
+      (println "start of player phase")
+      {:db (assoc (:db cofx) :turn newTurn)
+       :dispatch [:logHistory]})))
+
+(rf/reg-event-fx
+  ::rewindTurn
+  (fn [cofx [_ turn]]
+    {:db (-> @(rf/subscribe [:history])
+             (get (- turn 1)))
+     :dispatch [:logHistory]}))
+
+;toggles firing mode when player pushes fire or ends their phase
 (rf/reg-event-db
   :toggleFiringMode
   (fn [db _]
@@ -215,7 +239,9 @@
                      true
                      false)]
     (if destroyed?
-      (rf/dispatch [:gameEnd defender]))
+      (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
+                               :playerShip
+                               :enemyShip)]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
      attacker system]))
          
@@ -278,7 +304,7 @@
                                   (newSystemHP)
                                   (get 0))]
               {:db (assoc (:db cofx) type newDamagedShip)
-               :dispatch [:changeTurn]}))))
+               :dispatch [:changePhase]}))))
       
 ;test handler for trying new things and placeholding
 (rf/reg-event-db

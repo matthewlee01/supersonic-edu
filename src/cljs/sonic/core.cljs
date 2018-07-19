@@ -18,6 +18,10 @@
   (r/render [views/main-panel]
             (.getElementById js/document "app")))
 
+(defn rewind
+  [turn]
+  (rf/dispatch [::events/rewindTurn turn]))
+
 (defn ^:export init 
   []
   (rf/dispatch-sync [::events/initialize-db])

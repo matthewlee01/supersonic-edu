@@ -14,4 +14,6 @@
    :turn 0
    :firing? false
    :playerName "Player"
-   :gameOver? false}) 
+   :gameOver? false
+   :phase 0
+   :history []}) 

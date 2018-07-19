@@ -7,7 +7,7 @@
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?]) (not= text "Fire")) 
-          (= @(rf/subscribe [:turn]) 1)
+          (= @(rf/subscribe [:phase]) 1)
           (events/systemDisabled? requiredSystem :playerShip))
       true
       false))
@@ -59,7 +59,8 @@
         enemyShields (:shields @(rf/subscribe [:enemyShip]))
         enemySystems (:systems @(rf/subscribe [:enemyShip]))
         playerSystems (:systems @(rf/subscribe [:playerShip]))
-        turn (if (= @(rf/subscribe [:turn]) 0)
+        turn @(rf/subscribe [:turn])
+        phase (if (= @(rf/subscribe [:phase]) 0)
                @(rf/subscribe [:playerName])
                "Enemy")
         firingMode (if (= @(rf/subscribe [:firing?]) false)
@@ -68,11 +69,13 @@
     [:fieldset {:disabled @(rf/subscribe [:gameOver?])}
      [:div.flexContainer
       [:div.infoDisplayArea 
-       [:textarea.infoDisplay {:value (str turn "'s Turn")
+       [:textarea.infoDisplay {:value (str phase "'s Turn")
                                :readOnly true
-                               :style {:color (if (= @(rf/subscribe [:turn]) 0)
+                               :style {:color (if (= @(rf/subscribe [:phase]) 0)
                                                 "blue"
-                                                "red")}}]]
+                                                "red")}}]
+       [:textarea.infoDisplay {:value (str "Turn #: " turn)
+                               :readOnly true}]]
        
       [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
                               :readOnly true
