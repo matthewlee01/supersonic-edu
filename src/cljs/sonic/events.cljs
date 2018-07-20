@@ -1,5 +1,6 @@
 (ns sonic.events
   (:require
+   [sonic.core :as core]
    [re-frame.core :as rf]
    [sonic.db :as db]))
    
@@ -30,14 +31,14 @@
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
-   (println "initializing")
+   (core/devLog "initializing")
    db/default-db))
 
 ;prompts player for playerName value
 (rf/reg-event-fx
   ::gameStart
   (fn [cofx effects]
-    (println "start of game")
+    (core/devLog "start of game")
     (let [playerName (js/prompt "Enter your name:")]
       {:db (assoc (:db cofx) :playerName (if (or 
                                                (= playerName "")
@@ -50,7 +51,7 @@
 (rf/reg-event-db
   :gameEnd
   (fn [db [_ loser]]
-    (println "end of game")
+    (core/devLog "end of game")
     (js/alert (str "Game Over! " (if (= loser :playerShip)
                                    @(rf/subscribe [:playerName])
                                    "Enemy") 
@@ -73,12 +74,11 @@
 ;calculates strength of shield charge
 (defn calcShieldsStrength
   [shieldsSystemRank]
-  (let [result (-> (diceRoll)
-                   (* shieldsSystemRank)
-                   (* 8))]
-    result))
+  (-> (diceRoll)
+      (* shieldsSystemRank)
+      (* 8)))
 
-;rephases ship with increases shields
+;returns ship with increased shields
 (defn chargeShields [ship]
   (let [shieldsSystem (-> ship
                         (:systems)
@@ -88,7 +88,7 @@
         shieldsMax (calcShieldsMax shieldsSystemRank)
         shieldsStrength (calcShieldsStrength shieldsSystemRank)
         newShields (+ shieldsCurrentValue shieldsStrength)]
-    (println (str "shields boosted by " (- newShields shieldsCurrentValue)))
+    (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue)))
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
@@ -97,7 +97,7 @@
 (rf/reg-event-fx
   :actionFire
   (fn [cofx event]
-    (println "player toggling firing mode")
+    (core/devLog "player toggling firing mode")
     {:db (:db cofx)
      :dispatch [:toggleFiringMode]}))
     
@@ -106,7 +106,7 @@
 (rf/reg-event-fx
   :actionChargeShields
   (fn [cofx events]
-    (println "player charging shields")
+    (core/devLog "player charging shields")
     {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
      :dispatch [:changePhase]}))
 
@@ -115,7 +115,7 @@
 (rf/reg-event-fx
   :actionFlee 
   (fn [cofx effects]
-    (println "player fleeing")
+    (core/devLog "player fleeing")
     {:db (:db cofx)
      :dispatch [:changePhase]}))
 
@@ -132,14 +132,14 @@
 (rf/reg-event-fx 
   :enemyChargeShields
   (fn [cofx events]
-    (println "enemy charging shields")
+    (core/devLog "enemy charging shields")
     {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip])))
      :dispatch [:changePhase]}))
 
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
-  (println "enemy choosing action")
+  (core/devLog "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
         enemyShields (:shields enemyShip)
         playerSystems (-> playerShip
@@ -149,19 +149,19 @@
                                 (map playerSystemsActive?)
                                 (remove false?))]
     (if (false? (systemDisabled? :weapons :enemyShip))
-      (do (println "enemy has decided to fire")
+      (do (core/devLog "enemy has decided to fire")
           [:damageSystem (rand-nth playerActiveSystems) :playerShip])
       (if (false? (systemDisabled? :shields :enemyShip))
-        (do (println "enemy has decided to charge their shields") 
+        (do (core/devLog "enemy has decided to charge their shields") 
             [:enemyChargeShields])
-        (do (println "enemy has decided to pass their phase")
+        (do (core/devLog "enemy has decided to pass their phase")
             [:changePhase])))))
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
   :changePhase
   (fn [cofx effects]
-    (println "changing phase")
+    (core/devLog "changing phase")
     (let [phase @(rf/subscribe [:phase])]
       (if (= phase 0)
         {:db (assoc (:db cofx) :phase 1)
@@ -173,7 +173,7 @@
 (rf/reg-event-fx
   :enemyPhase
   (fn [cofx effects]
-    (println "start of enemy phase")
+    (core/devLog "start of enemy phase")
     (let [playerShip @(rf/subscribe [:playerShip])
           enemyShip @(rf/subscribe [:enemyShip])]
       {:db (:db cofx)
@@ -182,7 +182,7 @@
 (rf/reg-event-db
   :logHistory
   (fn [db _]
-    (println "logging turn")
+    (core/devLog "logging turn")
     (let [newHistory (-> @(rf/subscribe [:history])
                          (concat [db])
                          (vec))]
@@ -194,14 +194,14 @@
   :playerPhase
   (fn [cofx effects]
     (let [newTurn (inc @(rf/subscribe [:turn]))]
-      (println "start of player phase")
+      (core/devLog "start of player phase")
       {:db (assoc (:db cofx) :turn newTurn)
        :dispatch [:logHistory]})))
 
 (rf/reg-event-fx
   ::rewindTurn
   (fn [cofx [_ turn]]
-    (println (str "rewinding to turn " turn))
+    (core/devLog (str "rewinding to turn " turn))
     {:db (-> @(rf/subscribe [:history])
              (get (- turn 1)))
      :dispatch [:logHistory]}))
@@ -295,7 +295,7 @@
                          (:weapons)
                          (get 1))
           damage (calcDamage attackRank)]
-         (println (str "target took " damage " damage"))
+         (core/devLog (str "target took " damage " damage"))
          (let [newDamagedShip (-> [defender attacker system damage] 
                                   (newHP)
                                   (newShields)
@@ -304,11 +304,19 @@
               {:db (assoc (:db cofx) type newDamagedShip)
                :dispatch [:changePhase]}))))
       
+;toggles :devMode between true and false
+(rf/reg-event-db
+  ::toggleDevMode
+  (fn [db _]
+    (assoc db :devMode (if @(rf/subscribe [:devMode])
+                         false
+                         true))))
+
 ;test handler for trying new things and placeholding
 (rf/reg-event-db
   :doNothing
   (fn [db _]
-    (println "nothing")
+    (core/devLog "nothing")
     db))
 
 

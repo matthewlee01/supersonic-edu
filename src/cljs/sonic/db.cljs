@@ -16,4 +16,5 @@
    :playerName "Player"
    :gameOver? false
    :phase 0
-   :history []}) 
+   :history []
+   :devMode true})

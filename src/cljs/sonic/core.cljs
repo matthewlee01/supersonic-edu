@@ -22,6 +22,15 @@
   [turn]
   (rf/dispatch [::events/rewindTurn turn]))
 
+(defn devLog
+  [string]
+  (if @(rf/subscribe [:devMode])
+    (println string)))
+
+(defn devMode
+  []
+  (rf/dispatch [::events/toggleDevMode]))
+  
 (defn ^:export init 
   []
   (rf/dispatch-sync [::events/initialize-db])

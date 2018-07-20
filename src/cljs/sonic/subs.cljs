@@ -41,3 +41,9 @@
   :phase
   (fn [db _]
     (:phase db)))
+
+(rf/reg-sub
+  :devMode
+  (fn [db _]
+    (:devMode db)))
+
