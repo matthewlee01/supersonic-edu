@@ -4,8 +4,9 @@
    [re-frame.core :as rf]
    [sonic.events :as events]
    [sonic.views :as views]
-   [sonic.config :as config]))
-   
+   [sonic.config :as config]
+   [sonic.tests :as tests]))
+
 (defn dev-setup 
   []
   (when config/debug?
