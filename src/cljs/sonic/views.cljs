@@ -65,11 +65,14 @@
                "Enemy")
         firingMode (if (= @(rf/subscribe [:firing?]) false)
                      "Inactive"
-                     "Active")]
-    [:fieldset {:disabled @(rf/subscribe [:gameOver?])}
+                     "Active")
+        gameOver? @(rf/subscribe [:gameOver?])]
+    [:fieldset {:disabled gameOver?}
      [:div.flexContainer
       [:div.infoDisplayArea 
-       [:textarea.infoDisplay {:value (str phase "'s Turn")
+       [:textarea.infoDisplay {:value (if gameOver?
+                                        "Game Over!"
+                                        (str phase "'s Turn"))
                                :readOnly true
                                :style {:color (if (= @(rf/subscribe [:phase]) 0)
                                                 "blue"
