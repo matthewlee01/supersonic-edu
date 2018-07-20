@@ -73,9 +73,10 @@
 ;calculates strength of shield charge
 (defn calcShieldsStrength
   [shieldsSystemRank]
-  (-> (diceRoll)
-      (* shieldsSystemRank)
-      (* 8)))
+  (let [result (-> (diceRoll)
+                   (* shieldsSystemRank)
+                   (* 8))]
+    result))
 
 ;rephases ship with increases shields
 (defn chargeShields [ship]
@@ -87,6 +88,7 @@
         shieldsMax (calcShieldsMax shieldsSystemRank)
         shieldsStrength (calcShieldsStrength shieldsSystemRank)
         newShields (+ shieldsCurrentValue shieldsStrength)]
+    (println (str "shields boosted by " (- newShields shieldsCurrentValue)))
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
@@ -199,6 +201,7 @@
 (rf/reg-event-fx
   ::rewindTurn
   (fn [cofx [_ turn]]
+    (println (str "rewinding to turn " turn))
     {:db (-> @(rf/subscribe [:history])
              (get (- turn 1)))
      :dispatch [:logHistory]}))
@@ -207,7 +210,6 @@
 (rf/reg-event-db
   :toggleFiringMode
   (fn [db _]
-    (println "toggling firing mode")
     (let [firing? @(rf/subscribe [:firing?])]
       (if firing?
         (assoc db :firing? false)
@@ -223,17 +225,12 @@
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
-  [[defender attacker system]]
+  [[defender attacker system damage]]
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
-        attackRank (-> attacker
-                       (:systems)
-                       (:weapons)
-                       (get 1))
-        attackDamage (calcDamage attackRank)
-        HPDamage (if (> (- defenderShields attackDamage) 0)
+        HPDamage (if (> (- defenderShields damage) 0)
                      0
-                     (- attackDamage defenderShields))
+                     (- damage defenderShields))
         newHPVal (- defenderHP HPDamage)
         destroyed? (if (<= newHPVal 0)
                      true
@@ -243,27 +240,22 @@
                                :playerShip
                                :enemyShip)]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
-     attacker system]))
+     attacker system damage]))
          
 ;calculates new shield value
 (defn newShields 
-  [[defender attacker system]]
+  [[defender attacker system damage]]
   (let [defenderShields (:shields defender)
-        attackRank (-> attacker
-                       (:systems)
-                       (:weapons)
-                       (get 1))
-        attackDamage (calcDamage attackRank)
-        shieldsDamage (if (> (- defenderShields attackDamage) 0)
-                        attackDamage
+        shieldsDamage (if (> (- defenderShields damage) 0)
+                        damage
                         defenderShields)]
     [(assoc defender :shields (- defenderShields shieldsDamage)) 
-     attacker system]))
+     attacker system damage]))
 
 ;calculates new system status if shields are down, 
 ;otherwise no system damage taken
 (defn newSystemHP
-  [[defender attacker system]]
+  [[defender attacker system damage]]
   (let [defenderShields (:shields defender)]
     (if (<= defenderShields 0)
       (let [systemHP (-> defender
@@ -285,7 +277,7 @@
             newSystemsMap (assoc (:systems defender) system newSystem)]
         [(assoc defender :systems newSystemsMap) 
          attacker system])
-      [defender attacker system])))
+      [defender attacker system damage])))
     
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
@@ -297,8 +289,14 @@
     (let [defender @(rf/subscribe [type])
           attacker (if (= type :playerShip)
                     @(rf/subscribe [:playerShip])
-                    @(rf/subscribe [:enemyShip]))]
-         (let [newDamagedShip (-> [defender attacker system] 
+                    @(rf/subscribe [:enemyShip]))
+          attackRank (-> attacker
+                         (:systems)
+                         (:weapons)
+                         (get 1))
+          damage (calcDamage attackRank)]
+         (println (str "target took " damage " damage"))
+         (let [newDamagedShip (-> [defender attacker system damage] 
                                   (newHP)
                                   (newShields)
                                   (newSystemHP)
