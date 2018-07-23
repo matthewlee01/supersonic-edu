@@ -20,7 +20,7 @@
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
-  (if (>= 0 (-> @(rf/subscribe [type])
+  (if (>= 0 (-> (type db/default-db)
                 (:systems)
                 (system)
                 (get 0)))
@@ -136,11 +136,11 @@
 
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
-  [systemtype]
-  (let [ship @(rf/subscribe [:playerShip])
-        system (systemtype (:systems ship))]
+  [systemType]
+  (let [ship (db/default-db :playerShip)
+        system (systemType (:systems ship))]
     (if (> (get system 0) 0)
-      systemtype
+      systemType
       false)))
 
 ;calls chargeShields on enemyShip and updates value

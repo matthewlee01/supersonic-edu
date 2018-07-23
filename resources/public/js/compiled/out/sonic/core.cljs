@@ -5,7 +5,8 @@
    [sonic.events :as events]
    [sonic.views :as views]
    [sonic.config :as config]
-   [sonic.tests :as tests]))
+   [sonic.tests :as tests]
+   [sonic.db :as db]))
 
 (defn dev-setup 
   []

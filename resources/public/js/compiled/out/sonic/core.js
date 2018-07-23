@@ -7,6 +7,7 @@ goog.require('sonic.events');
 goog.require('sonic.views');
 goog.require('sonic.config');
 goog.require('sonic.tests');
+goog.require('sonic.db');
 sonic.core.dev_setup = (function sonic$core$dev_setup(){
 if(sonic.config.debug_QMARK_){
 cljs.core.enable_console_print_BANG_.call(null);
@@ -45,4 +46,4 @@ return sonic.core.mount_root.call(null);
 });
 goog.exportSymbol('sonic.core.init', sonic.core.init);
 
-//# sourceMappingURL=core.js.map?rel=1532376070252
+//# sourceMappingURL=core.js.map?rel=1532382302341
