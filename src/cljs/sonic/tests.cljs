@@ -16,11 +16,12 @@
   (let [testRoll (events/diceRoll)]
     (is (and (> testRoll 0)
              (< testRoll 7)))
-    (is (= 40 (events/calcDamage 1 4)))
+    (is (= 40 (events/calcLaserDamage 1 4)))
     (is (= 60 (-> (events/newShields [(:playerShip db/default-db)
                                       (:enemyShip db/default-db)
                                       :weapons
-                                      40])
+                                      40
+                                      :lasers])
                   (get 0)
                   (:shields))))))
 
