@@ -48,6 +48,15 @@
        :dispatch [:playerPhase]})))
 
 ;sends an alert and disables main view
+(defn gameEnd [db [_ loser]]
+  (core/devLog "end of game")
+  (js/alert (str "Game Over! " (if (= loser :playerShip)
+                                 @(rf/subscribe [:playerName])
+                                 "Enemy") 
+                 "'s ship was destroyed!"))
+  (assoc db :gameOver? true))
+
+
 (rf/reg-event-db
   :gameEnd
   (fn [db [_ loser]]
@@ -73,8 +82,8 @@
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
-  [shieldsSystemRank]
-  (-> (diceRoll)
+  [shieldsSystemRank diceRoll]
+  (-> diceRoll
       (* shieldsSystemRank)
       (* 8)))
 
@@ -85,8 +94,9 @@
                         (:shields))
         shieldsCurrentValue (:shields ship)
         shieldsSystemRank (get shieldsSystem 1)
+        diceRoll (diceRoll)
         shieldsMax (calcShieldsMax shieldsSystemRank)
-        shieldsStrength (calcShieldsStrength shieldsSystemRank)
+        shieldsStrength (calcShieldsStrength shieldsSystemRank diceRoll)
         newShields (+ shieldsCurrentValue shieldsStrength)]
     (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue)))
     (assoc ship :shields (if (> newShields shieldsMax)
@@ -103,12 +113,16 @@
     
 ;calls chargeShields on playerShip when corresponding button is pressed, 
 ;then ends player phase
+(defn actionChargeShields
+  [cofx events]
+  (core/devLog "player charging shields")
+  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
+   :dispatch [:changePhase]})
+
+
 (rf/reg-event-fx
   :actionChargeShields
-  (fn [cofx events]
-    (core/devLog "player charging shields")
-    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
-     :dispatch [:changePhase]}))
+  actionChargeShields)
 
 ;attempt to escape the battle 
 ;(does nothing right now)
@@ -190,13 +204,16 @@
 
 ;initiates player phase, 
 ;saves a copy of current state
+(defn playerPhase
+  [cofx effects]
+  (let [newTurn (inc @(rf/subscribe [:turn]))]
+    (core/devLog "start of player phase")
+    {:db (assoc (:db cofx) :turn newTurn)
+     :dispatch [:logHistory]}))
+
 (rf/reg-event-fx
   :playerPhase
-  (fn [cofx effects]
-    (let [newTurn (inc @(rf/subscribe [:turn]))]
-      (core/devLog "start of player phase")
-      {:db (assoc (:db cofx) :turn newTurn)
-       :dispatch [:logHistory]})))
+  playerPhase)
 
 (rf/reg-event-fx
   ::rewindTurn
@@ -206,19 +223,34 @@
              (get (- turn 1)))
      :dispatch [:logHistory]}))
 
+
 ;toggles firing mode when player pushes fire or ends their phase
+(defn toggleFiringMode [db _]
+  (let [firing? @(rf/subscribe [:firing?])]
+    (if firing?
+      (assoc db :firing? false)
+      (assoc db :firing? true))))
+
 (rf/reg-event-db
   :toggleFiringMode
-  (fn [db _]
-    (let [firing? @(rf/subscribe [:firing?])]
-      (if firing?
-        (assoc db :firing? false)
-        (assoc db :firing? true)))))
+  toggleFiringMode)
+      
+;toggles :devMode between true and false
+(defn toggleDevMode [db _]
+  (let [devMode @(rf/subscribe [:devMode])]
+    (if devMode
+      (assoc db :devMode false)
+      (assoc db :devMode true))))
+
+(rf/reg-event-db
+  ::toggleDevMode
+  toggleDevMode)
+
 
 ;formula for damage: randomfactor x weaponrank x 10dmg
 (defn calcDamage
-  [attackRank]
-  (-> (diceRoll)
+  [attackRank diceRoll]
+  (-> diceRoll
       (* attackRank)
       (* 10)))
 
@@ -281,6 +313,30 @@
     
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
+(defn damageSystem
+  [cofx [_ system type]]
+  (if (= type :enemyShip)
+     (rf/dispatch [:toggleFiringMode]))
+  (let [defender @(rf/subscribe [type])
+        attacker (if (= type :playerShip)
+                  @(rf/subscribe [:playerShip])
+                  @(rf/subscribe [:enemyShip]))
+        attackRank (-> attacker
+                       (:systems)
+                       (:weapons)
+                       (get 1))
+        diceRoll (diceRoll)
+        damage (calcDamage attackRank diceRoll)]
+       (core/devLog (str "target took " damage " damage"))
+       (let [newDamagedShip (-> [defender attacker system damage] 
+                                (newHP)
+                                (newShields)
+                                (newSystemHP)
+                                (get 0))]
+            {:db (assoc (:db cofx) type newDamagedShip)
+             :dispatch [:changePhase]})))
+
+
 (rf/reg-event-fx
   :damageSystem
   (fn [cofx [_ system type]]
@@ -294,7 +350,8 @@
                          (:systems)
                          (:weapons)
                          (get 1))
-          damage (calcDamage attackRank)]
+          diceRoll (diceRoll)
+          damage (calcDamage attackRank diceRoll)]
          (core/devLog (str "target took " damage " damage"))
          (let [newDamagedShip (-> [defender attacker system damage] 
                                   (newHP)
@@ -303,14 +360,6 @@
                                   (get 0))]
               {:db (assoc (:db cofx) type newDamagedShip)
                :dispatch [:changePhase]}))))
-      
-;toggles :devMode between true and false
-(rf/reg-event-db
-  ::toggleDevMode
-  (fn [db _]
-    (assoc db :devMode (if @(rf/subscribe [:devMode])
-                         false
-                         true))))
 
 ;test handler for trying new things and placeholding
 (rf/reg-event-db
