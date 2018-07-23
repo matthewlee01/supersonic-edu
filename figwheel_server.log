@@ -1,0 +1,14 @@
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 6.727 seconds.
+notifying browser that file changed:  resources/public/js/compiled/out/goog/deps.js
+notifying browser that file changed:  resources/public/js/compiled/out/cljs_deps.js
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.879 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.828 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.842 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
