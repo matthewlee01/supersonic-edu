@@ -740,3 +740,26 @@ notifying browser that file changed:  resources\public\js\compiled\out\sonic\eve
 Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
 Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.743 seconds.
 notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.063 seconds.
+notifying browser that file changed:  resources/public/js/compiled/out/goog/deps.js
+notifying browser that file changed:  resources/public/js/compiled/out/cljs_deps.js
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.221 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.149 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.892 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.073 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.954 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.914 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
