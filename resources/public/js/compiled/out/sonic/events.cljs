@@ -82,8 +82,8 @@
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
-  [shieldsSystemRank diceRoll]
-  (-> diceRoll
+  [shieldsSystemRank amount]
+  (-> amount
       (* shieldsSystemRank)
       (* 8)))
 
@@ -97,10 +97,12 @@
         shieldsMax (calcShieldsMax shieldsSystemRank)
         shieldsStrength (calcShieldsStrength shieldsSystemRank amount)
         newShields (+ shieldsCurrentValue shieldsStrength)]
-    (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue)))
+    (if @(rf/subscribe [:devMode])
+      (println (str "shields boosted by " (- newShields shieldsCurrentValue))))    
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
+    
 
 ;toggles firing mode for player to select target
 (rf/reg-event-fx
@@ -115,7 +117,7 @@
 (defn actionChargeShields
   [cofx events]
   (core/devLog "player charging shields")
-  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) diceRoll))
+  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll)))
    :dispatch [:changePhase]})
 
 
@@ -146,7 +148,7 @@
   :enemyChargeShields
   (fn [cofx events]
     (core/devLog "enemy charging shields")
-    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip]) diceRoll))
+    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip]) (diceRoll)))
      :dispatch [:changePhase]}))
 
 ;enemy chooses actions based on which systems are available

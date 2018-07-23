@@ -12,3 +12,436 @@ notifying browser that file changed:  resources\public\js\compiled\out\sonic\eve
 Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
 Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.842 seconds.
 notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.076 seconds.
+notifying browser that file changed:  resources/public/js/compiled/out/goog/deps.js
+notifying browser that file changed:  resources/public/js/compiled/out/cljs_deps.js
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.031 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.98 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.982 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.923 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.8 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.791 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.872 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.005 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.832 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.965 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.814 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.962 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.864 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.683 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:103  column:48  ----
+
+  Use of undeclared Var sonic.events/newShields
+
+   99          newShields (+ shieldsCurrentValue shieldsStrength)]
+  100      (assoc ship :shields (if (> newShields shieldsMax)
+  101                             shieldsMax
+  102                             newShields)))
+  103      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                      ^--- Use of undeclared Var sonic.events/newShields
+  104  
+  105  ;toggles firing mode for player to select target
+  106  (rf/reg-event-fx
+  107    :actionFire
+  108    (fn [cofx event]
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:103  column:59  ----
+
+  Use of undeclared Var sonic.events/shieldsCurrentValue
+
+   99          newShields (+ shieldsCurrentValue shieldsStrength)]
+  100      (assoc ship :shields (if (> newShields shieldsMax)
+  101                             shieldsMax
+  102                             newShields)))
+  103      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                                 ^--- Use of undeclared Var sonic.events/shieldsCurrentValue
+  104  
+  105  ;toggles firing mode for player to select target
+  106  (rf/reg-event-fx
+  107    :actionFire
+  108    (fn [cofx event]
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.829 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.384 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:382 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 382, col 1] Unexpected EOF while reading item 28 of list, starting at line 91 and column 1.
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.335 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll))
+  119     :dispatch [:changePhase]})
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.345 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) 1)
+  119     :dispatch [:changePhase]})
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.362 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip] (diceRoll)))
+  119     :dispatch [:changePhase]})
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.36 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip] (diceRoll)))
+  119     :dispatch [:changePhase]})
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.371 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip] (diceRoll)))
+  119     :dispatch [:changePhase]})
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.377 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip] (diceRoll)))
+  119     :dispatch [:changePhase]}))
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.392 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:119 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+
+  117    (core/devLog "player charging shields")
+  118    {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip] (diceRoll)))
+  119     :dispatch [:changePhase]}))
+          C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 119, col 29] Unmatched delimiter }.
+  120  
+  121  
+  122  (rf/reg-event-fx
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Failed to compile build :dev from ["src/cljs"] in 0.369 seconds.
+----  Could not Read  src/cljs/sonic/events.cljs   line:382 ----
+
+  C:\Users\Kevin\Documents\sonic-master\src\cljs\sonic\events.cljs [line 382, col 1] Unexpected EOF while reading item 21 of list, starting at line 145 and column 1.
+
+----  Reader Error : Please see src/cljs/sonic/events.cljs  ----
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.69 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.722 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.736 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.888 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.676 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.697 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.71 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.721 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.653 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.733 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.745 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.685 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.678 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.782 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.659 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.629 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\core.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.648 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.694 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\core.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.607 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.855 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.691 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\core.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.809 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:48  ----
+
+  Use of undeclared Var sonic.events/newShields
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                      ^--- Use of undeclared Var sonic.events/newShields
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:59  ----
+
+  Use of undeclared Var sonic.events/shieldsCurrentValue
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                                 ^--- Use of undeclared Var sonic.events/shieldsCurrentValue
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.722 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:48  ----
+
+  Use of undeclared Var sonic.events/newShields
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                      ^--- Use of undeclared Var sonic.events/newShields
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:59  ----
+
+  Use of undeclared Var sonic.events/shieldsCurrentValue
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                                 ^--- Use of undeclared Var sonic.events/shieldsCurrentValue
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.767 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:48  ----
+
+  Use of undeclared Var sonic.events/newShields
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                      ^--- Use of undeclared Var sonic.events/newShields
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:59  ----
+
+  Use of undeclared Var sonic.events/shieldsCurrentValue
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                                 ^--- Use of undeclared Var sonic.events/shieldsCurrentValue
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.724 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\core.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:48  ----
+
+  Use of undeclared Var sonic.events/newShields
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                      ^--- Use of undeclared Var sonic.events/newShields
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:104  column:59  ----
+
+  Use of undeclared Var sonic.events/shieldsCurrentValue
+
+  101      (assoc ship :shields (if (> newShields shieldsMax)
+  102                             shieldsMax
+  103                             newShields)))
+  104      (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
+                                                                 ^--- Use of undeclared Var sonic.events/shieldsCurrentValue
+  105      
+  106  
+  107  ;toggles firing mode for player to select target
+  108  (rf/reg-event-fx
+  109    :actionFire
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.751 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.666 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.717 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\db.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.688 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.708 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.727 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.917 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.711 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.69 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js

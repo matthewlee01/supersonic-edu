@@ -38,20 +38,20 @@ sonic.core.devLog.call(null,"start of game");
 var playerName = prompt("Enter your name:");
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"playerName","playerName",1504328524),((((cljs.core._EQ_.call(null,playerName,"")) || (cljs.core._EQ_.call(null,playerName,null))))?"Player":playerName)),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerPhase","playerPhase",-496299256)], null)], null);
 }));
-sonic.events.gameEnd = (function sonic$events$gameEnd(db,p__31351){
-var vec__31352 = p__31351;
-var _ = cljs.core.nth.call(null,vec__31352,(0),null);
-var loser = cljs.core.nth.call(null,vec__31352,(1),null);
+sonic.events.gameEnd = (function sonic$events$gameEnd(db,p__25415){
+var vec__25416 = p__25415;
+var _ = cljs.core.nth.call(null,vec__25416,(0),null);
+var loser = cljs.core.nth.call(null,vec__25416,(1),null);
 sonic.core.devLog.call(null,"end of game");
 
 alert(["Game Over! ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(((cljs.core._EQ_.call(null,loser,new cljs.core.Keyword(null,"playerShip","playerShip",2104484)))?cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerName","playerName",1504328524)], null))):"Enemy")),"'s ship was destroyed!"].join(''));
 
 return cljs.core.assoc.call(null,db,new cljs.core.Keyword(null,"gameOver?","gameOver?",-425708201),true);
 });
-re_frame.core.reg_event_db.call(null,new cljs.core.Keyword(null,"gameEnd","gameEnd",-1148810376),(function (db,p__31355){
-var vec__31356 = p__31355;
-var _ = cljs.core.nth.call(null,vec__31356,(0),null);
-var loser = cljs.core.nth.call(null,vec__31356,(1),null);
+re_frame.core.reg_event_db.call(null,new cljs.core.Keyword(null,"gameEnd","gameEnd",-1148810376),(function (db,p__25419){
+var vec__25420 = p__25419;
+var _ = cljs.core.nth.call(null,vec__25420,(0),null);
+var loser = cljs.core.nth.call(null,vec__25420,(1),null);
 sonic.core.devLog.call(null,"end of game");
 
 alert(["Game Over! ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(((cljs.core._EQ_.call(null,loser,new cljs.core.Keyword(null,"playerShip","playerShip",2104484)))?cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerName","playerName",1504328524)], null))):"Enemy")),"'s ship was destroyed!"].join(''));
@@ -64,8 +64,8 @@ return (((shieldsSystemRank - (1)) * (15)) + (100));
 sonic.events.diceRoll = (function sonic$events$diceRoll(){
 return ((1) + cljs.core.rand_int.call(null,(6)));
 });
-sonic.events.calcShieldsStrength = (function sonic$events$calcShieldsStrength(shieldsSystemRank,diceRoll){
-return ((diceRoll * shieldsSystemRank) * (8));
+sonic.events.calcShieldsStrength = (function sonic$events$calcShieldsStrength(shieldsSystemRank,amount){
+return ((amount * shieldsSystemRank) * (8));
 });
 sonic.events.chargeShields = (function sonic$events$chargeShields(ship,amount){
 var shieldsSystem = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(new cljs.core.Keyword(null,"systems","systems",-1015374944).cljs$core$IFn$_invoke$arity$1(ship));
@@ -74,7 +74,10 @@ var shieldsSystemRank = cljs.core.get.call(null,shieldsSystem,(1));
 var shieldsMax = sonic.events.calcShieldsMax.call(null,shieldsSystemRank);
 var shieldsStrength = sonic.events.calcShieldsStrength.call(null,shieldsSystemRank,amount);
 var newShields = (shieldsCurrentValue + shieldsStrength);
-sonic.core.devLog.call(null,["shields boosted by ",cljs.core.str.cljs$core$IFn$_invoke$arity$1((newShields - shieldsCurrentValue))].join(''));
+if(cljs.core.truth_(cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"devMode","devMode",-540703912)], null))))){
+cljs.core.println.call(null,["shields boosted by ",cljs.core.str.cljs$core$IFn$_invoke$arity$1((newShields - shieldsCurrentValue))].join(''));
+} else {
+}
 
 return cljs.core.assoc.call(null,ship,new cljs.core.Keyword(null,"shields","shields",-295786721),(((newShields > shieldsMax))?shieldsMax:newShields));
 });
@@ -86,7 +89,7 @@ return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db
 sonic.events.actionChargeShields = (function sonic$events$actionChargeShields(cofx,events){
 sonic.core.devLog.call(null,"player charging shields");
 
-return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"playerShip","playerShip",2104484),sonic.events.chargeShields.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerShip","playerShip",2104484)], null))),sonic.events.diceRoll)),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
+return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"playerShip","playerShip",2104484),sonic.events.chargeShields.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerShip","playerShip",2104484)], null))),sonic.events.diceRoll.call(null))),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
 });
 re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"actionChargeShields","actionChargeShields",-339901575),sonic.events.actionChargeShields);
 re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"actionFlee","actionFlee",-176341741),(function (cofx,effects){
@@ -106,7 +109,7 @@ return false;
 re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"enemyChargeShields","enemyChargeShields",587872441),(function (cofx,events){
 sonic.core.devLog.call(null,"enemy charging shields");
 
-return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690),sonic.events.chargeShields.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690)], null))),sonic.events.diceRoll)),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
+return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690),sonic.events.chargeShields.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690)], null))),sonic.events.diceRoll.call(null))),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
 }));
 sonic.events.enemyChooseAction = (function sonic$events$enemyChooseAction(enemyShip,playerShip){
 sonic.core.devLog.call(null,"enemy choosing action");
@@ -161,10 +164,10 @@ sonic.core.devLog.call(null,"start of player phase");
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"turn","turn",75759344),newTurn),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"logHistory","logHistory",473291914)], null)], null);
 });
 re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"playerPhase","playerPhase",-496299256),sonic.events.playerPhase);
-re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword("sonic.events","rewindTurn","sonic.events/rewindTurn",-734079357),(function (cofx,p__31359){
-var vec__31360 = p__31359;
-var _ = cljs.core.nth.call(null,vec__31360,(0),null);
-var turn = cljs.core.nth.call(null,vec__31360,(1),null);
+re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword("sonic.events","rewindTurn","sonic.events/rewindTurn",-734079357),(function (cofx,p__25423){
+var vec__25424 = p__25423;
+var _ = cljs.core.nth.call(null,vec__25424,(0),null);
+var turn = cljs.core.nth.call(null,vec__25424,(1),null);
 sonic.core.devLog.call(null,["rewinding to turn ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(turn)].join(''));
 
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.get.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"history","history",-247395220)], null))),(turn - (1))),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"logHistory","logHistory",473291914)], null)], null);
@@ -190,12 +193,12 @@ re_frame.core.reg_event_db.call(null,new cljs.core.Keyword("sonic.events","toggl
 sonic.events.calcDamage = (function sonic$events$calcDamage(attackRank,diceRoll){
 return ((diceRoll * attackRank) * (10));
 });
-sonic.events.newHP = (function sonic$events$newHP(p__31363){
-var vec__31364 = p__31363;
-var defender = cljs.core.nth.call(null,vec__31364,(0),null);
-var attacker = cljs.core.nth.call(null,vec__31364,(1),null);
-var system = cljs.core.nth.call(null,vec__31364,(2),null);
-var damage = cljs.core.nth.call(null,vec__31364,(3),null);
+sonic.events.newHP = (function sonic$events$newHP(p__25427){
+var vec__25428 = p__25427;
+var defender = cljs.core.nth.call(null,vec__25428,(0),null);
+var attacker = cljs.core.nth.call(null,vec__25428,(1),null);
+var system = cljs.core.nth.call(null,vec__25428,(2),null);
+var damage = cljs.core.nth.call(null,vec__25428,(3),null);
 var defenderHP = new cljs.core.Keyword(null,"HP","HP",-457348996).cljs$core$IFn$_invoke$arity$1(defender);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 var HPDamage = ((((defenderShields - damage) > (0)))?(0):(damage - defenderShields));
@@ -208,22 +211,22 @@ re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 2, 5, cljs
 
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.assoc.call(null,defender,new cljs.core.Keyword(null,"HP","HP",-457348996),(defenderHP - HPDamage)),attacker,system,damage], null);
 });
-sonic.events.newShields = (function sonic$events$newShields(p__31367){
-var vec__31368 = p__31367;
-var defender = cljs.core.nth.call(null,vec__31368,(0),null);
-var attacker = cljs.core.nth.call(null,vec__31368,(1),null);
-var system = cljs.core.nth.call(null,vec__31368,(2),null);
-var damage = cljs.core.nth.call(null,vec__31368,(3),null);
+sonic.events.newShields = (function sonic$events$newShields(p__25431){
+var vec__25432 = p__25431;
+var defender = cljs.core.nth.call(null,vec__25432,(0),null);
+var attacker = cljs.core.nth.call(null,vec__25432,(1),null);
+var system = cljs.core.nth.call(null,vec__25432,(2),null);
+var damage = cljs.core.nth.call(null,vec__25432,(3),null);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 var shieldsDamage = ((((defenderShields - damage) > (0)))?damage:defenderShields);
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.assoc.call(null,defender,new cljs.core.Keyword(null,"shields","shields",-295786721),(defenderShields - shieldsDamage)),attacker,system,damage], null);
 });
-sonic.events.newSystemHP = (function sonic$events$newSystemHP(p__31371){
-var vec__31372 = p__31371;
-var defender = cljs.core.nth.call(null,vec__31372,(0),null);
-var attacker = cljs.core.nth.call(null,vec__31372,(1),null);
-var system = cljs.core.nth.call(null,vec__31372,(2),null);
-var damage = cljs.core.nth.call(null,vec__31372,(3),null);
+sonic.events.newSystemHP = (function sonic$events$newSystemHP(p__25435){
+var vec__25436 = p__25435;
+var defender = cljs.core.nth.call(null,vec__25436,(0),null);
+var attacker = cljs.core.nth.call(null,vec__25436,(1),null);
+var system = cljs.core.nth.call(null,vec__25436,(2),null);
+var damage = cljs.core.nth.call(null,vec__25436,(3),null);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 if((defenderShields <= (0))){
 var systemHP = cljs.core.get.call(null,system.call(null,new cljs.core.Keyword(null,"systems","systems",-1015374944).cljs$core$IFn$_invoke$arity$1(defender)),(0));
@@ -237,11 +240,11 @@ return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMP
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [defender,attacker,system,damage], null);
 }
 });
-sonic.events.damageSystem = (function sonic$events$damageSystem(cofx,p__31375){
-var vec__31376 = p__31375;
-var _ = cljs.core.nth.call(null,vec__31376,(0),null);
-var system = cljs.core.nth.call(null,vec__31376,(1),null);
-var type = cljs.core.nth.call(null,vec__31376,(2),null);
+sonic.events.damageSystem = (function sonic$events$damageSystem(cofx,p__25439){
+var vec__25440 = p__25439;
+var _ = cljs.core.nth.call(null,vec__25440,(0),null);
+var system = cljs.core.nth.call(null,vec__25440,(1),null);
+var type = cljs.core.nth.call(null,vec__25440,(2),null);
 if(cljs.core._EQ_.call(null,type,new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690))){
 re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"toggleFiringMode","toggleFiringMode",804668357)], null));
 } else {
@@ -257,11 +260,11 @@ sonic.core.devLog.call(null,["target took ",cljs.core.str.cljs$core$IFn$_invoke$
 var newDamagedShip = cljs.core.get.call(null,sonic.events.newSystemHP.call(null,sonic.events.newShields.call(null,sonic.events.newHP.call(null,new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [defender,attacker,system,damage], null)))),(0));
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),type,newDamagedShip),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
 });
-re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"damageSystem","damageSystem",-1223096996),(function (cofx,p__31379){
-var vec__31380 = p__31379;
-var _ = cljs.core.nth.call(null,vec__31380,(0),null);
-var system = cljs.core.nth.call(null,vec__31380,(1),null);
-var type = cljs.core.nth.call(null,vec__31380,(2),null);
+re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"damageSystem","damageSystem",-1223096996),(function (cofx,p__25443){
+var vec__25444 = p__25443;
+var _ = cljs.core.nth.call(null,vec__25444,(0),null);
+var system = cljs.core.nth.call(null,vec__25444,(1),null);
+var type = cljs.core.nth.call(null,vec__25444,(2),null);
 if(cljs.core._EQ_.call(null,type,new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690))){
 re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"toggleFiringMode","toggleFiringMode",804668357)], null));
 } else {
@@ -283,4 +286,4 @@ sonic.core.devLog.call(null,"nothing");
 return db;
 }));
 
-//# sourceMappingURL=events.js.map?rel=1532369509105
+//# sourceMappingURL=events.js.map?rel=1532376120650
