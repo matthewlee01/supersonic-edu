@@ -41,7 +41,6 @@
   (is (= 100 (-> (events/chargeShields (:playerShip db/default-db) 10)
                 (:shields))))
   (is (= 100 (events/calcShieldsMax 1)))
-  (is (= false (events/systemDisabled? :weapons :playerShip)))
   (is (= :shields (events/playerSystemsActive? :shields)))
 
 

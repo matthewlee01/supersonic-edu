@@ -20,7 +20,7 @@
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
-  (if (>= 0 (-> (type db/default-db)
+  (if (>= 0 (-> @(rf/subscribe [type])
                 (:systems)
                 (system)
                 (get 0)))
@@ -250,8 +250,8 @@
 
 ;formula for damage: randomfactor x weaponrank x 10dmg
 (defn calcDamage
-  [attackRank diceRoll]
-  (-> diceRoll
+  [attackRank amount]
+  (-> amount
       (* attackRank)
       (* 10)))
 

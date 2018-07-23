@@ -647,3 +647,96 @@ notifying browser that file changed:  resources\public\js\compiled\out\sonic\tes
 Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
 Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.781 seconds.
 notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.141 seconds.
+notifying browser that file changed:  resources/public/js/compiled/out/goog/deps.js
+notifying browser that file changed:  resources/public/js/compiled/out/cljs_deps.js
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.115 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.915 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.334 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:23  column:19  ----
+
+  Use of undeclared Var re-frame.core/subsribe
+
+  20  ;checks if system on ship is disabled (0HP)
+  21  (defn systemDisabled?
+  22    [system type]
+  23    (if (>= 0 (-> @(rf/subsribe [type])
+                        ^--- Use of undeclared Var re-frame.core/subsribe
+  24                  (:systems)
+  25                  (system)
+  26                  (get 0)))
+  27      true
+  28      false))
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.982 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:23  column:19  ----
+
+  Use of undeclared Var re-frame.core/subsribe
+
+  20  ;checks if system on ship is disabled (0HP)
+  21  (defn systemDisabled?
+  22    [system type]
+  23    (if (>= 0 (-> @(rf/subsribe [type])
+                        ^--- Use of undeclared Var re-frame.core/subsribe
+  24                  (:systems)
+  25                  (system)
+  26                  (get 0)))
+  27      true
+  28      false))
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 1.029 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\tests.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:23  column:19  ----
+
+  Use of undeclared Var re-frame.core/subsribe
+
+  20  ;checks if system on ship is disabled (0HP)
+  21  (defn systemDisabled?
+  22    [system type]
+  23    (if (>= 0 (-> @(rf/subsribe [type])
+                        ^--- Use of undeclared Var re-frame.core/subsribe
+  24                  (:systems)
+  25                  (system)
+  26                  (get 0)))
+  27      true
+  28      false))
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.772 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+----  Compiler Warning on   src/cljs/sonic/events.cljs   line:23  column:19  ----
+
+  Use of undeclared Var re-frame.core/subsribe
+
+  20  ;checks if system on ship is disabled (0HP)
+  21  (defn systemDisabled?
+  22    [system type]
+  23    (if (>= 0 (-> @(rf/subsribe [type])
+                        ^--- Use of undeclared Var re-frame.core/subsribe
+  24                  (:systems)
+  25                  (system)
+  26                  (get 0)))
+  27      true
+  28      false))
+
+----  Compiler Warning : Please see src/cljs/sonic/events.cljs  ----
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.823 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js
+Compiling build :dev to "resources/public/js/compiled/app.js" from ["src/cljs"]...
+Successfully compiled build :dev to "resources/public/js/compiled/app.js" in 0.743 seconds.
+notifying browser that file changed:  resources\public\js\compiled\out\sonic\events.js

@@ -21,7 +21,7 @@ return re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 3, 
 });
 });
 sonic.events.systemDisabled_QMARK_ = (function sonic$events$systemDisabled_QMARK_(system,type){
-if(((0) >= cljs.core.get.call(null,system.call(null,new cljs.core.Keyword(null,"systems","systems",-1015374944).cljs$core$IFn$_invoke$arity$1(type.call(null,sonic.db.default_db))),(0)))){
+if(((0) >= cljs.core.get.call(null,system.call(null,new cljs.core.Keyword(null,"systems","systems",-1015374944).cljs$core$IFn$_invoke$arity$1(cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [type], null))))),(0)))){
 return true;
 } else {
 return false;
@@ -38,20 +38,20 @@ sonic.core.devLog.call(null,"start of game");
 var playerName = prompt("Enter your name:");
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"playerName","playerName",1504328524),((((cljs.core._EQ_.call(null,playerName,"")) || (cljs.core._EQ_.call(null,playerName,null))))?"Player":playerName)),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerPhase","playerPhase",-496299256)], null)], null);
 }));
-sonic.events.gameEnd = (function sonic$events$gameEnd(db,p__24559){
-var vec__24560 = p__24559;
-var _ = cljs.core.nth.call(null,vec__24560,(0),null);
-var loser = cljs.core.nth.call(null,vec__24560,(1),null);
+sonic.events.gameEnd = (function sonic$events$gameEnd(db,p__23272){
+var vec__23273 = p__23272;
+var _ = cljs.core.nth.call(null,vec__23273,(0),null);
+var loser = cljs.core.nth.call(null,vec__23273,(1),null);
 sonic.core.devLog.call(null,"end of game");
 
 alert(["Game Over! ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(((cljs.core._EQ_.call(null,loser,new cljs.core.Keyword(null,"playerShip","playerShip",2104484)))?cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerName","playerName",1504328524)], null))):"Enemy")),"'s ship was destroyed!"].join(''));
 
 return cljs.core.assoc.call(null,db,new cljs.core.Keyword(null,"gameOver?","gameOver?",-425708201),true);
 });
-re_frame.core.reg_event_db.call(null,new cljs.core.Keyword(null,"gameEnd","gameEnd",-1148810376),(function (db,p__24563){
-var vec__24564 = p__24563;
-var _ = cljs.core.nth.call(null,vec__24564,(0),null);
-var loser = cljs.core.nth.call(null,vec__24564,(1),null);
+re_frame.core.reg_event_db.call(null,new cljs.core.Keyword(null,"gameEnd","gameEnd",-1148810376),(function (db,p__23276){
+var vec__23277 = p__23276;
+var _ = cljs.core.nth.call(null,vec__23277,(0),null);
+var loser = cljs.core.nth.call(null,vec__23277,(1),null);
 sonic.core.devLog.call(null,"end of game");
 
 alert(["Game Over! ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(((cljs.core._EQ_.call(null,loser,new cljs.core.Keyword(null,"playerShip","playerShip",2104484)))?cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"playerName","playerName",1504328524)], null))):"Enemy")),"'s ship was destroyed!"].join(''));
@@ -164,10 +164,10 @@ sonic.core.devLog.call(null,"start of player phase");
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),new cljs.core.Keyword(null,"turn","turn",75759344),newTurn),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"logHistory","logHistory",473291914)], null)], null);
 });
 re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"playerPhase","playerPhase",-496299256),sonic.events.playerPhase);
-re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword("sonic.events","rewindTurn","sonic.events/rewindTurn",-734079357),(function (cofx,p__24567){
-var vec__24568 = p__24567;
-var _ = cljs.core.nth.call(null,vec__24568,(0),null);
-var turn = cljs.core.nth.call(null,vec__24568,(1),null);
+re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword("sonic.events","rewindTurn","sonic.events/rewindTurn",-734079357),(function (cofx,p__23280){
+var vec__23281 = p__23280;
+var _ = cljs.core.nth.call(null,vec__23281,(0),null);
+var turn = cljs.core.nth.call(null,vec__23281,(1),null);
 sonic.core.devLog.call(null,["rewinding to turn ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(turn)].join(''));
 
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.get.call(null,cljs.core.deref.call(null,re_frame.core.subscribe.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"history","history",-247395220)], null))),(turn - (1))),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"logHistory","logHistory",473291914)], null)], null);
@@ -190,15 +190,15 @@ return cljs.core.assoc.call(null,db,new cljs.core.Keyword(null,"devMode","devMod
 }
 });
 re_frame.core.reg_event_db.call(null,new cljs.core.Keyword("sonic.events","toggleDevMode","sonic.events/toggleDevMode",-883524574),sonic.events.toggleDevMode);
-sonic.events.calcDamage = (function sonic$events$calcDamage(attackRank,diceRoll){
-return ((diceRoll * attackRank) * (10));
+sonic.events.calcDamage = (function sonic$events$calcDamage(attackRank,amount){
+return ((amount * attackRank) * (10));
 });
-sonic.events.newHP = (function sonic$events$newHP(p__24571){
-var vec__24572 = p__24571;
-var defender = cljs.core.nth.call(null,vec__24572,(0),null);
-var attacker = cljs.core.nth.call(null,vec__24572,(1),null);
-var system = cljs.core.nth.call(null,vec__24572,(2),null);
-var damage = cljs.core.nth.call(null,vec__24572,(3),null);
+sonic.events.newHP = (function sonic$events$newHP(p__23284){
+var vec__23285 = p__23284;
+var defender = cljs.core.nth.call(null,vec__23285,(0),null);
+var attacker = cljs.core.nth.call(null,vec__23285,(1),null);
+var system = cljs.core.nth.call(null,vec__23285,(2),null);
+var damage = cljs.core.nth.call(null,vec__23285,(3),null);
 var defenderHP = new cljs.core.Keyword(null,"HP","HP",-457348996).cljs$core$IFn$_invoke$arity$1(defender);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 var HPDamage = ((((defenderShields - damage) > (0)))?(0):(damage - defenderShields));
@@ -211,22 +211,22 @@ re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 2, 5, cljs
 
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.assoc.call(null,defender,new cljs.core.Keyword(null,"HP","HP",-457348996),(defenderHP - HPDamage)),attacker,system,damage], null);
 });
-sonic.events.newShields = (function sonic$events$newShields(p__24575){
-var vec__24576 = p__24575;
-var defender = cljs.core.nth.call(null,vec__24576,(0),null);
-var attacker = cljs.core.nth.call(null,vec__24576,(1),null);
-var system = cljs.core.nth.call(null,vec__24576,(2),null);
-var damage = cljs.core.nth.call(null,vec__24576,(3),null);
+sonic.events.newShields = (function sonic$events$newShields(p__23288){
+var vec__23289 = p__23288;
+var defender = cljs.core.nth.call(null,vec__23289,(0),null);
+var attacker = cljs.core.nth.call(null,vec__23289,(1),null);
+var system = cljs.core.nth.call(null,vec__23289,(2),null);
+var damage = cljs.core.nth.call(null,vec__23289,(3),null);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 var shieldsDamage = ((((defenderShields - damage) > (0)))?damage:defenderShields);
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.assoc.call(null,defender,new cljs.core.Keyword(null,"shields","shields",-295786721),(defenderShields - shieldsDamage)),attacker,system,damage], null);
 });
-sonic.events.newSystemHP = (function sonic$events$newSystemHP(p__24579){
-var vec__24580 = p__24579;
-var defender = cljs.core.nth.call(null,vec__24580,(0),null);
-var attacker = cljs.core.nth.call(null,vec__24580,(1),null);
-var system = cljs.core.nth.call(null,vec__24580,(2),null);
-var damage = cljs.core.nth.call(null,vec__24580,(3),null);
+sonic.events.newSystemHP = (function sonic$events$newSystemHP(p__23292){
+var vec__23293 = p__23292;
+var defender = cljs.core.nth.call(null,vec__23293,(0),null);
+var attacker = cljs.core.nth.call(null,vec__23293,(1),null);
+var system = cljs.core.nth.call(null,vec__23293,(2),null);
+var damage = cljs.core.nth.call(null,vec__23293,(3),null);
 var defenderShields = new cljs.core.Keyword(null,"shields","shields",-295786721).cljs$core$IFn$_invoke$arity$1(defender);
 if((defenderShields <= (0))){
 var systemHP = cljs.core.get.call(null,system.call(null,new cljs.core.Keyword(null,"systems","systems",-1015374944).cljs$core$IFn$_invoke$arity$1(defender)),(0));
@@ -240,11 +240,11 @@ return new cljs.core.PersistentVector(null, 3, 5, cljs.core.PersistentVector.EMP
 return new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [defender,attacker,system,damage], null);
 }
 });
-sonic.events.damageSystem = (function sonic$events$damageSystem(cofx,p__24583){
-var vec__24584 = p__24583;
-var _ = cljs.core.nth.call(null,vec__24584,(0),null);
-var system = cljs.core.nth.call(null,vec__24584,(1),null);
-var type = cljs.core.nth.call(null,vec__24584,(2),null);
+sonic.events.damageSystem = (function sonic$events$damageSystem(cofx,p__23296){
+var vec__23297 = p__23296;
+var _ = cljs.core.nth.call(null,vec__23297,(0),null);
+var system = cljs.core.nth.call(null,vec__23297,(1),null);
+var type = cljs.core.nth.call(null,vec__23297,(2),null);
 if(cljs.core._EQ_.call(null,type,new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690))){
 re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"toggleFiringMode","toggleFiringMode",804668357)], null));
 } else {
@@ -260,11 +260,11 @@ sonic.core.devLog.call(null,["target took ",cljs.core.str.cljs$core$IFn$_invoke$
 var newDamagedShip = cljs.core.get.call(null,sonic.events.newSystemHP.call(null,sonic.events.newShields.call(null,sonic.events.newHP.call(null,new cljs.core.PersistentVector(null, 4, 5, cljs.core.PersistentVector.EMPTY_NODE, [defender,attacker,system,damage], null)))),(0));
 return new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"db","db",993250759),cljs.core.assoc.call(null,new cljs.core.Keyword(null,"db","db",993250759).cljs$core$IFn$_invoke$arity$1(cofx),type,newDamagedShip),new cljs.core.Keyword(null,"dispatch","dispatch",1319337009),new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"changePhase","changePhase",895785201)], null)], null);
 });
-re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"damageSystem","damageSystem",-1223096996),(function (cofx,p__24587){
-var vec__24588 = p__24587;
-var _ = cljs.core.nth.call(null,vec__24588,(0),null);
-var system = cljs.core.nth.call(null,vec__24588,(1),null);
-var type = cljs.core.nth.call(null,vec__24588,(2),null);
+re_frame.core.reg_event_fx.call(null,new cljs.core.Keyword(null,"damageSystem","damageSystem",-1223096996),(function (cofx,p__23300){
+var vec__23301 = p__23300;
+var _ = cljs.core.nth.call(null,vec__23301,(0),null);
+var system = cljs.core.nth.call(null,vec__23301,(1),null);
+var type = cljs.core.nth.call(null,vec__23301,(2),null);
 if(cljs.core._EQ_.call(null,type,new cljs.core.Keyword(null,"enemyShip","enemyShip",-701356690))){
 re_frame.core.dispatch.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"toggleFiringMode","toggleFiringMode",804668357)], null));
 } else {
@@ -286,4 +286,4 @@ sonic.core.devLog.call(null,"nothing");
 return db;
 }));
 
-//# sourceMappingURL=events.js.map?rel=1532382302392
+//# sourceMappingURL=events.js.map?rel=1532384967878
