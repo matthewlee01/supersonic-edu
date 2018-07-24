@@ -81,8 +81,10 @@ goog.addDependency("../re_frame/subs.js", ['re_frame.subs'], ['re_frame.interop'
 goog.addDependency("../re_frame/core.js", ['re_frame.core'], ['re_frame.interop', 're_frame.interceptor', 're_frame.events', 're_frame.fx', 're_frame.registrar', 'cljs.core', 're_frame.router', 'clojure.set', 're_frame.std_interceptors', 're_frame.loggers', 're_frame.subs', 're_frame.cofx', 're_frame.db']);
 goog.addDependency("../sonic/subs.js", ['sonic.subs'], ['cljs.core', 're_frame.core']);
 goog.addDependency("../sonic/views.js", ['sonic.views'], ['cljs.core', 'sonic.subs', 're_frame.core', 'sonic.events']);
+goog.addDependency("../cljs/test.js", ['cljs.test'], ['cljs.core', 'cljs.pprint', 'clojure.string']);
 goog.addDependency("../sonic/config.js", ['sonic.config'], ['cljs.core']);
 goog.addDependency("../sonic/db.js", ['sonic.db'], ['cljs.core']);
+goog.addDependency("../sonic/tests.js", ['sonic.tests'], ['sonic.views', 'reagent.core', 'cljs.core', 'cljs.test', 'sonic.core', 'sonic.config', 're_frame.core', 'sonic.events', 'sonic.db']);
 goog.addDependency("../sonic/core.js", ['sonic.core'], ['sonic.views', 'reagent.core', 'cljs.core', 'sonic.tests', 'sonic.config', 're_frame.core', 'sonic.events', 'sonic.db']);
 goog.addDependency("../sonic/events.js", ['sonic.events'], ['cljs.core', 'sonic.core', 're_frame.core', 'sonic.db']);
 goog.addDependency("../cljs/user/coreB547C1C.js", ['cljs.user.core18EE70B'], ['cljs.core']);
