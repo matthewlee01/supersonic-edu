@@ -49,9 +49,13 @@
                          "orange")]
     [:button.system
      (if (= type :playerShip)
-       {:disabled (or firing? 
-                      (events/systemDisabled? system type))
-        :style {:background-color shieldedStatus}}
+       (if repairing?
+         {:on-click (events/repairDispatch system type) 
+          :style {:background-color shieldedStatus}}
+         (if firing?
+           {:disabled (or firing?
+                          (events/systemDisabled? system type))}
+           {:style {:background-color shieldedStatus}}))
        (if firing?
          {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}
@@ -73,9 +77,8 @@
         phase (if (= @(rf/subscribe [:phase]) 0)
                @(rf/subscribe [:playerName])
                "Enemy")
-        firingMode (if (= @(rf/subscribe [:firing?]) false)
-                     "Inactive"
-                     "Active")
+        firing? @(rf/subscribe [:firing?])
+        repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
     [:fieldset {:disabled gameOver?}
      [:div.flexContainer
@@ -90,11 +93,17 @@
        [:textarea.infoDisplay {:value (str "Turn #: " turn)
                                :readOnly true}]]
        
-      [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
+      [:textarea.infoDisplay {:value (if repairing?
+                                       "Repairing Mode"
+                                       (if firing?
+                                         "Firing Mode"
+                                         "Select an Action"))
                               :readOnly true
-                              :style {:color (if @(rf/subscribe [:firing?])
-                                                "red"
-                                                "green")}}]
+                              :style {:color (if repairing?
+                                                "green"
+                                                (if firing?
+                                                  "red"
+                                                  "black"))}}]
       [:div.ships
        [:div.playerShip
         [:div.vitalityDisplayArea
