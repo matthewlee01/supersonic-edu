@@ -58,13 +58,17 @@
 
 (rf/reg-event-db
   :gameEnd
-  (fn [db [_ loser]]
-    (core/devLog "end of game")
-    (js/alert (str "Game Over! " (if (= loser :playerShip)
-                                   @(rf/subscribe [:playerName])
-                                   "Enemy") 
-                   "'s ship was destroyed!"))
-    (assoc db :gameOver? true)))
+  (fn [db [_ loser gameOver?]]
+    (core/devLog "end of battle")
+    (let [loserName (if (= loser :playerShip)
+                      (:playerName db)
+                      "Enemy")]
+      (if gameOver?
+        (do (js/alert (str "Game Over! " loserName "'s ship was destroyed!"))
+            (assoc db :gameOver? true))
+        (do (js/alert (str loserName " fled the battle!"))
+            (assoc db :gameOver? true))))))
+      
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
@@ -138,7 +142,7 @@
   (fn [cofx effects]
     (core/devLog "player fleeing")
     {:db (:db cofx)
-     :dispatch [:changePhase]}))
+     :dispatch [:gameEnd :playerShip false]}))
 
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
@@ -178,8 +182,8 @@
         (if (false? (systemDisabled? :shields :enemyShip))
           (do (core/devLog "enemy has decided to charge their shields") 
               [:enemyChargeShields])
-          (do (core/devLog "enemy has decided to pass their phase")
-              [:changePhase]))))))
+          (do (core/devLog "enemy has decided to flee")
+              [:gameEnd :enemyShip false]))))))
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
@@ -297,7 +301,7 @@
     (if destroyed?
       (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
                                :playerShip
-                               :enemyShip)]))
+                               :enemyShip) true]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
      attacker system damage firingType]))
          

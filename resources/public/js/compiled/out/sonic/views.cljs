@@ -76,7 +76,7 @@
      [:div.flexContainer
       [:div.infoDisplayArea 
        [:textarea.infoDisplay {:value (if gameOver?
-                                        "Game Over!"
+                                        "Game End!"
                                         (str phase "'s Turn"))
                                :readOnly true
                                :style {:color (if (= @(rf/subscribe [:phase]) 0)

@@ -28,12 +28,12 @@ throw e;
 }),(0));
 });
 devtools.async.promise_based_set_immediate = (function devtools$async$promise_based_set_immediate(callback){
-var o__26538__auto___40269 = (function (){var o__26538__auto__ = (function (){var o__26538__auto__ = Promise;
-return (o__26538__auto__["resolve"]).call(o__26538__auto__);
+var o__26593__auto___28254 = (function (){var o__26593__auto__ = (function (){var o__26593__auto__ = Promise;
+return (o__26593__auto__["resolve"]).call(o__26593__auto__);
 })();
-return (o__26538__auto__["then"]).call(o__26538__auto__,callback);
+return (o__26593__auto__["then"]).call(o__26593__auto__,callback);
 })();
-(o__26538__auto___40269["catch"]).call(o__26538__auto___40269,devtools.async.rethrow_outside_promise);
+(o__26593__auto___28254["catch"]).call(o__26593__auto___28254,devtools.async.rethrow_outside_promise);
 
 return null;
 });
@@ -54,14 +54,14 @@ return null;
 } else {
 devtools.async._STAR_installed_STAR_ = true;
 
-var G__40270_40271 = Error;
-var target__26543__auto___40272 = G__40270_40271;
-if(cljs.core.truth_(target__26543__auto___40272)){
+var G__28255_28256 = Error;
+var target__26598__auto___28257 = G__28255_28256;
+if(cljs.core.truth_(target__26598__auto___28257)){
 } else {
-throw (new Error(["Assert failed: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(["unable to locate object path ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(null)," in ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(G__40270_40271)].join('')),"\n","target__26543__auto__"].join('')));
+throw (new Error(["Assert failed: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(["unable to locate object path ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(null)," in ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(G__28255_28256)].join('')),"\n","target__26598__auto__"].join('')));
 }
 
-(target__26543__auto___40272["stackTraceLimit"] = Infinity);
+(target__26598__auto___28257["stackTraceLimit"] = Infinity);
 
 
 devtools.async.install_async_set_immediate_BANG_.call(null);
@@ -84,4 +84,4 @@ return null;
 }
 });
 
-//# sourceMappingURL=async.js.map?rel=1532451316496
+//# sourceMappingURL=async.js.map?rel=1532452673547

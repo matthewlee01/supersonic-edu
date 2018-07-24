@@ -46,4 +46,4 @@ return sonic.core.mount_root.call(null);
 });
 goog.exportSymbol('sonic.core.init', sonic.core.init);
 
-//# sourceMappingURL=core.js.map?rel=1532452354598
+//# sourceMappingURL=core.js.map?rel=1532452946636
