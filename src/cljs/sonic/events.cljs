@@ -79,6 +79,12 @@
 (defn diceRoll
   []
   (+ 1 (rand-int 6)))
+
+(defn consumeAmmo
+  [ship]
+  (let [ammo (:ammo ship)
+        newAmmo (- ammo 1)]
+  (assoc ship :ammo newAmmo)))
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
