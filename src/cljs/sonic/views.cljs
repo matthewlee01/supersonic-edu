@@ -11,7 +11,9 @@
                (= @(rf/subscribe [:firingType]) :lasers))
           (and @(rf/subscribe [:firing?])
                (not= text "Launch Missiles")
-               (= @(rf/subscribe [:firingType]) :missiles)) 
+               (= @(rf/subscribe [:firingType]) :missiles))
+          (and @(rf/subscribe [:repairing?])
+               (not= text "Repair Ship"))
           (= @(rf/subscribe [:phase]) 1)
           (events/systemDisabled? requiredSystem :playerShip))
       true
@@ -32,6 +34,7 @@
 (defn systemButton
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
+        repairing? @(rf/subscribe [:repairing?])
         ship @(rf/subscribe [type])
         systemRank (-> ship
                        (:systems)
@@ -52,8 +55,10 @@
        (if firing?
          {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}
-         {:on-click (fn [] (rf/dispatch [:doNothing]))
-          :style {:background-color shieldedStatus}}))
+         (if repairing?
+           {:disabled true}
+           {:on-click (fn [] (rf/dispatch [:doNothing]))
+            :style {:background-color shieldedStatus}})))
      (str "Rank " systemRank " " text " (" systemHP " HP)")]))
 
 (defn main-panel 
@@ -98,6 +103,7 @@
         [systemButton :lasers :playerShip "Lasers"]
         [systemButton :missiles :playerShip "Missiles"]
         [systemButton :shields :playerShip "Shields"]
+        [systemButton :repairBay :playerShip "Repair Bay"]
         [systemButton :engines :playerShip "Engines"]]
        [:div.enemyShip
         [:div.vitalityDisplayArea
@@ -106,11 +112,13 @@
         [systemButton :lasers :enemyShip "Lasers"]
         [systemButton :missiles :enemyShip "Missiles"]
         [systemButton :shields :enemyShip "Shields"]
+        [systemButton :repairBay :enemyShip "Repair Bay"]
         [systemButton :engines :enemyShip "Engines"]]]
       [:div.actionBar
        [actionButton :lasers :actionFire "Fire Lasers"]
        [actionButton :missiles :actionLaunch "Launch Missiles"]
        [actionButton :shields :actionChargeShields "Charge Shields"]
+       [actionButton :repairBay :actionRepairShip "Repair Ship"]
        [actionButton :engines :actionFlee "Flee"]]]]))
       
      

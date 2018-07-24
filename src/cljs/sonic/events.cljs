@@ -118,7 +118,7 @@
 (rf/reg-event-fx
   :actionLaunch
   (fn [cofx event]
-    (core/devLog "missiles placeholder")
+    (core/devLog "player toggling launch mode")
     {:db (:db cofx)
      :dispatch [:setFiringType :missiles]}))
 
@@ -135,8 +135,15 @@
   :actionChargeShields
   actionChargeShields)
 
+(defn actionRepairShip 
+  [cofx effects]
+  {:db (:db cofx)
+   :dispatch [:toggleRepairingMode]})
+  
+(rf/reg-event-fx
+  :actionRepairShip
+  actionRepairShip)
 ;attempt to escape the battle 
-;(does nothing right now)
 (rf/reg-event-fx
   :actionFlee 
   (fn [cofx effects]
@@ -258,6 +265,16 @@
   :toggleFiringMode
   toggleFiringMode)
       
+(defn toggleRepairingMode [db _]
+  (let [repairing? (:repairing? db)]
+    (if repairing?
+      (assoc db :repairing? false)
+      (assoc db :repairing? true))))
+
+(rf/reg-event-db
+  :toggleRepairingMode
+  toggleRepairingMode)
+
 ;toggles :devMode between true and false
 (defn toggleDevMode [db _]
   (let [devMode @(rf/subscribe [:devMode])]
