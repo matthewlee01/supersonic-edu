@@ -19,7 +19,7 @@
     (is (= 40 (events/calcLaserDamage 1 4)))
     (is (= 60 (-> (events/newShields [(:playerShip db/default-db)
                                       (:enemyShip db/default-db)
-                                      :weapons
+                                      :engines
                                       40
                                       :lasers])
                   (get 0)

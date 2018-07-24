@@ -14,8 +14,7 @@
 (defn damageDispatch
   "dispatches the damage system event with parameters"
   [system type firingType]
-  (fn [] 
-    (rf/dispatch [:damageShip system type firingType])))
+  (fn [] (rf/dispatch [:damageShip system type firingType])))
    
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
@@ -169,14 +168,17 @@
         playerActiveSystems (->> playerSystems
                                 (map playerSystemsActive?)
                                 (remove false?))]
-    (if (false? (systemDisabled? :lasers :enemyShip))
-      (do (core/devLog "enemy has decided to fire")
-          [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
-      (if (false? (systemDisabled? :shields :enemyShip))
-        (do (core/devLog "enemy has decided to charge their shields") 
-            [:enemyChargeShields])
-        (do (core/devLog "enemy has decided to pass their phase")
-            [:changePhase])))))
+    (if (false? (systemDisabled? :missiles :enemyShip))
+      (do (core/devLog "enemy has decided to launch missiles")
+          [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
+      (if (false? (systemDisabled? :lasers :enemyShip))
+        (do (core/devLog "enemy has decided to fire")
+            [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
+        (if (false? (systemDisabled? :shields :enemyShip))
+          (do (core/devLog "enemy has decided to charge their shields") 
+              [:enemyChargeShields])
+          (do (core/devLog "enemy has decided to pass their phase")
+              [:changePhase]))))))
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
@@ -314,7 +316,12 @@
 ;otherwise no system damage taken
 (defn newSystemHP
   [[defender attacker system damage firingType]]
-  (let [defenderShields (:shields defender)]
+  (let [defenderShields (:shields defender)
+        shieldsSystemRank (-> defender
+                              (:systems)
+                              (:shields)
+                              (get 1))
+        shieldsMax (calcShieldsMax shieldsSystemRank)]
     (if (or (and (<= defenderShields 0)
                  (= firingType :lasers))
             (= firingType :missiles))
@@ -336,7 +343,7 @@
             newSystem [(- systemHP systemDamage) systemRank]       
             newSystemsMap (assoc (:systems defender) system newSystem)]
         [(assoc defender :systems newSystemsMap) 
-         attacker system])
+         attacker system damage firingType])
       [defender attacker system damage firingType])))
     
 ;performs all the steps of damaging the ship 
