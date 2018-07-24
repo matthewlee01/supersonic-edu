@@ -6,7 +6,12 @@
 
 (defn actionDisabled?
   [text requiredSystem]
-  (if (or (and @(rf/subscribe [:firing?]) (not= text "Fire")) 
+  (if (or (and @(rf/subscribe [:firing?]) 
+               (not= text "Fire Lasers")
+               (= @(rf/subscribe [:firingType]) :lasers))
+          (and @(rf/subscribe [:firing?])
+               (not= text "Launch Missiles")
+               (= @(rf/subscribe [:firingType]) :missiles)) 
           (= @(rf/subscribe [:phase]) 1)
           (events/systemDisabled? requiredSystem :playerShip))
       true
@@ -45,7 +50,7 @@
                       (events/systemDisabled? system type))
         :style {:background-color shieldedStatus}}
        (if firing?
-         {:on-click (events/damageDispatch system type)
+         {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}
          {:on-click (fn [] (rf/dispatch [:doNothing]))
           :style {:background-color shieldedStatus}}))
@@ -90,18 +95,21 @@
         [:div.vitalityDisplayArea
          [shipVitalityDisplay playerShields "Shields"]
          [shipVitalityDisplay playerHP "HP"]]
-        [systemButton :weapons :playerShip "Weapons"]
+        [systemButton :lasers :playerShip "Lasers"]
+        [systemButton :missiles :playerShip "Missiles"]
         [systemButton :shields :playerShip "Shields"]
         [systemButton :engines :playerShip "Engines"]]
        [:div.enemyShip
         [:div.vitalityDisplayArea
          [shipVitalityDisplay enemyShields "Shields"]
          [shipVitalityDisplay enemyHP "HP"]]
-        [systemButton :weapons :enemyShip "Weapons"]
+        [systemButton :lasers :enemyShip "Lasers"]
+        [systemButton :missiles :enemyShip "Missiles"]
         [systemButton :shields :enemyShip "Shields"]
         [systemButton :engines :enemyShip "Engines"]]]
       [:div.actionBar
-       [actionButton :weapons :actionFire "Fire"]
+       [actionButton :lasers :actionFire "Fire Lasers"]
+       [actionButton :missiles :actionLaunch "Launch Missiles"]
        [actionButton :shields :actionChargeShields "Charge Shields"]
        [actionButton :engines :actionFlee "Flee"]]]]))
       

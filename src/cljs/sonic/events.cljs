@@ -10,12 +10,12 @@
   [event]
   (fn [] (rf/dispatch [event])))
 
-;dispatches :damageSystem with the targeted system and ship
+;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
   "dispatches the damage system event with parameters"
-  [system type]
+  [system type firingType]
   (fn [] 
-    (rf/dispatch [:damageSystem system type])))
+    (rf/dispatch [:damageShip system type firingType])))
    
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
@@ -110,8 +110,15 @@
   (fn [cofx event]
     (core/devLog "player toggling firing mode")
     {:db (:db cofx)
-     :dispatch [:toggleFiringMode]}))
+     :dispatch [:setFiringType :lasers]}))
     
+(rf/reg-event-fx
+  :actionLaunch
+  (fn [cofx event]
+    (core/devLog "missiles placeholder")
+    {:db (:db cofx)
+     :dispatch [:setFiringType :missiles]}))
+
 ;calls chargeShields on playerShip when corresponding button is pressed, 
 ;then ends player phase
 (defn actionChargeShields
@@ -163,9 +170,9 @@
         playerActiveSystems (->> playerSystems
                                 (map playerSystemsActive?)
                                 (remove false?))]
-    (if (false? (systemDisabled? :weapons :enemyShip))
+    (if (false? (systemDisabled? :lasers :enemyShip))
       (do (core/devLog "enemy has decided to fire")
-          [:damageSystem (rand-nth playerActiveSystems) :playerShip])
+          [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
       (if (false? (systemDisabled? :shields :enemyShip))
         (do (core/devLog "enemy has decided to charge their shields") 
             [:enemyChargeShields])
@@ -224,6 +231,15 @@
              (get (- turn 1)))
      :dispatch [:logHistory]}))
 
+;sets firing mode
+(defn setFiringType
+  [cofx [_ firingType]]
+  {:db (assoc (:db cofx) :firingType firingType)
+   :dispatch [:toggleFiringMode]})
+  
+(rf/reg-event-fx
+  :setFiringType
+  setFiringType)
 
 ;toggles firing mode when player pushes fire or ends their phase
 (defn toggleFiringMode [db _]
@@ -249,21 +265,29 @@
 
 
 ;formula for damage: randomfactor x weaponrank x 10dmg
-(defn calcDamage
-  [attackRank amount]
-  (-> amount
+(defn calcLaserDamage
+  [attackRank diceRoll]
+  (-> diceRoll
       (* attackRank)
       (* 10)))
+
+(defn calcMissileDamage
+  [attackRank diceRoll]
+  (-> diceRoll
+      (* attackRank)
+      (* 5)))
 
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
-  [[defender attacker system damage]]
+  [[defender attacker system damage firingType]]
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
-        HPDamage (if (> (- defenderShields damage) 0)
+        HPDamage (if (= firingType :lasers)
+                   (if (> (- defenderShields damage) 0)
                      0
                      (- damage defenderShields))
+                   damage)
         newHPVal (- defenderHP HPDamage)
         destroyed? (if (<= newHPVal 0)
                      true
@@ -273,31 +297,35 @@
                                :playerShip
                                :enemyShip)]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
-     attacker system damage]))
+     attacker system damage firingType]))
          
 ;calculates new shield value
 (defn newShields 
-  [[defender attacker system damage]]
+  [[defender attacker system damage firingType]]
   (let [defenderShields (:shields defender)
-        shieldsDamage (if (> (- defenderShields damage) 0)
-                        damage
-                        defenderShields)]
+        shieldsDamage (if (= firingType :lasers)
+                        (if (> (- defenderShields damage) 0)
+                          damage
+                          defenderShields)
+                        0)]
     [(assoc defender :shields (- defenderShields shieldsDamage)) 
-     attacker system damage]))
+     attacker system damage firingType]))
 
 ;calculates new system status if shields are down, 
 ;otherwise no system damage taken
 (defn newSystemHP
-  [[defender attacker system damage]]
+  [[defender attacker system damage firingType]]
   (let [defenderShields (:shields defender)]
-    (if (<= defenderShields 0)
+    (if (or (and (<= defenderShields 0)
+                 (= firingType :lasers))
+            (= firingType :missiles))
       (let [systemHP (-> defender
                          (:systems)
                          (system)
                          (get 0))
             attackRank (-> attacker
                            (:systems)
-                           (:weapons)
+                           (:lasers)
                            (get 1))
             systemDamage (if (> (- systemHP attackRank) 0)
                            attackRank
@@ -310,26 +338,28 @@
             newSystemsMap (assoc (:systems defender) system newSystem)]
         [(assoc defender :systems newSystemsMap) 
          attacker system])
-      [defender attacker system damage])))
+      [defender attacker system damage firingType])))
     
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
-(defn damageSystem
-  [cofx [_ system type]]
+(defn damageShip
+  [cofx [_ system type firingType]]
   (if (= type :enemyShip)
-     (rf/dispatch [:toggleFiringMode]))
+    (rf/dispatch [:toggleFiringMode]))
   (let [defender @(rf/subscribe [type])
         attacker (if (= type :playerShip)
                   @(rf/subscribe [:playerShip])
                   @(rf/subscribe [:enemyShip]))
         attackRank (-> attacker
                        (:systems)
-                       (:weapons)
+                       (firingType)
                        (get 1))
         diceRoll (diceRoll)
-        damage (calcDamage attackRank diceRoll)]
+        damage (if (= firingType :lasers)
+                 (calcLaserDamage attackRank diceRoll)
+                 (calcMissileDamage attackRank diceRoll))]
        (core/devLog (str "target took " damage " damage"))
-       (let [newDamagedShip (-> [defender attacker system damage] 
+       (let [newDamagedShip (-> [defender attacker system damage firingType] 
                                 (newHP)
                                 (newShields)
                                 (newSystemHP)
@@ -339,30 +369,10 @@
 
 
 (rf/reg-event-fx
-  :damageSystem
-  (fn [cofx [_ system type]]
-    (if (= type :enemyShip)
-      (rf/dispatch [:toggleFiringMode]))
-    (let [defender @(rf/subscribe [type])
-          attacker (if (= type :playerShip)
-                    @(rf/subscribe [:playerShip])
-                    @(rf/subscribe [:enemyShip]))
-          attackRank (-> attacker
-                         (:systems)
-                         (:weapons)
-                         (get 1))
-          diceRoll (diceRoll)
-          damage (calcDamage attackRank diceRoll)]
-         (core/devLog (str "target took " damage " damage"))
-         (let [newDamagedShip (-> [defender attacker system damage] 
-                                  (newHP)
-                                  (newShields)
-                                  (newSystemHP)
-                                  (get 0))]
-              {:db (assoc (:db cofx) type newDamagedShip)
-               :dispatch [:changePhase]}))))
+  :damageShip
+  damageShip)
 
-;test handler for trying new things and placeholding
+  ;test handler for trying new things and placeholding
 (rf/reg-event-db
   :doNothing
   (fn [db _]
