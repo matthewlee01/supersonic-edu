@@ -4,18 +4,23 @@
   {:playerShip {:systems {:lasers [2 1]
                           :missiles [2 1]
                           :shields [2 1]
+                          :repairBay [2 1]
                           :engines [2 1]}
                 :HP 100
+                :maxHP 100
                 :shields 100}
    :enemyShip {:systems {:lasers [2 1]
                          :missiles [2 1]
                          :shields [2 1]
+                         :repairBay [2 1]
                          :engines [2 1]}
                :HP 100
+               :maxHP 100
                :shields 100}
    :turn 0
    :firing? false
    :firingType nil
+   :repairing? false
    :playerName "Player"
    :gameOver? false
    :phase 0

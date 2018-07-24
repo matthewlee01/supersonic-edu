@@ -14,9 +14,13 @@
 (defn damageDispatch
   "dispatches the damage system event with parameters"
   [system type firingType]
-  (fn [] 
-    (rf/dispatch [:damageShip system type firingType])))
+  (fn [] (rf/dispatch [:damageShip system type firingType])))
    
+;dispatches :repairShip with the targeted system and ship
+(defn repairDispatch
+  [system type]
+  (fn [] (rf/dispatch [:repairShip system type])))
+
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
@@ -59,13 +63,17 @@
 
 (rf/reg-event-db
   :gameEnd
-  (fn [db [_ loser]]
-    (core/devLog "end of game")
-    (js/alert (str "Game Over! " (if (= loser :playerShip)
-                                   @(rf/subscribe [:playerName])
-                                   "Enemy") 
-                   "'s ship was destroyed!"))
-    (assoc db :gameOver? true)))
+  (fn [db [_ loser gameOver?]]
+    (core/devLog "end of battle")
+    (let [loserName (if (= loser :playerShip)
+                      (:playerName db)
+                      "Enemy")]
+      (if gameOver?
+        (do (js/alert (str "Game Over! " loserName "'s ship was destroyed!"))
+            (assoc db :gameOver? true))
+        (do (js/alert (str loserName " fled the battle!"))
+            (assoc db :gameOver? true))))))
+      
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
@@ -115,7 +123,7 @@
 (rf/reg-event-fx
   :actionLaunch
   (fn [cofx event]
-    (core/devLog "missiles placeholder")
+    (core/devLog "player toggling launch mode")
     {:db (:db cofx)
      :dispatch [:setFiringType :missiles]}))
 
@@ -132,14 +140,21 @@
   :actionChargeShields
   actionChargeShields)
 
+(defn actionRepairShip 
+  [cofx effects]
+  {:db (:db cofx)
+   :dispatch [:toggleRepairingMode]})
+  
+(rf/reg-event-fx
+  :actionRepairShip
+  actionRepairShip)
 ;attempt to escape the battle 
-;(does nothing right now)
 (rf/reg-event-fx
   :actionFlee 
   (fn [cofx effects]
     (core/devLog "player fleeing")
     {:db (:db cofx)
-     :dispatch [:changePhase]}))
+     :dispatch [:gameEnd :playerShip false]}))
 
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
@@ -170,14 +185,17 @@
         playerActiveSystems (->> playerSystems
                                 (map playerSystemsActive?)
                                 (remove false?))]
-    (if (false? (systemDisabled? :lasers :enemyShip))
-      (do (core/devLog "enemy has decided to fire")
-          [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
-      (if (false? (systemDisabled? :shields :enemyShip))
-        (do (core/devLog "enemy has decided to charge their shields") 
-            [:enemyChargeShields])
-        (do (core/devLog "enemy has decided to pass their phase")
-            [:changePhase])))))
+    (if (false? (systemDisabled? :missiles :enemyShip))
+      (do (core/devLog "enemy has decided to launch missiles")
+          [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
+      (if (false? (systemDisabled? :lasers :enemyShip))
+        (do (core/devLog "enemy has decided to fire")
+            [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
+        (if (false? (systemDisabled? :shields :enemyShip))
+          (do (core/devLog "enemy has decided to charge their shields") 
+              [:enemyChargeShields])
+          (do (core/devLog "enemy has decided to flee")
+              [:gameEnd :enemyShip false]))))))
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
@@ -252,6 +270,16 @@
   :toggleFiringMode
   toggleFiringMode)
       
+(defn toggleRepairingMode [db _]
+  (let [repairing? (:repairing? db)]
+    (if repairing?
+      (assoc db :repairing? false)
+      (assoc db :repairing? true))))
+
+(rf/reg-event-db
+  :toggleRepairingMode
+  toggleRepairingMode)
+
 ;toggles :devMode between true and false
 (defn toggleDevMode [db _]
   (let [devMode @(rf/subscribe [:devMode])]
@@ -295,7 +323,7 @@
     (if destroyed?
       (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
                                :playerShip
-                               :enemyShip)]))
+                               :enemyShip) true]))
     [(assoc defender :HP (- defenderHP HPDamage)) 
      attacker system damage firingType]))
          
@@ -315,7 +343,12 @@
 ;otherwise no system damage taken
 (defn newSystemHP
   [[defender attacker system damage firingType]]
-  (let [defenderShields (:shields defender)]
+  (let [defenderShields (:shields defender)
+        shieldsSystemRank (-> defender
+                              (:systems)
+                              (:shields)
+                              (get 1))
+        shieldsMax (calcShieldsMax shieldsSystemRank)]
     (if (or (and (<= defenderShields 0)
                  (= firingType :lasers))
             (= firingType :missiles))
@@ -337,7 +370,7 @@
             newSystem [(- systemHP systemDamage) systemRank]       
             newSystemsMap (assoc (:systems defender) system newSystem)]
         [(assoc defender :systems newSystemsMap) 
-         attacker system])
+         attacker system damage firingType])
       [defender attacker system damage firingType])))
     
 ;performs all the steps of damaging the ship 
@@ -367,16 +400,67 @@
             {:db (assoc (:db cofx) type newDamagedShip)
              :dispatch [:changePhase]})))
 
-
 (rf/reg-event-fx
   :damageShip
   damageShip)
+
+(defn calcRepairStrength
+  [repairRank diceRoll]
+  (-> repairRank
+      (* diceRoll)
+      (* 4)))
+  
+(defn createRepairedSystem
+  [systemRank]
+  [(+ systemRank 1) systemRank])
+
+(defn restoreHP
+  [[system ship]]
+  (let [repairRank (-> ship
+                       (:systems)
+                       (:repairBay)
+                       (get 1))
+        maxHP (:maxHP ship)
+        repairStrength (calcRepairStrength repairRank (diceRoll))
+        currentHP (:HP ship)
+        newHP (if (>= (+ currentHP repairStrength) maxHP)
+                maxHP
+                (+ currentHP repairStrength))
+        newShip (assoc ship :HP newHP)]
+    [system newShip]))
+  
+(defn restoreSystem
+  [[system ship]]
+  (let [systemRank (-> ship
+                       (:systems)
+                       (system)
+                       (get 1))
+        newSystem (createRepairedSystem systemRank)
+        newSystemsMap (assoc (:systems ship) system newSystem)
+        newShip (assoc ship :systems newSystemsMap)]
+    [system newShip]))
+    
+(defn repairShip
+  [cofx [_ system type]]
+  (if (= type :playerShip)
+    (rf/dispatch [:toggleRepairingMode]))
+  (let [ship @(rf/subscribe [type])
+        repairedShip (-> [system ship]
+                         (restoreHP)
+                         (restoreSystem)
+                         (get 1))]
+    {:db (assoc (:db cofx) type repairedShip)
+     :dispatch [:changePhase]}))
+    
+(rf/reg-event-fx
+  :repairShip
+  repairShip) 
 
   ;test handler for trying new things and placeholding
 (rf/reg-event-db
   :doNothing
   (fn [db _]
-    (core/devLog "nothing")
+    (core/devLog "doing nothing")
     db))
 
 
