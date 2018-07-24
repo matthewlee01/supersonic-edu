@@ -17,27 +17,30 @@
   (let [testRoll (events/diceRoll)]
     (is (and (> testRoll 0)
              (< testRoll 7))))
-  (is (= 40 (events/calcDamage 1 4)))
+  (is (= 40 (events/calcLaserDamage 1 4)))
   (is (= 40 (events/calcShieldsStrength (-> db/default-db :playerShip :systems :shields second) 5)))
   (is (= 100 (-> (events/newHP [(:playerShip db/default-db)
                                 (:enemyShip db/default-db)
-                                 :weapons
-                                  40])
+                                :engines
+                                40
+                                :lasers])
                   (get 0)
                   (:HP))))
   (is (= 60 (-> (events/newShields [(:playerShip db/default-db)
                                     (:enemyShip db/default-db)
-                                     :weapons
-                                      40])
+                                    :engines
+                                    40
+                                    :lasers])
                 (get 0)
                 (:shields))))
   (is (= [2 1] (-> (events/newSystemHP [(:playerShip db/default-db)
                                         (:enemyShip db/default-db)
-                                         :weapons
-                                          40])
+                                        :engines
+                                        40
+                                        :lasers])
                 (get 0)
                 :systems
-                :weapons)))
+                :engines)))
   (is (= 100 (-> (events/chargeShields (:playerShip db/default-db) 10)
                 (:shields))))
   (is (= 100 (events/calcShieldsMax 1)))
@@ -46,7 +49,7 @@
 
   )
 
-(deftest moreEvents
+(deftest reducedShields
   "tests with reduced player health and shields"
   (let [sim-db {:playerShip {:systems {:weapons [2 1]
                                    :shields [2 1]
@@ -60,21 +63,24 @@
                             :shields 50}}]
     (is (= 40 (events/calcShieldsStrength (-> sim-db :playerShip :systems :shields second) 5)))
     (is (= 40 (-> (events/newHP [(:playerShip sim-db)
-                                  (:enemyShip sim-db)
-                                   :weapons
-                                    60])
+                                 (:enemyShip sim-db)
+                                 :weapons
+                                 60
+                                 :lasers])
                   (get 0)
                   (:HP))))
     (is (= 0 (-> (events/newShields [(:playerShip sim-db)
-                                      (:enemyShip sim-db)
-                                       :weapons
-                                        60])
+                                     (:enemyShip sim-db)
+                                     :weapons
+                                     60
+                                     :lasers])
                 (get 0)
                 (:shields))))
     (is (= [2 1] (-> (events/newSystemHP [(:playerShip sim-db)
                                           (:enemyShip sim-db)
-                                           :weapons
-                                            60])
+                                          :weapons
+                                          60
+                                          :lasers])
                      (get 0)
                      (:systems)
                      (:weapons))))
@@ -82,7 +88,7 @@
                 (:shields))))
   ))
 
-(deftest evenMoreEvents
+(deftest depletedShields
   "tests with depleted player shields"
   (let [sim-db {:playerShip {:systems {:weapons [2 1]
                                    :shields [2 1]
@@ -95,21 +101,24 @@
                             :HP 50
                             :shields 50}}]
     (is (= 20 (-> (events/newHP [(:playerShip sim-db)
-                                  (:enemyShip sim-db)
-                                   :weapons
-                                    60])
+                                 (:enemyShip sim-db)
+                                 :weapons
+                                 60
+                                 :lasers])
                   (get 0)
                   (:HP))))
     (is (= 0 (-> (events/newShields [(:playerShip sim-db)
-                                      (:enemyShip sim-db)
-                                       :weapons
-                                        60])
+                                     (:enemyShip sim-db)
+                                     :weapons
+                                     60
+                                     :lasers])
                  (get 0)
                  (:shields))))
     (is (= [1 1] (-> (events/newSystemHP [(:playerShip sim-db)
                                           (:enemyShip sim-db)
-                                           :weapons
-                                            60])
+                                          :weapons
+                                          60
+                                          :lasers])
                      (get 0)
                      (:systems)
                      (:weapons))))

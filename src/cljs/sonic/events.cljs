@@ -183,13 +183,16 @@
 (rf/reg-event-fx
   :changePhase
   (fn [cofx effects]
-    (core/devLog "changing phase")
-    (let [phase @(rf/subscribe [:phase])]
-      (if (= phase 0)
+    (if (= false @(rf/subscribe [:gameOver?]))
+      (do
+       (core/devLog "changing phase")
+       (let [phase @(rf/subscribe [:phase])]
+       (if (= phase 0)
         {:db (assoc (:db cofx) :phase 1)
          :dispatch [:enemyPhase]}
         {:db (assoc (:db cofx) :phase 0)
-         :dispatch [:playerPhase]}))))
+         :dispatch [:playerPhase]}))))))
+      
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -378,11 +381,6 @@
   (fn [db _]
     (core/devLog "nothing")
     db))
-
-
-
-
-
 
 
 

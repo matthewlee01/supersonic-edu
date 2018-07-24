@@ -23,6 +23,10 @@
     (:firing? db)))
 
 (rf/reg-sub
+  :firingType
+  (fn [db _]
+    (:firingType db)))
+(rf/reg-sub
   :playerName
   (fn [db _]
     (:playerName db)))

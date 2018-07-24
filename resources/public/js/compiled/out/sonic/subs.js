@@ -14,6 +14,9 @@ return new cljs.core.Keyword(null,"turn","turn",75759344).cljs$core$IFn$_invoke$
 re_frame.core.reg_sub.call(null,new cljs.core.Keyword(null,"firing?","firing?",-1865348313),(function (db,_){
 return new cljs.core.Keyword(null,"firing?","firing?",-1865348313).cljs$core$IFn$_invoke$arity$1(db);
 }));
+re_frame.core.reg_sub.call(null,new cljs.core.Keyword(null,"firingType","firingType",5090382),(function (db,_){
+return new cljs.core.Keyword(null,"firingType","firingType",5090382).cljs$core$IFn$_invoke$arity$1(db);
+}));
 re_frame.core.reg_sub.call(null,new cljs.core.Keyword(null,"playerName","playerName",1504328524),(function (db,_){
 return new cljs.core.Keyword(null,"playerName","playerName",1504328524).cljs$core$IFn$_invoke$arity$1(db);
 }));
@@ -30,4 +33,4 @@ re_frame.core.reg_sub.call(null,new cljs.core.Keyword(null,"devMode","devMode",-
 return new cljs.core.Keyword(null,"devMode","devMode",-540703912).cljs$core$IFn$_invoke$arity$1(db);
 }));
 
-//# sourceMappingURL=subs.js.map?rel=1532367308163
+//# sourceMappingURL=subs.js.map?rel=1532454691059
