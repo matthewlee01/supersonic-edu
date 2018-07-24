@@ -381,8 +381,8 @@
     (rf/dispatch [:toggleFiringMode]))
   (let [defender @(rf/subscribe [type])
         attacker (if (= type :playerShip)
-                  @(rf/subscribe [:playerShip])
-                  @(rf/subscribe [:enemyShip]))
+                  @(rf/subscribe [:enemyShip])
+                  @(rf/subscribe [:playerShip]))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
@@ -463,7 +463,17 @@
     (core/devLog "doing nothing")
     db))
 
-
+(defn setSystemRank 
+  [db [_ ship system [newHP newRank]]]
+  (let [targetShip (ship db)
+        shipSystems (:systems targetShip)
+        newSystemsMap (assoc shipSystems system [newHP newRank])
+        newShip (assoc targetShip :systems newSystemsMap)]
+    (assoc db ship newShip)))
+  
+(rf/reg-event-db
+  ::setSystemRank
+  setSystemRank)
 
 
 

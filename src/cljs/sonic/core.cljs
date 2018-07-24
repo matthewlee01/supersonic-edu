@@ -29,6 +29,9 @@
   (if @(rf/subscribe [:devMode])
     (println string)))
 
+(defn adjustSystem
+  [ship system [newHP newRank]]
+  (rf/dispatch [::events/setSystemRank ship system [newHP newRank]]))
 (defn devMode
   []
   (rf/dispatch [::events/toggleDevMode]))
