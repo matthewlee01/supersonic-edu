@@ -67,7 +67,6 @@
                                  :weapons
                                  60
                                  :lasers])
->>>>>>> src/cljs/sonic/tests.cljs
                   (get 0)
                   (:HP))))
     (is (= 0 (-> (events/newShields [(:playerShip sim-db)
