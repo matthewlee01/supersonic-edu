@@ -89,12 +89,12 @@
   (assoc ship :ammo nAmmo)))
 
 (defn refillAmmo
-  [ship]
-  (let [ammo (:ammo ship)
-        nAmmo (if (< 2 ammo) 
-                  (+ ammo 1)
-                  (ammo))]
-  (assoc ship :ammo nAmmo)))
+  [ammo turn]
+  (println "+ammo")
+  (if (and (> 10 ammo)
+           (= 0 (mod turn 2))) 
+      (inc ammo)
+      ammo))
 
   
 ;calculates strength of shield charge
@@ -221,9 +221,13 @@
   (fn [cofx effects]
     (core/devLog "start of enemy phase")
     (let [playerShip @(rf/subscribe [:playerShip])
-          enemyShip @(rf/subscribe [:enemyShip])]
-      {:db (:db cofx)
-       :dispatch (enemyChooseAction enemyShip playerShip)})))
+          enemyShip @(rf/subscribe [:enemyShip])
+          turn (inc @(rf/subscribe [:turn]))
+          refilledAmmo (refillAmmo (:ammo enemyShip) turn)
+          newEnemyShip (assoc enemyShip :ammo refilledAmmo)
+          ]
+      {:db (assoc (:db cofx) :enemyShip newEnemyShip)
+       :dispatch (enemyChooseAction newEnemyShip playerShip)})))
           
 (rf/reg-event-db
   :logHistory
@@ -238,9 +242,12 @@
 ;saves a copy of current state
 (defn playerPhase
   [cofx effects]
-  (let [newTurn (inc @(rf/subscribe [:turn]))]
+  (let [newTurn (inc @(rf/subscribe [:turn]))
+        refilledAmmo (refillAmmo (:ammo @(rf/subscribe [:playerShip])) newTurn)
+        newPlayerShip (assoc @(rf/subscribe [:playerShip]) :ammo refilledAmmo)
+        ]
     (core/devLog "start of player phase")
-    {:db (assoc (:db cofx) :turn newTurn)
+    {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip)
      :dispatch [:logHistory]}))
 
 (rf/reg-event-fx
