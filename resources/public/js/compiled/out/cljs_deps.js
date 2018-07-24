@@ -53,7 +53,6 @@ goog.addDependency("../cljs/repl.js", ['cljs.repl'], ['cljs.core', 'cljs.spec.al
 goog.addDependency("../figwheel/client.js", ['figwheel.client'], ['goog.userAgent.product', 'goog.Uri', 'cljs.core', 'goog.object', 'cljs.core.async', 'figwheel.client.file_reloading', 'figwheel.client.utils', 'cljs.repl', 'figwheel.client.heads_up', 'figwheel.client.socket', 'clojure.string', 'cljs.reader']);
 goog.addDependency("../figwheel/connect.js", ['figwheel.connect'], ['cljs.core', 'figwheel.client']);
 goog.addDependency("../devtools/preload.js", ['devtools.preload'], ['cljs.core', 'devtools.core', 'devtools.prefs']);
-goog.addDependency("../cljs/user/coreDAB8EF7.js", ['cljs.user.C_COLON__BSLASH_Users_BSLASH_Kevin_BSLASH_Documents_BSLASH_sonic_master_BSLASH_src_BSLASH_clj_BSLASH_sonic_BSLASH_coreF659330'], ['cljs.core']);
 goog.addDependency("../cljsjs/react/development/react.inc.js", ['cljsjs.react'], [], {'foreign-lib': true});
 goog.addDependency("../cljsjs/create-react-class/development/create-react-class.inc.js", ['cljsjs.create_react_class'], ['cljsjs.react'], {'foreign-lib': true});
 goog.addDependency("../reagent/interop.js", ['reagent.interop'], ['cljs.core']);
@@ -81,10 +80,9 @@ goog.addDependency("../re_frame/std_interceptors.js", ['re_frame.std_interceptor
 goog.addDependency("../re_frame/subs.js", ['re_frame.subs'], ['re_frame.interop', 're_frame.trace', 're_frame.registrar', 'cljs.core', 're_frame.utils', 're_frame.loggers', 're_frame.db']);
 goog.addDependency("../re_frame/core.js", ['re_frame.core'], ['re_frame.interop', 're_frame.interceptor', 're_frame.events', 're_frame.fx', 're_frame.registrar', 'cljs.core', 're_frame.router', 'clojure.set', 're_frame.std_interceptors', 're_frame.loggers', 're_frame.subs', 're_frame.cofx', 're_frame.db']);
 goog.addDependency("../sonic/subs.js", ['sonic.subs'], ['cljs.core', 're_frame.core']);
-goog.addDependency("../cljs/test.js", ['cljs.test'], ['cljs.core', 'cljs.pprint', 'clojure.string']);
+goog.addDependency("../sonic/views.js", ['sonic.views'], ['cljs.core', 'sonic.subs', 're_frame.core', 'sonic.events']);
 goog.addDependency("../sonic/config.js", ['sonic.config'], ['cljs.core']);
 goog.addDependency("../sonic/db.js", ['sonic.db'], ['cljs.core']);
-goog.addDependency("../sonic/tests.js", ['sonic.tests'], ['sonic.views', 'reagent.core', 'cljs.core', 'cljs.test', 'sonic.core', 'sonic.config', 're_frame.core', 'sonic.events', 'sonic.db']);
 goog.addDependency("../sonic/core.js", ['sonic.core'], ['sonic.views', 'reagent.core', 'cljs.core', 'sonic.tests', 'sonic.config', 're_frame.core', 'sonic.events', 'sonic.db']);
 goog.addDependency("../sonic/events.js", ['sonic.events'], ['cljs.core', 'sonic.core', 're_frame.core', 'sonic.db']);
-goog.addDependency("../sonic/views.js", ['sonic.views'], ['cljs.core', 'sonic.subs', 're_frame.core', 'sonic.events']);
+goog.addDependency("../cljs/user/coreB547C1C.js", ['cljs.user.core18EE70B'], ['cljs.core']);
