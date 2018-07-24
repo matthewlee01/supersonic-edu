@@ -82,26 +82,27 @@
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
-  [shieldsSystemRank diceRoll]
-  (-> diceRoll
+  [shieldsSystemRank amount]
+  (-> amount
       (* shieldsSystemRank)
       (* 8)))
 
 ;returns ship with increased shields
-(defn chargeShields [ship]
+(defn chargeShields [ship amount]
   (let [shieldsSystem (-> ship
                         (:systems)
                         (:shields))
         shieldsCurrentValue (:shields ship)
         shieldsSystemRank (get shieldsSystem 1)
-        diceRoll (diceRoll)
         shieldsMax (calcShieldsMax shieldsSystemRank)
-        shieldsStrength (calcShieldsStrength shieldsSystemRank diceRoll)
+        shieldsStrength (calcShieldsStrength shieldsSystemRank amount)
         newShields (+ shieldsCurrentValue shieldsStrength)]
-    (core/devLog (str "shields boosted by " (- newShields shieldsCurrentValue)))
+    (if @(rf/subscribe [:devMode])
+      (println (str "shields boosted by " (- newShields shieldsCurrentValue))))    
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
+    
 
 ;toggles firing mode for player to select target
 (rf/reg-event-fx
@@ -123,7 +124,7 @@
 (defn actionChargeShields
   [cofx events]
   (core/devLog "player charging shields")
-  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip])))
+  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll)))
    :dispatch [:changePhase]})
 
 
@@ -142,11 +143,11 @@
 
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
-  [systemtype]
-  (let [ship @(rf/subscribe [:playerShip])
-        system (systemtype (:systems ship))]
+  [systemType]
+  (let [ship (db/default-db :playerShip)
+        system (systemType (:systems ship))]
     (if (> (get system 0) 0)
-      systemtype
+      systemType
       false)))
 
 ;calls chargeShields on enemyShip and updates value
@@ -154,7 +155,7 @@
   :enemyChargeShields
   (fn [cofx events]
     (core/devLog "enemy charging shields")
-    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip])))
+    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip]) (diceRoll)))
      :dispatch [:changePhase]}))
 
 ;enemy chooses actions based on which systems are available
