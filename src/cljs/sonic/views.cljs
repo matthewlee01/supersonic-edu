@@ -11,9 +11,11 @@
                (= @(rf/subscribe [:firingType]) :lasers))
           (and @(rf/subscribe [:firing?])
                (not= text "Launch Missiles")
-               (= @(rf/subscribe [:firingType]) :missiles)) 
+               (= @(rf/subscribe [:firingType]) :missiles))
           (= @(rf/subscribe [:phase]) 1)
-          (events/systemDisabled? requiredSystem :playerShip))
+          (events/systemDisabled? requiredSystem :playerShip)
+          (and (= 0 (:ammo  @(rf/subscribe [:playerShip])))
+               (= requiredSystem :missiles)))
       true
       false))
 

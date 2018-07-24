@@ -20,10 +20,12 @@
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
-  (if (>= 0 (-> @(rf/subscribe [type])
+  (if (or (>= 0 (-> @(rf/subscribe [type])
                 (:systems)
                 (system)
                 (get 0)))
+          (and (= 0 (:ammo type))
+               (= system :missiles)))
     true
     false))
 
@@ -186,14 +188,18 @@
         playerActiveSystems (->> playerSystems
                                 (map playerSystemsActive?)
                                 (remove false?))]
-    (if (false? (systemDisabled? :lasers :enemyShip))
-      (do (core/devLog "enemy has decided to fire")
-          [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
-      (if (false? (systemDisabled? :shields :enemyShip))
-        (do (core/devLog "enemy has decided to charge their shields") 
-            [:enemyChargeShields])
-        (do (core/devLog "enemy has decided to pass their phase")
-            [:changePhase])))))
+    (if (false? (systemDisabled? :missiles :enemyShip))
+      (do (core/devLog "enemy has decided to launch missiles")
+          [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
+      (if (false? (systemDisabled? :lasers :enemyShip))
+        (do (core/devLog "enemy has decided to fire")
+            [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
+        (if (false? (systemDisabled? :shields :enemyShip))
+          (do (core/devLog "enemy has decided to charge their shields") 
+              [:enemyChargeShields])
+          (do (core/devLog "enemy has decided to flee")
+              [:gameEnd :enemyShip false]))))))
+
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
