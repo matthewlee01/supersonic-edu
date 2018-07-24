@@ -33,6 +33,7 @@
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
         ship @(rf/subscribe [type])
+        ammo (:ammo ship)
         systemRank (-> ship
                        (:systems)
                        (system)
@@ -54,7 +55,9 @@
           :style {:background-color shieldedStatus}}
          {:on-click (fn [] (rf/dispatch [:doNothing]))
           :style {:background-color shieldedStatus}}))
-     (str "Rank " systemRank " " text " (" systemHP " HP)")]))
+     (if (= system :missiles)
+        (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
+        (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
 
 (defn main-panel 
   []

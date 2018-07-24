@@ -83,8 +83,18 @@
 (defn consumeAmmo
   [ship]
   (let [ammo (:ammo ship)
-        newAmmo (- ammo 1)]
-  (assoc ship :ammo newAmmo)))
+        nAmmo (- ammo 1)]
+  (println "comsumed ammos")
+  (assoc ship :ammo nAmmo)))
+
+(defn refillAmmo
+  [ship]
+  (let [ammo (:ammo ship)
+        nAmmo (if (< 2 ammo) 
+                  (+ ammo 1)
+                  (ammo))]
+  (assoc ship :ammo nAmmo)))
+
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
@@ -290,6 +300,7 @@
 ;triggers game over if necessary
 (defn newHP
   [[defender attacker system damage firingType]]
+  (println "1" [defender attacker system damage firingType])
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
         HPDamage (if (= firingType :lasers)
@@ -317,6 +328,8 @@
                           damage
                           defenderShields)
                         0)]
+
+    (println "2" [defender attacker system damage firingType])
     [(assoc defender :shields (- defenderShields shieldsDamage)) 
      attacker system damage firingType]))
 
@@ -346,8 +359,18 @@
             newSystem [(- systemHP systemDamage) systemRank]       
             newSystemsMap (assoc (:systems defender) system newSystem)]
         [(assoc defender :systems newSystemsMap) 
-         attacker system])
+         attacker system damage firingType])
       [defender attacker system damage firingType])))
+
+(defn newAmmo 
+  [[defender attacker system damage firingType]]
+  (println "newAmmo" [defender attacker system damage firingType])
+  (let [currentAmmo (:ammo attacker)]
+    (if ;(and (< 0 currentAmmo)
+             (= firingType :missiles);)
+      [defender (consumeAmmo attacker) system damage firingType]
+      [defender attacker system damage firingType])))
+
     
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
@@ -356,9 +379,12 @@
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
   (let [defender @(rf/subscribe [type])
+        attackerType (if (= type :playerShip)
+                      :enemyShip
+                      :playerShip)
         attacker (if (= type :playerShip)
-                  @(rf/subscribe [:playerShip])
-                  @(rf/subscribe [:enemyShip]))
+                  @(rf/subscribe [:enemyShip])
+                  @(rf/subscribe [:playerShip]))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
@@ -368,12 +394,16 @@
                  (calcLaserDamage attackRank diceRoll)
                  (calcMissileDamage attackRank diceRoll))]
        (core/devLog (str "target took " damage " damage"))
-       (let [newDamagedShip (-> [defender attacker system damage firingType] 
+       (let [newDamagedShip (-> [defender attacker system damage firingType]
                                 (newHP)
                                 (newShields)
                                 (newSystemHP)
-                                (get 0))]
-            {:db (assoc (:db cofx) type newDamagedShip)
+                                (newAmmo)
+                                )]
+       (println "updating" newDamagedShip " attacker:" attackerType)
+            {:db (-> (:db cofx)
+                     (assoc type (get newDamagedShip 0))
+                     (assoc attackerType (get newDamagedShip 1)))
              :dispatch [:changePhase]})))
 
 
