@@ -24,7 +24,7 @@
                 (:systems)
                 (system)
                 (get 0)))
-          (and (= 0 (:ammo type))
+          (and (= 0 (:ammo  @(rf/subscribe [type])))
                (= system :missiles)))
     true
     false))
@@ -86,7 +86,6 @@
   [ship]
   (let [ammo (:ammo ship)
         nAmmo (- ammo 1)]
-  (println "comsumed ammos")
   (assoc ship :ammo nAmmo)))
 
 (defn refillAmmo
@@ -306,7 +305,6 @@
 ;triggers game over if necessary
 (defn newHP
   [[defender attacker system damage firingType]]
-  (println "1" [defender attacker system damage firingType])
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
         HPDamage (if (= firingType :lasers)
@@ -334,8 +332,6 @@
                           damage
                           defenderShields)
                         0)]
-
-    (println "2" [defender attacker system damage firingType])
     [(assoc defender :shields (- defenderShields shieldsDamage)) 
      attacker system damage firingType]))
 
@@ -370,7 +366,6 @@
 
 (defn newAmmo 
   [[defender attacker system damage firingType]]
-  (println "newAmmo" [defender attacker system damage firingType])
   (let [currentAmmo (:ammo attacker)]
     (if ;(and (< 0 currentAmmo)
              (= firingType :missiles);)
@@ -406,7 +401,6 @@
                                 (newSystemHP)
                                 (newAmmo)
                                 )]
-       (println "updating" newDamagedShip " attacker:" attackerType)
             {:db (-> (:db cofx)
                      (assoc type (get newDamagedShip 0))
                      (assoc attackerType (get newDamagedShip 1)))
