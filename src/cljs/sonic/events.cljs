@@ -154,6 +154,15 @@
       systemType
       false)))
 
+(defn enemySystemsDamaged?
+  [systemType]
+  (let [ship @(rf/subscribe [:enemyShip])
+        system (systemType (:systems ship))]
+    (if (-> (get system 0)
+            (< (+ (get system 1) 1)))
+      systemType
+      false)))
+
 ;calls chargeShields on enemyShip and updates value
 (rf/reg-event-fx 
   :enemyChargeShields
@@ -162,29 +171,42 @@
     {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
      :dispatch [:changePhase]}))
 
+(def enemyPriorityList
+  {:target [:lasers :missiles :shields :repairBay :engines]
+   :repair [:missiles :lasers :shields :repairBay :engines]})
+
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
   (core/devLog "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
         enemyShields (:shields enemyShip)
-        playerSystems (-> playerShip
-                          (:systems)
-                          (keys))
-        playerActiveSystems (->> playerSystems
+        playerSystemsKeys (:target enemyPriorityList)
+        playerActiveSystems (->> playerSystemsKeys
                                  (map playerSystemsActive?)
-                                 (remove false?))]
+                                 (remove false?)
+                                 (vec))
+        playerTargetSystem (get playerActiveSystems 0)
+        enemySystemsKeys (:repair enemyPriorityList)
+        enemyDamagedSystems (->> enemySystemsKeys
+                                 (map enemySystemsDamaged?)
+                                 (remove false?)
+                                 (vec))
+        enemyTargetSystem (get enemyDamagedSystems 0)]
     (if (false? (systemDisabled? :missiles :enemyShip))
       (do (core/devLog "enemy has decided to launch missiles")
-          [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
+          [:damageShip playerTargetSystem :playerShip :missiles])
       (if (false? (systemDisabled? :lasers :enemyShip))
-        (do (core/devLog "enemy has decided to fire")
-            [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
+        (do (core/devLog "enemy has decided to fire lasers")
+            [:damageShip playerTargetSystem :playerShip :lasers])
         (if (false? (systemDisabled? :shields :enemyShip))
           (do (core/devLog "enemy has decided to charge their shields") 
               [:enemyChargeShields])
-          (do (core/devLog "enemy has decided to flee")
-              [:gameEnd :enemyShip false]))))))
+          (if (false? (systemDisabled? :repairBay :enemyShip))
+            (do (core/devLog "enemy has decided to repair their ship")
+                [:repairShip enemyTargetSystem :enemyShip])
+            (do (core/devLog "enemy has decided to flee")
+                [:gameEnd :enemyShip false])))))))
 
 ;toggles phase between player and enemy after each action
               
