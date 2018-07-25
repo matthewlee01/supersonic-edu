@@ -16,21 +16,27 @@
     (is (= true (-> sim-db
                   (events/toggleFiringMode nil)
                   (:firing?))))
+    (is (= true (-> sim-db
+                  (events/toggleRepairingMode nil)
+                  (:repairing?))))
     (is (= true (and (> testRoll 0)
                      (< testRoll 7))))
     (is (= 40 (events/calcLaserDamage 1 4)))
     (is (= 80 (events/calcMissileDamage 2 8)))
     (is (= 115 (events/calcShieldsMax 2)))
     (is (= 120 (events/calcShieldsStrength 3 5)))
+    (is (= 64 (events/calcRepairStrength 4 4)))
+    (is (= [4 3] (events/createRepairedSystem 3)))
     (is (= 10 (events/refillAmmo 10 8)))
     (is (= 10 (events/refillAmmo 9 8)))
     (is (= 5 (events/refillAmmo 4 8)))
-    (is (= 5 (events/refillAmmo 5 5)))))
+    (is (= 5 (events/refillAmmo 5 5))))
+  )
 
 
 
 (deftest fullShields
-  "tests with full player shields using starting game state"
+  "simulated attacks with full player shields"
   (let [testRoll (events/diceRoll)
         sim-db db/default-db
         playerShip (:playerShip sim-db)
@@ -90,7 +96,7 @@
                (:ammo)))))) 
 
 (deftest reducedShields
-  "tests with reduced player health and shields"
+  "simulated attacks with reduced player health and shields"
   (let [sim-db {:playerShip {:systems {:lasers [2 1]
                                        :missiles [2 1]
                                        :shields [2 1]
@@ -164,7 +170,7 @@
                (:ammo))))))
   
 (deftest depletedShields
-  "tests with depleted player shields"
+  "simulated attacks with depleted player shields"
   (let [sim-db {:playerShip {:systems {:lasers [2 1]
                                        :missiles [2 1]
                                        :shields [2 1]
@@ -236,7 +242,42 @@
                (:ammo))))))
 
 
+(deftest damagedShip
+  "testing shielding, repairing, and ammo consumption functions on a damaged ship"
+  (let [randomAmount (events/diceRoll)
+        testShip {:systems {:lasers [1 1]
+                              :engines [0 3]
+                              :shields [2 1]
+                              :repairBay [2 1]}
+                    :HP 30
+                    :maxHP 200
+                    :shields 10
+                    :ammo 5}
+        newShip (-> [:engines testShip]
+                  (events/restoreHP)
+                  (events/restoreSystem)
+                  (get 1)
+                  (events/chargeShields randomAmount)
+                  (events/consumeAmmo))
+        newHP (:HP newShip)
+        newAmmo (:ammo newShip)
+        newShields (:shields newShip)
+        newEngines (-> newShip :systems :engines)
+        ]
 
+    ;checking HP
+    (is (= true (and (>= newHP 34)
+                     (<= newHP 54))))
+    
+    ;checking shields
+    (is (= true (and (>= newShields 18)
+                     (<= newShields 58))))
+
+    ;checking ammo
+    (is (= 4 newAmmo))
+
+    ;checking engine system
+    (is (= [4 3] newEngines))))
 
   
 
