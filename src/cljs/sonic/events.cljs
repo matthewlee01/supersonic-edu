@@ -205,10 +205,11 @@
    :repair [:missiles :lasers :shields :repairBay :engines]})
 
 ;selects a system target for enemy AI
+;by filtering through priority list
 (defn getTargetSystem
-  [type]
+  [filterType]
   (get (->> (type enemyPriorityList)
-            (map (if (= type :repair)
+            (map (if (= filterType :repair)
                    enemySystemsDamaged?
                    playerSystemsActive?)) 
             (remove false?)
