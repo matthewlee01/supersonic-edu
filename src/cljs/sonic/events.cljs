@@ -62,7 +62,7 @@
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
-          gameOverMessage (str "Game Over! " loserName "'s ship was destroyed!'")
+          gameOverMessage (str "Game Over! " loserName "'s ship was destroyed!")
           fleeMessage (str loserName " fled the battle!")]
       (do (js/alert (if gameOver?
                       gameOverMessage
@@ -210,10 +210,10 @@
 (rf/reg-event-fx
   :changePhase
   (fn [cofx effects]
-    (if (= false @(rf/subscribe [:gameOver?]))
+    (if (= false (:gameOver? (:db cofx)))
       (do
        (core/devLog "changing phase")
-       (let [phase @(rf/subscribe [:phase])]
+       (let [phase (:phase (:db cofx))]
         (if (= phase 0)
          {:db (assoc (:db cofx) :phase 1)
           :dispatch [:enemyPhase]}
@@ -226,9 +226,9 @@
   :enemyPhase
   (fn [cofx effects]
     (core/devLog "start of enemy phase")
-    (let [playerShip @(rf/subscribe [:playerShip])
-          enemyShip @(rf/subscribe [:enemyShip])
-          turn (inc @(rf/subscribe [:turn]))
+    (let [playerShip (:playerShip (:db cofx))
+          enemyShip (:enemyShip (:db cofx))
+          turn (inc (:turn (:db cofx)))
           refilledAmmo (refillAmmo (:ammo enemyShip) turn)
           newEnemyShip (assoc enemyShip :ammo refilledAmmo)]
           
@@ -248,8 +248,8 @@
 ;saves a copy of current state
 (defn playerPhase
   [cofx effects]
-  (let [newTurn (inc @(rf/subscribe [:turn]))
-        playerShip @(rf/subscribe [:playerShip])
+  (let [newTurn (inc (:turn (:db cofx)))
+        playerShip (:playerShip (:db cofx))
         refilledAmmo (refillAmmo (:ammo playerShip) newTurn)
         newPlayerShip (assoc playerShip :ammo refilledAmmo)]
     (core/devLog "start of player phase")
@@ -392,9 +392,9 @@
 (defn newAmmo 
   [[defender attacker system damage firingType]]
   (let [currentAmmo (:ammo attacker)]
-    (if (= firingType :missiles)
-      [defender (consumeAmmo attacker) system damage firingType]
-      [defender attacker system damage firingType])))
+    [defender (if (= firingType :missiles)
+                (consumeAmmo attacker)
+                attacker) system damage firingType]))
 
     
 ;performs all the steps of damaging the ship 
@@ -403,13 +403,13 @@
   [cofx [_ system type firingType]]
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
-  (let [defender @(rf/subscribe [type])
+  (let [defender (type (:db cofx))
         attackerType (if (= type :playerShip)
                       :enemyShip
                       :playerShip)
         attacker (if (= type :playerShip)
-                  @(rf/subscribe [:enemyShip])
-                  @(rf/subscribe [:playerShip]))
+                  (:enemyShip (:db cofx))
+                  (:playerShip (:db cofx)))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
