@@ -26,6 +26,11 @@
   :firingType
   (fn [db _]
     (:firingType db)))
+
+(rf/reg-sub
+  :repairing?
+  (fn [db _]
+    (:repairing? db)))
 (rf/reg-sub
   :playerName
   (fn [db _]

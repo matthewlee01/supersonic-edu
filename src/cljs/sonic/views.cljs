@@ -12,6 +12,8 @@
           (and @(rf/subscribe [:firing?])
                (not= text "Launch Missiles")
                (= @(rf/subscribe [:firingType]) :missiles))
+          (and @(rf/subscribe [:repairing?])
+               (not= text "Repair Ship"))
           (= @(rf/subscribe [:phase]) 1)
           (events/systemDisabled? requiredSystem :playerShip))
       true
@@ -32,6 +34,7 @@
 (defn systemButton
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
+        repairing? @(rf/subscribe [:repairing?])
         ship @(rf/subscribe [type])
         ammo (:ammo ship)
         systemRank (-> ship
@@ -47,14 +50,20 @@
                          "orange")]
     [:button.system
      (if (= type :playerShip)
-       {:disabled (or firing? 
-                      (events/systemDisabled? system type))
-        :style {:background-color shieldedStatus}}
+       (if repairing?
+         {:on-click (events/repairDispatch system type) 
+          :style {:background-color shieldedStatus}}
+         (if firing?
+           {:disabled (or firing?
+                          (events/systemDisabled? system type))}
+           {:style {:background-color shieldedStatus}}))
        (if firing?
          {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}
-         {:on-click (fn [] (rf/dispatch [:doNothing]))
-          :style {:background-color shieldedStatus}}))
+         (if repairing?
+           {:disabled true}
+           {:on-click (fn [] (rf/dispatch [:doNothing]))
+            :style {:background-color shieldedStatus}})))
      (if (= system :missiles)
         (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
         (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
@@ -71,15 +80,14 @@
         phase (if (= @(rf/subscribe [:phase]) 0)
                @(rf/subscribe [:playerName])
                "Enemy")
-        firingMode (if (= @(rf/subscribe [:firing?]) false)
-                     "Inactive"
-                     "Active")
+        firing? @(rf/subscribe [:firing?])
+        repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
     [:fieldset {:disabled gameOver?}
      [:div.flexContainer
       [:div.infoDisplayArea 
        [:textarea.infoDisplay {:value (if gameOver?
-                                        "Game Over!"
+                                        "Game End!"
                                         (str phase "'s Turn"))
                                :readOnly true
                                :style {:color (if (= @(rf/subscribe [:phase]) 0)
@@ -88,11 +96,17 @@
        [:textarea.infoDisplay {:value (str "Turn #: " turn)
                                :readOnly true}]]
        
-      [:textarea.infoDisplay {:value (str "Firing Mode: " firingMode)
+      [:textarea.infoDisplay {:value (if repairing?
+                                       "Repairing Mode"
+                                       (if firing?
+                                         "Firing Mode"
+                                         "Select an Action"))
                               :readOnly true
-                              :style {:color (if @(rf/subscribe [:firing?])
-                                                "red"
-                                                "green")}}]
+                              :style {:color (if repairing?
+                                                "green"
+                                                (if firing?
+                                                  "red"
+                                                  "black"))}}]
       [:div.ships
        [:div.playerShip
         [:div.vitalityDisplayArea
@@ -101,6 +115,7 @@
         [systemButton :lasers :playerShip "Lasers"]
         [systemButton :missiles :playerShip "Missiles"]
         [systemButton :shields :playerShip "Shields"]
+        [systemButton :repairBay :playerShip "Repair Bay"]
         [systemButton :engines :playerShip "Engines"]]
        [:div.enemyShip
         [:div.vitalityDisplayArea
@@ -109,11 +124,13 @@
         [systemButton :lasers :enemyShip "Lasers"]
         [systemButton :missiles :enemyShip "Missiles"]
         [systemButton :shields :enemyShip "Shields"]
+        [systemButton :repairBay :enemyShip "Repair Bay"]
         [systemButton :engines :enemyShip "Engines"]]]
       [:div.actionBar
        [actionButton :lasers :actionFire "Fire Lasers"]
        [actionButton :missiles :actionLaunch "Launch Missiles"]
        [actionButton :shields :actionChargeShields "Charge Shields"]
+       [actionButton :repairBay :actionRepairShip "Repair Ship"]
        [actionButton :engines :actionFlee "Flee"]]]]))
       
      
