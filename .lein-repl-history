@@ -1,3 +1,0 @@
-(in-ns 'sonic.core)
-(events/calcLaserDamage 1 4)
-(quit)
