@@ -43,13 +43,12 @@
   ::gameStart
   (fn [cofx effects]
     (core/devLog "start of game")
-    (let [playerName (js/prompt "Enter your name:")]
-      {:db (assoc (:db cofx) :playerName (if (or 
-                                               (= playerName "")
-                                               (= playerName nil))
+    {:db (assoc (:db cofx) :playerName (if-let [playerName (js/prompt "Enter your name:")] 
+                                          (if (= playerName "")
                                             "Player"
-                                            playerName))
-       :dispatch [:playerPhase]})))
+                                            playerName)
+                                          "Player"))
+     :dispatch [:playerPhase]}))
 
 ;sends an alert and disables main view
 (rf/reg-event-db
@@ -188,18 +187,29 @@
               [:gameEnd :enemyShip false]))))))
 
 ;toggles phase between player and enemy after each action
+              
+(defn changePhase
+  [cofx effects]
+  (if (false? (:gameOver? (:db cofx)))
+    (do (core/devLog "changing phase")
+        (if (zero? (:phase (:db cofx)))
+          {:db (assoc (:db cofx) :phase 1)
+           :dispatch [:enemyPhase]}
+          {:db (assoc (:db cofx) :phase 0)
+           :dispatch [:playerPhase]}))))
+
 (rf/reg-event-fx
   :changePhase
-  (fn [cofx effects]
-    (if (false? (:gameOver? (:db cofx)))
-      (do
-       (core/devLog "changing phase")
-       (let [phase (:phase (:db cofx))]
-        (if (= phase 0)
-         {:db (assoc (:db cofx) :phase 1)
-          :dispatch [:enemyPhase]}
-         {:db (assoc (:db cofx) :phase 0)
-          :dispatch [:playerPhase]}))))))
+  changePhase)
+
+
+(defn refillAmmo
+  [ammo turn]
+  (if (and (> 10 ammo)
+           (= 0 (mod turn 2))) 
+    (inc ammo)
+    ammo))
+
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -223,6 +233,7 @@
                          (concat [db])
                          (vec))]
       (assoc db :history newHistory))))
+
 
 ;initiates player phase, 
 ;saves a copy of current state
@@ -287,7 +298,6 @@
   ::toggleDevMode
   toggleDevMode)
 
-
 ;formula for damage: randomfactor x weaponrank x 10dmg
 (defn calcLaserDamage
   [attackRank diceRoll]
@@ -306,13 +316,6 @@
   (let [ammo (:ammo ship)
         nAmmo (- ammo 1)]
    (assoc ship :ammo nAmmo)))
-
-(defn refillAmmo
-  [ammo turn]
-  (if (and (> 10 ammo)
-           (= 0 (mod turn 2))) 
-      (inc ammo)
-      ammo))
 
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary

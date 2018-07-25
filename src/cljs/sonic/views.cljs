@@ -54,8 +54,7 @@
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
-           {:on-click (fn [] (rf/dispatch [:doNothing]))
-            :style {:background-color shieldedStatus}})))
+           {:style {:background-color shieldedStatus}})))
      (if (= system :missiles)
         (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
         (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
