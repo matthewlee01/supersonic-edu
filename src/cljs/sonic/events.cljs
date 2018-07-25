@@ -74,7 +74,10 @@
       (* 15)
       (+ 100)))
 
+
+
 (defn shieldsSupercharged?
+  "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
   (let [maxShields (-> ship 
                      (:systems)
@@ -82,7 +85,7 @@
                      (get 1)
                      (calcShieldsMax))
         shipShields (:shields ship)
-        threshold maxShields]
+        threshold maxShields] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
       true
       false)))
@@ -415,30 +418,27 @@
     (rf/dispatch [:toggleFiringMode]))
   (let [defender (type (:db cofx))
         attackerType (if (= type :playerShip)
-                      :enemyShip
-                      :playerShip)
-        attacker (if (= type :playerShip)
-                  (:enemyShip (:db cofx))
-                  (:playerShip (:db cofx)))
+                       :enemyShip
+                       :playerShip)
+        attacker (attackerType (:db cofx))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
-        diceRoll (diceRoll)
         baseDamage (if (= firingType :lasers)
-                 (calcLaserDamage attackRank diceRoll)
-                 (calcMissileDamage attackRank diceRoll))
-        chargedDamage (if supercharged?
+                     (calcLaserDamage attackRank (diceRoll))
+                     (calcMissileDamage attackRank (diceRoll)))
+        finalDamage (if supercharged?
                         (* 2 baseDamage)
                         baseDamage)
         devMsg (str (if (= defender :playerShip) "player " "enemy ")
                     "took "
                     baseDamage
-                    " damage "
-                    (if supercharged? (str "times 2 for a total of " chargedDamage " damage")))]
+                    " damage"
+                    (if supercharged? (str " times 2 for a total of " finalDamage " damage")))]
        (core/devLog devMsg)
-       (let [newShips (-> [defender attacker system chargedDamage firingType]
+       (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
                           (newShields)
                           (newSystemHP)
