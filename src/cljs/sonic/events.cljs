@@ -24,10 +24,12 @@
 ;checks if system on ship is disabled (0HP)
 (defn systemDisabled?
   [system type]
-  (if (>= 0 (-> @(rf/subscribe [type])
+  (if (or (>= 0 (-> @(rf/subscribe [type])
                 (:systems)
                 (system)
                 (get 0)))
+          (and (= 0 (:ammo  @(rf/subscribe [type])))
+               (= system :missiles)))
     true
     false))
 
@@ -87,6 +89,20 @@
 (defn diceRoll
   []
   (+ 1 (rand-int 6)))
+
+(defn consumeAmmo
+  [ship]
+  (let [ammo (:ammo ship)
+        nAmmo (- ammo 1)]
+  (assoc ship :ammo nAmmo)))
+
+(defn refillAmmo
+  [ammo turn]
+  (if (and (> 10 ammo)
+           (= 0 (mod turn 2))) 
+      (inc ammo)
+      ammo))
+
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
@@ -196,18 +212,22 @@
               [:enemyChargeShields])
           (do (core/devLog "enemy has decided to flee")
               [:gameEnd :enemyShip false]))))))
+
       
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
   :changePhase
   (fn [cofx effects]
-    (core/devLog "changing phase")
-    (let [phase @(rf/subscribe [:phase])]
-      (if (= phase 0)
+    (if (= false @(rf/subscribe [:gameOver?]))
+      (do
+       (core/devLog "changing phase")
+       (let [phase @(rf/subscribe [:phase])]
+       (if (= phase 0)
         {:db (assoc (:db cofx) :phase 1)
          :dispatch [:enemyPhase]}
         {:db (assoc (:db cofx) :phase 0)
-         :dispatch [:playerPhase]}))))
+         :dispatch [:playerPhase]}))))))
+      
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -215,9 +235,13 @@
   (fn [cofx effects]
     (core/devLog "start of enemy phase")
     (let [playerShip @(rf/subscribe [:playerShip])
-          enemyShip @(rf/subscribe [:enemyShip])]
-      {:db (:db cofx)
-       :dispatch (enemyChooseAction enemyShip playerShip)})))
+          enemyShip @(rf/subscribe [:enemyShip])
+          turn (inc @(rf/subscribe [:turn]))
+          refilledAmmo (refillAmmo (:ammo enemyShip) turn)
+          newEnemyShip (assoc enemyShip :ammo refilledAmmo)
+          ]
+      {:db (assoc (:db cofx) :enemyShip newEnemyShip)
+       :dispatch (enemyChooseAction newEnemyShip playerShip)})))
           
 (rf/reg-event-db
   :logHistory
@@ -232,9 +256,12 @@
 ;saves a copy of current state
 (defn playerPhase
   [cofx effects]
-  (let [newTurn (inc @(rf/subscribe [:turn]))]
+  (let [newTurn (inc @(rf/subscribe [:turn]))
+        playerShip @(rf/subscribe [:playerShip])
+        refilledAmmo (refillAmmo (:ammo playerShip) newTurn)
+        newPlayerShip (assoc playerShip :ammo refilledAmmo)]
     (core/devLog "start of player phase")
-    {:db (assoc (:db cofx) :turn newTurn)
+    {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip)
      :dispatch [:logHistory]}))
 
 (rf/reg-event-fx
@@ -372,6 +399,14 @@
         [(assoc defender :systems newSystemsMap) 
          attacker system damage firingType])
       [defender attacker system damage firingType])))
+
+(defn newAmmo 
+  [[defender attacker system damage firingType]]
+  (let [currentAmmo (:ammo attacker)]
+    (if (= firingType :missiles)
+      [defender (consumeAmmo attacker) system damage firingType]
+      [defender attacker system damage firingType])))
+
     
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
@@ -380,9 +415,12 @@
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
   (let [defender @(rf/subscribe [type])
+        attackerType (if (= type :playerShip)
+                      :enemyShip
+                      :playerShip)
         attacker (if (= type :playerShip)
-                  @(rf/subscribe [:playerShip])
-                  @(rf/subscribe [:enemyShip]))
+                  @(rf/subscribe [:enemyShip])
+                  @(rf/subscribe [:playerShip]))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
@@ -392,12 +430,16 @@
                  (calcLaserDamage attackRank diceRoll)
                  (calcMissileDamage attackRank diceRoll))]
        (core/devLog (str "target took " damage " damage"))
-       (let [newDamagedShip (-> [defender attacker system damage firingType] 
+       (let [newShips (-> [defender attacker system damage firingType]
                                 (newHP)
                                 (newShields)
                                 (newSystemHP)
-                                (get 0))]
-            {:db (assoc (:db cofx) type newDamagedShip)
+                                (newAmmo))
+             newDefenderType (get newShips 0)
+             newAttackerType (get newShips 1)]
+            {:db (assoc (:db cofx)
+                    type newDefenderType
+                    attackerType newAttackerType)
              :dispatch [:changePhase]})))
 
 (rf/reg-event-fx
@@ -462,11 +504,6 @@
   (fn [db _]
     (core/devLog "doing nothing")
     db))
-
-
-
-
-
 
 
 
