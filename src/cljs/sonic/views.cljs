@@ -25,26 +25,18 @@
     [:button.action {:on-click (events/actionDispatch event)
                      :disabled (actionDisabled? text requiredSystem)} 
                     text]))
-                                 
-(defn shipVitalityDisplay
-  [value text]
-  [:textarea.vitalityDisplay {:value (str text ": " value)
-                              :readOnly true}]) 
-    
+   
 (defn systemButton
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         ship @(rf/subscribe [type])
         ammo (:ammo ship)
-        systemRank (-> ship
-                       (:systems)
-                       (system)
-                       (get 1))
-        systemHP (-> ship             
-                     (:systems)
-                     (system)
-                     (get 0))
+        systemVec (-> ship
+                      (:systems)
+                      (system))
+        systemRank (get systemVec 1)
+        systemHP (get systemVec 0)             
         shieldedStatus (if (> (:shields ship) 0)
                          "lightblue"
                          "orange")]
@@ -62,12 +54,16 @@
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
-           {:on-click (fn [] (rf/dispatch [:doNothing]))
-            :style {:background-color shieldedStatus}})))
+           {:style {:background-color shieldedStatus}})))
      (if (= system :missiles)
         (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
         (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
-
+                                 
+(defn shipVitalityDisplay
+  [value text]
+  [:textarea.vitalityDisplay {:value (str text ": " value)
+                              :readOnly true}]) 
+ 
 (defn main-panel 
   []
   (let [playerHP (:HP @(rf/subscribe [:playerShip]))
@@ -77,9 +73,11 @@
         enemySystems (:systems @(rf/subscribe [:enemyShip]))
         playerSystems (:systems @(rf/subscribe [:playerShip]))
         turn @(rf/subscribe [:turn])
-        phase (if (= @(rf/subscribe [:phase]) 0)
-               @(rf/subscribe [:playerName])
-               "Enemy")
+        phase @(rf/subscribe [:phase])
+        phaseName (if (= phase 0)
+                   @(rf/subscribe [:playerName])
+                   "Enemy")
+        
         firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
@@ -88,9 +86,9 @@
       [:div.infoDisplayArea 
        [:textarea.infoDisplay {:value (if gameOver?
                                         "Game End!"
-                                        (str phase "'s Turn"))
+                                        (str phaseName "'s Turn"))
                                :readOnly true
-                               :style {:color (if (= @(rf/subscribe [:phase]) 0)
+                               :style {:color (if (= phase 0)
                                                 "blue"
                                                 "red")}}]
        [:textarea.infoDisplay {:value (str "Turn #: " turn)
