@@ -400,15 +400,16 @@
                  (calcLaserDamage attackRank diceRoll)
                  (calcMissileDamage attackRank diceRoll))]
        (core/devLog (str "target took " damage " damage"))
-       (let [newDamagedShip (-> [defender attacker system damage firingType]
+       (let [newShips (-> [defender attacker system damage firingType]
                                 (newHP)
                                 (newShields)
                                 (newSystemHP)
-                                (newAmmo)
-                                )]
-            {:db (-> (:db cofx)
-                     (assoc type (get newDamagedShip 0))
-                     (assoc attackerType (get newDamagedShip 1)))
+                                (newAmmo))
+             newDefenderType (get newShips 0)
+             newAttackerType (get newShips 1)]
+            {:db (assoc (:db cofx)
+                    type newDefenderType
+                    attackerType newAttackerType)
              :dispatch [:changePhase]})))
 
 
