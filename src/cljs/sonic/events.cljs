@@ -195,28 +195,29 @@
     {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
      :dispatch [:changePhase]}))
 
+;holds priority list for enemy attacks and repairs
 (def enemyPriorityList
   {:target [:lasers :missiles :shields :repairBay :engines]
    :repair [:missiles :lasers :shields :repairBay :engines]})
 
+;selects a system target for enemy AI
+(defn getTargetSystem
+  [type]
+  (get (->> (type enemyPriorityList)
+            (map (if (= type :repair)
+                   enemySystemsDamaged?
+                   playerSystemsActive?)) 
+            (remove false?)
+            (vec)) 0))
+   
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
   (core/devLog "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
         enemyShields (:shields enemyShip)
-        playerSystemsKeys (:target enemyPriorityList)
-        playerActiveSystems (->> playerSystemsKeys
-                                 (map playerSystemsActive?)
-                                 (remove false?)
-                                 (vec))
-        playerTargetSystem (get playerActiveSystems 0)
-        enemySystemsKeys (:repair enemyPriorityList)
-        enemyDamagedSystems (->> enemySystemsKeys
-                                 (map enemySystemsDamaged?)
-                                 (remove false?)
-                                 (vec))
-        enemyTargetSystem (get enemyDamagedSystems 0)]
+        playerTargetSystem (getTargetSystem :target)
+        enemyTargetSystem (getTargetSystem :repair)]
     (if (and (criticalHP? playerShip enemyShip)
              (not= nil enemyTargetSystem)
              (false? (systemDisabled? :repairBay :enemyShip)))
@@ -239,7 +240,6 @@
                   [:gameEnd :enemyShip false]))))))))
 
 ;toggles phase between player and enemy after each action
-              
 (defn changePhase
   [cofx effects]
   (if (false? (:gameOver? (:db cofx)))
