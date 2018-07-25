@@ -7,6 +7,7 @@
                           :repairBay [2 1]
                           :engines [2 1]}
                 :HP 100
+                :maxHP 100
                 :shields 100
                 :ammo 2}
    :enemyShip {:systems {:lasers [2 1]
@@ -15,6 +16,7 @@
                          :repairBay [2 1]
                          :engines [2 1]}
                :HP 100
+               :maxHP 100
                :shields 100
                :ammo 2}
    :turn 0
