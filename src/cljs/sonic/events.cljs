@@ -85,6 +85,30 @@
       (* shieldsSystemRank)
       (* 8)))
 
+;formula for damage: randomfactor x weaponrank x 10dmg
+(defn calcLaserDamage
+  [attackRank diceRoll]
+  (-> diceRoll
+      (* attackRank)
+      (* 10)))
+
+(defn calcMissileDamage
+  [attackRank diceRoll]
+  (-> diceRoll
+      (* attackRank)
+      (* 5)))
+
+(defn criticalHP?
+  [attacker defender]
+  (let [potentialDamage (-> attacker
+                            (:systems)
+                            (:missiles)
+                            (get 1)
+                            (calcMissileDamage 6))]
+    (if (<= (:HP defender) potentialDamage)
+      true
+      false)))
+
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
   (let [shieldsSystem (-> ship
@@ -193,8 +217,9 @@
                                  (remove false?)
                                  (vec))
         enemyTargetSystem (get enemyDamagedSystems 0)]
-    (if (and (< (:HP enemyShip) 30)
-             (not= nil enemyTargetSystem))
+    (if (and (criticalHP? playerShip enemyShip)
+             (not= nil enemyTargetSystem)
+             (false? (systemDisabled? :repairBay :enemyShip)))
       (do (core/devLog "enemy has decided to repair their ship")
           [:repairShip enemyTargetSystem :enemyShip])
       (if (false? (systemDisabled? :missiles :enemyShip))
@@ -237,7 +262,6 @@
     (inc ammo)
     ammo))
 
-
 ;initiates enemy AI
 (rf/reg-event-fx
   :enemyPhase
@@ -260,7 +284,6 @@
                          (concat [db])
                          (vec))]
       (assoc db :history newHistory))))
-
 
 ;initiates player phase, 
 ;saves a copy of current state
@@ -324,19 +347,6 @@
 (rf/reg-event-db
   ::toggleDevMode
   toggleDevMode)
-
-;formula for damage: randomfactor x weaponrank x 10dmg
-(defn calcLaserDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* 10)))
-
-(defn calcMissileDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* 5)))
 
 (defn consumeAmmo
   [ship]
