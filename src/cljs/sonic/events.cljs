@@ -52,14 +52,6 @@
        :dispatch [:playerPhase]})))
 
 ;sends an alert and disables main view
-(defn gameEnd [db [_ loser]]
-  (core/devLog "end of game")
-  (js/alert (str "Game Over! " (if (= loser :playerShip)
-                                 @(rf/subscribe [:playerName])
-                                 "Enemy") 
-                 "'s ship was destroyed!"))
-  (assoc db :gameOver? true))
-
 
 (rf/reg-event-db
   :gameEnd
@@ -67,13 +59,13 @@
     (core/devLog "end of battle")
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
-                      "Enemy")]
-      (if gameOver?
-        (do (js/alert (str "Game Over! " loserName "'s ship was destroyed!"))
-            (assoc db :gameOver? true))
-        (do (js/alert (str loserName " fled the battle!"))
-            (assoc db :gameOver? true))))))
-      
+                      "Enemy")
+          gameOverMessage (str "Game Over! " loserName "'s ship was destroyed!'")
+          fleeMessage (str loserName " fled the battle!")]
+      (do (js/alert (if gameOver?
+                      gameOverMessage
+                      fleeMessage))
+          (assoc db :gameOver? true)))))
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
@@ -159,7 +151,7 @@
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
   [systemType]
-  (let [ship (db/default-db :playerShip)
+  (let [ship @(rf/subscribe [:playerShip])
         system (systemType (:systems ship))]
     (if (> (get system 0) 0)
       systemType
@@ -170,7 +162,7 @@
   :enemyChargeShields
   (fn [cofx events]
     (core/devLog "enemy charging shields")
-    {:db (assoc (:db cofx) :enemyShip (chargeShields @(rf/subscribe [:enemyShip]) (diceRoll)))
+    {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
      :dispatch [:changePhase]}))
 
 ;enemy chooses actions based on which systems are available
@@ -202,7 +194,7 @@
   :changePhase
   (fn [cofx effects]
     (core/devLog "changing phase")
-    (let [phase @(rf/subscribe [:phase])]
+    (let [phase (:phase (:db cofx))]
       (if (= phase 0)
         {:db (assoc (:db cofx) :phase 1)
          :dispatch [:enemyPhase]}
@@ -214,8 +206,8 @@
   :enemyPhase
   (fn [cofx effects]
     (core/devLog "start of enemy phase")
-    (let [playerShip @(rf/subscribe [:playerShip])
-          enemyShip @(rf/subscribe [:enemyShip])]
+    (let [playerShip (:playerShip (:db cofx))
+          enemyShip (:enemyShip (:db cofx))]
       {:db (:db cofx)
        :dispatch (enemyChooseAction enemyShip playerShip)})))
           
@@ -223,7 +215,7 @@
   :logHistory
   (fn [db _]
     (core/devLog "logging turn")
-    (let [newHistory (-> @(rf/subscribe [:history])
+    (let [newHistory (-> (:history db)
                          (concat [db])
                          (vec))]
       (assoc db :history newHistory))))
@@ -232,7 +224,7 @@
 ;saves a copy of current state
 (defn playerPhase
   [cofx effects]
-  (let [newTurn (inc @(rf/subscribe [:turn]))]
+  (let [newTurn (inc (:turn (:db cofx)))]
     (core/devLog "start of player phase")
     {:db (assoc (:db cofx) :turn newTurn)
      :dispatch [:logHistory]}))
@@ -245,7 +237,7 @@
   ::rewindTurn
   (fn [cofx [_ turn]]
     (core/devLog (str "rewinding to turn " turn))
-    {:db (-> @(rf/subscribe [:history])
+    {:db (-> (:history (:db cofx))
              (get (- turn 1)))
      :dispatch [:logHistory]}))
 
@@ -261,20 +253,18 @@
 
 ;toggles firing mode when player pushes fire or ends their phase
 (defn toggleFiringMode [db _]
-  (let [firing? @(rf/subscribe [:firing?])]
-    (if firing?
-      (assoc db :firing? false)
-      (assoc db :firing? true))))
+  (assoc db :firing? (if (:firing? db)
+                       false
+                       true)))
 
 (rf/reg-event-db
   :toggleFiringMode
   toggleFiringMode)
       
 (defn toggleRepairingMode [db _]
-  (let [repairing? (:repairing? db)]
-    (if repairing?
-      (assoc db :repairing? false)
-      (assoc db :repairing? true))))
+  (assoc db :repairing? (if (:repairing? db)
+                          false
+                          true)))
 
 (rf/reg-event-db
   :toggleRepairingMode
@@ -282,10 +272,9 @@
 
 ;toggles :devMode between true and false
 (defn toggleDevMode [db _]
-  (let [devMode @(rf/subscribe [:devMode])]
-    (if devMode
-      (assoc db :devMode false)
-      (assoc db :devMode true))))
+  (assoc db :devMode (if (:devMode db)
+                       false
+                       true)))
 
 (rf/reg-event-db
   ::toggleDevMode
@@ -379,10 +368,10 @@
   [cofx [_ system type firingType]]
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
-  (let [defender @(rf/subscribe [type])
+  (let [defender (type (:db cofx))
         attacker (if (= type :playerShip)
-                  @(rf/subscribe [:enemyShip])
-                  @(rf/subscribe [:playerShip]))
+                  (:enemyShip (:db cofx))
+                  (:playerShip (:db cofx)))
         attackRank (-> attacker
                        (:systems)
                        (firingType)
@@ -444,7 +433,7 @@
   [cofx [_ system type]]
   (if (= type :playerShip)
     (rf/dispatch [:toggleRepairingMode]))
-  (let [ship @(rf/subscribe [type])
+  (let [ship (type (:db cofx))
         repairedShip (-> [system ship]
                          (restoreHP)
                          (restoreSystem)
