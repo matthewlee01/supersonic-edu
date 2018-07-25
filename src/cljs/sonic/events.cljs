@@ -6,13 +6,11 @@
    
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
-  "dispatches the given action event from button"
   [event]
   (fn [] (rf/dispatch [event])))
 
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
-  "dispatches the damage system event with parameters"
   [system type firingType]
   (fn [] (rf/dispatch [:damageShip system type firingType])))
    
@@ -25,9 +23,9 @@
 (defn systemDisabled?
   [system type]
   (if (or (>= 0 (-> @(rf/subscribe [type])
-                 (:systems)
-                 (system)
-                 (get 0)))
+                     (:systems)
+                     (system)
+                     (get 0)))
           (and (= 0 (:ammo  @(rf/subscribe [type])))
                (= system :missiles)))
     true
@@ -54,7 +52,6 @@
        :dispatch [:playerPhase]})))
 
 ;sends an alert and disables main view
-
 (rf/reg-event-db
   :gameEnd
   (fn [db [_ loser gameOver?]]
@@ -81,20 +78,6 @@
 (defn diceRoll
   []
   (+ 1 (rand-int 6)))
-
-(defn consumeAmmo
-  [ship]
-  (let [ammo (:ammo ship)
-        nAmmo (- ammo 1)]
-   (assoc ship :ammo nAmmo)))
-
-(defn refillAmmo
-  [ammo turn]
-  (if (and (> 10 ammo)
-           (= 0 (mod turn 2))) 
-      (inc ammo)
-      ammo))
-
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
@@ -118,7 +101,6 @@
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
-    
 
 ;toggles firing mode for player to select target
 (rf/reg-event-fx
@@ -143,7 +125,6 @@
   {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll)))
    :dispatch [:changePhase]})
 
-
 (rf/reg-event-fx
   :actionChargeShields
   actionChargeShields)
@@ -156,6 +137,7 @@
 (rf/reg-event-fx
   :actionRepairShip
   actionRepairShip)
+
 ;attempt to escape the battle 
 (rf/reg-event-fx
   :actionFlee 
@@ -191,8 +173,8 @@
                           (:systems)
                           (keys))
         playerActiveSystems (->> playerSystems
-                                (map playerSystemsActive?)
-                                (remove false?))]
+                                 (map playerSystemsActive?)
+                                 (remove false?))]
     (if (false? (systemDisabled? :missiles :enemyShip))
       (do (core/devLog "enemy has decided to launch missiles")
           [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
@@ -205,12 +187,11 @@
           (do (core/devLog "enemy has decided to flee")
               [:gameEnd :enemyShip false]))))))
 
-      
 ;toggles phase between player and enemy after each action
 (rf/reg-event-fx
   :changePhase
   (fn [cofx effects]
-    (if (= false (:gameOver? (:db cofx)))
+    (if (false? (:gameOver? (:db cofx)))
       (do
        (core/devLog "changing phase")
        (let [phase (:phase (:db cofx))]
@@ -219,7 +200,6 @@
           :dispatch [:enemyPhase]}
          {:db (assoc (:db cofx) :phase 0)
           :dispatch [:playerPhase]}))))))
-      
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -321,6 +301,19 @@
       (* attackRank)
       (* 5)))
 
+(defn consumeAmmo
+  [ship]
+  (let [ammo (:ammo ship)
+        nAmmo (- ammo 1)]
+   (assoc ship :ammo nAmmo)))
+
+(defn refillAmmo
+  [ammo turn]
+  (if (and (> 10 ammo)
+           (= 0 (mod turn 2))) 
+      (inc ammo)
+      ammo))
+
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
@@ -396,7 +389,6 @@
                 (consumeAmmo attacker)
                 attacker) system damage firingType]))
 
-    
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
 (defn damageShip
@@ -487,13 +479,6 @@
   :repairShip
   repairShip) 
 
-  ;test handler for trying new things and placeholding
-(rf/reg-event-db
-  :doNothing
-  (fn [db _]
-    (core/devLog "doing nothing")
-    db))
-
 (defn setSystemRank 
   [db [_ ship system systemVec]]
   (let [targetShip (ship db)
@@ -505,6 +490,13 @@
 (rf/reg-event-db
   ::setSystemRank
   setSystemRank)
+
+;test handler for trying new things and placeholding
+(rf/reg-event-db
+  :doNothing
+  (fn [db _]
+    (core/devLog "doing nothing")
+    db))
 
 
 

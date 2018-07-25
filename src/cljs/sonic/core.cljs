@@ -31,7 +31,7 @@
 
 (defn adjustSystem
   [ship system systemVec]
-  (rf/dispatch [::events/setSystemRank ship system [newHP newRank]]))
+  (rf/dispatch [::events/setSystemRank ship system systemVec]))
 
 (defn devMode
   []
