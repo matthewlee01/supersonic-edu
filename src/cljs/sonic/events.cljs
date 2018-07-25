@@ -175,7 +175,7 @@
 ;used with map to create a list of all active player systems
 (defn playerSystemsActive?
   [systemType]
-  (let [ship (db/default-db :playerShip)
+  (let [ship @(rf/subscribe [:playerShip])
         system (systemType (:systems ship))]
     (if (> (get system 0) 0)
       systemType
@@ -339,7 +339,7 @@
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
         HPDamage (if (= firingType :lasers)
-                   (if (> (- defenderShields damage) 0)
+                   (if (> defenderShields damage)
                      0
                      (- damage defenderShields))
                    damage)
@@ -351,7 +351,7 @@
       (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
                                :playerShip
                                :enemyShip) true]))
-    [(assoc defender :HP (- defenderHP HPDamage)) 
+    [(assoc defender :HP newHPVal) 
      attacker system damage firingType]))
          
 ;calculates new shield value
