@@ -36,7 +36,7 @@
 
 
 (deftest fullShields
-  "simulated attacks with full player shields"
+  "simulated attacks with full player shields - does not account for supercharged shields"
   (let [testRoll (events/diceRoll)
         sim-db db/default-db
         playerShip (:playerShip sim-db)

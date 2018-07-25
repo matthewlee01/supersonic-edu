@@ -31,6 +31,7 @@
     true
     false))
 
+
 ;initializes default db  
 (rf/reg-event-db
  ::initialize-db
@@ -72,6 +73,20 @@
       (- 1)
       (* 15)
       (+ 100)))
+
+(defn shieldsSupercharged?
+  [ship]
+  (let [maxShields (-> ship 
+                     (:systems)
+                     (:shields)
+                     (get 1)
+                     (calcShieldsMax))
+        shipShields (:shields ship)
+        threshold maxShields]
+    (if (>= shipShields threshold)
+      true
+      false)))
+
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -409,12 +424,21 @@
                        (:systems)
                        (firingType)
                        (get 1))
+        supercharged? (shieldsSupercharged? attacker)
         diceRoll (diceRoll)
-        damage (if (= firingType :lasers)
+        baseDamage (if (= firingType :lasers)
                  (calcLaserDamage attackRank diceRoll)
-                 (calcMissileDamage attackRank diceRoll))]
-       (core/devLog (str "target took " damage " damage"))
-       (let [newShips (-> [defender attacker system damage firingType]
+                 (calcMissileDamage attackRank diceRoll))
+        chargedDamage (if supercharged?
+                        (* 2 baseDamage)
+                        baseDamage)
+        devMsg (str (if (= defender :playerShip) "player " "enemy ")
+                    "took "
+                    baseDamage
+                    " damage "
+                    (if supercharged? (str "times 2 for a total of " chargedDamage " damage")))]
+       (core/devLog devMsg)
+       (let [newShips (-> [defender attacker system chargedDamage firingType]
                           (newHP)
                           (newShields)
                           (newSystemHP)
