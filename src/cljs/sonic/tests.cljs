@@ -9,130 +9,277 @@
   [sonic.core :as core]
   [cljs.test :refer-macros [deftest is testing run-tests]]))
 
-(deftest events
-  
-  (is (= true (-> db/default-db
+(deftest calc
+  "test for functions that do simple calculations"
+  (let [testRoll (events/diceRoll)
+        sim-db db/default-db]
+    (is (= true (-> sim-db
                   (events/toggleFiringMode nil)
                   (:firing?))))
-  (let [testRoll (events/diceRoll)]
-    (is (and (> testRoll 0)
-             (< testRoll 7))))
-  (is (= 40 (events/calcLaserDamage 1 4)))
-  (is (= 40 (events/calcShieldsStrength (-> db/default-db :playerShip :systems :shields second) 5)))
-  (is (= 100 (-> (events/newHP [(:playerShip db/default-db)
-                                (:enemyShip db/default-db)
-                                :engines
-                                40
-                                :lasers])
+    (is (= true (-> sim-db
+                  (events/toggleRepairingMode nil)
+                  (:repairing?))))
+    (is (= true (and (> testRoll 0)
+                     (< testRoll 7))))
+    (is (= 40 (events/calcLaserDamage 1 4)))
+    (is (= 80 (events/calcMissileDamage 2 8)))
+    (is (= 115 (events/calcShieldsMax 2)))
+    (is (= 120 (events/calcShieldsStrength 3 5)))
+    (is (= 64 (events/calcRepairStrength 4 4)))
+    (is (= [4 3] (events/createRepairedSystem 3)))
+    (is (= 10 (events/refillAmmo 10 8)))
+    (is (= 10 (events/refillAmmo 9 8)))
+    (is (= 5 (events/refillAmmo 4 8)))
+    (is (= 5 (events/refillAmmo 5 5))))
+  )
+
+
+
+(deftest fullShields
+  "simulated attacks with full player shields"
+  (let [testRoll (events/diceRoll)
+        sim-db db/default-db
+        playerShip (:playerShip sim-db)
+        enemyShip (:enemyShip sim-db)
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
+        laserAttackFinal (-> laserAttackInit
+                           (events/newHP)
+                           (events/newShields)
+                           (events/newSystemHP)
+                           (events/newAmmo))
+        missileAttackInit [playerShip enemyShip :engines 40 :missiles]
+        missileAttackFinal (-> missileAttackInit
+                             (events/newHP)
+                             (events/newShields)
+                             (events/newSystemHP)
+                             (events/newAmmo))]
+    ;--------laser attack calculations--------
+
+    ;checks shields of defender   
+    (is (= 60 (-> laserAttackFinal
+                (get 0)
+                (:shields))))
+    ;checks HP of defender
+    (is (= 100 (-> laserAttackFinal
                  (get 0)
                  (:HP))))
-  (is (= 60 (-> (events/newShields [(:playerShip db/default-db)
-                                    (:enemyShip db/default-db)
-                                    :engines
-                                    40
-                                    :lasers])
-                (get 0)
-                (:shields))))
-  (is (= [2 1] (-> (events/newSystemHP [(:playerShip db/default-db)
-                                        (:enemyShip db/default-db)
-                                        :engines
-                                        40
-                                        :lasers])
-                (get 0)
-                :systems
-                :engines)))
-  (is (= 100 (-> (events/chargeShields (:playerShip db/default-db) 10)
-                (:shields))))
-  (is (= 100 (events/calcShieldsMax 1)))
-  (is (= :shields (events/playerSystemsActive? :shields))))
+    ;checks targeted system of defender
+    (is (= 2 (-> laserAttackFinal
+               (get 0)
+               (:systems)
+               (:engines)
+               (get 0))))
+    ;checks for ammo consumption for attacker
+    (is (= 2 (-> laserAttackFinal
+               (get 1)
+               (:ammo)))) 
 
+    ;---------missile attack calculations------
 
-  
-
-(deftest reducedShields
-  "tests with reduced player health and shields"
-  (let [sim-db {:playerShip {:systems {:weapons [2 1]
-                                       :shields [2 1]
-                                       :engines [2 1]}
-                             :HP 50
-                             :shields 50}
-                :enemyShip {:systems {:weapons [2 1]
-                                      :shields [2 1]
-                                      :engines [2 1]}
-                            :HP 50
-                            :shields 50}}]
-    (is (= 40 (events/calcShieldsStrength (-> sim-db :playerShip :systems :shields second) 5)))
-    (is (= 40 (-> (events/newHP [(:playerShip sim-db)
-                                 (:enemyShip sim-db)
-                                 :weapons
-                                 60
-                                 :lasers])
-                  (get 0)
-                  (:HP))))
-    (is (= 0 (-> (events/newShields [(:playerShip sim-db)
-                                     (:enemyShip sim-db)
-                                     :weapons
-                                     60
-                                     :lasers])
-                (get 0)
-                (:shields))))
-    (is (= [2 1] (-> (events/newSystemHP [(:playerShip sim-db)
-                                          (:enemyShip sim-db)
-                                          :weapons
-                                          60
-                                          :lasers])
-                     (get 0)
-                     (:systems)
-                     (:weapons))))
-    (is (= 58 (-> (events/chargeShields (:playerShip sim-db) 1)
-                (:shields))))))
-  
-
-(deftest depletedShields
-  "tests with depleted player shields"
-  (let [sim-db {:playerShip {:systems {:weapons [2 1]
-                                       :shields [2 1]
-                                       :engines [2 1]}
-                             :HP 80
-                             :shields 0}
-                :enemyShip {:systems {:weapons [2 1]
-                                      :shields [2 1]
-                                      :engines [2 1]}
-                            :HP 50
-                            :shields 50}}]
-    (is (= 20 (-> (events/newHP [(:playerShip sim-db)
-                                 (:enemyShip sim-db)
-                                 :weapons
-                                 60
-                                 :lasers])
-                  (get 0)
-                  (:HP))))
-    (is (= 0 (-> (events/newShields [(:playerShip sim-db)
-                                     (:enemyShip sim-db)
-                                     :weapons
-                                     60
-                                     :lasers])
+    ;checks shields of defender   
+    (is (= 100 (-> missileAttackFinal
                  (get 0)
                  (:shields))))
-    (is (= [1 1] (-> (events/newSystemHP [(:playerShip sim-db)
-                                          (:enemyShip sim-db)
-                                          :weapons
-                                          60
-                                          :lasers])
-                     (get 0)
-                     (:systems)
-                     (:weapons))))
-    (is (= 16 (-> (events/chargeShields (:playerShip sim-db) 2)
-                  (:shields))))))
+    ;checks HP of defender
+    (is (= 60 (-> missileAttackFinal
+                (get 0)
+                (:HP))))
+    ;checks systems of defender
+    (is (= 1 (-> missileAttackFinal
+               (get 0)
+               (:systems)
+               (:engines)
+               (get 0))))
+    ;checks for ammo consumption for attacker
+    (is (= 1 (-> missileAttackFinal
+               (get 1)
+               (:ammo)))))) 
+
+(deftest reducedShields
+  "simulated attacks with reduced player health and shields"
+  (let [sim-db {:playerShip {:systems {:lasers [2 1]
+                                       :missiles [2 1]
+                                       :shields [2 1]
+                                       :repairBay [2 1]
+                                       :engines [2 1]}
+                             :HP 100
+                             :maxHP 100
+                             :ammo 2
+                             :shields 20}
+                :enemyShip {:systems {:lasers [2 1]
+                                      :missiles [2 1]
+                                      :shields [2 1]
+                                      :repairBay [2 1]
+                                      :engines [2 1]}
+                            :HP 100
+                            :maxHP 100
+                            :ammo 2
+                            :shields 20}}
+        playerShip (:playerShip sim-db)
+        enemyShip (:enemyShip sim-db)
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
+        laserAttackFinal (-> laserAttackInit
+                           (events/newHP)
+                           (events/newShields)
+                           (events/newSystemHP)
+                           (events/newAmmo))
+        missileAttackInit [playerShip enemyShip :engines 40 :missiles]
+        missileAttackFinal (-> missileAttackInit
+                             (events/newHP)
+                             (events/newShields)
+                             (events/newSystemHP)
+                             (events/newAmmo))]
+    ;--------laser attack calculations--------
+
+    ;checks shields of defender   
+    (is (= 0 (-> laserAttackFinal
+               (get 0)
+               (:shields))))
+    ;checks HP of defender
+    (is (= 80 (-> laserAttackFinal
+                (get 0)
+                (:HP))))
+    ;checks targeted system of defender
+    (is (= [1 1] (-> laserAttackFinal
+                   (get 0)
+                   (:systems)
+                   (:engines))))
+    ;checks for ammo consumption for attacker
+    (is (= 2 (-> laserAttackFinal
+               (get 1)
+               (:ammo)))) 
+
+    ;---------missile attack calculations------
+
+    ;checks shields of defender   
+    (is (= 20 (-> missileAttackFinal
+                (get 0)
+                (:shields))))
+    ;checks HP of defender
+    (is (= 60 (-> missileAttackFinal
+                (get 0)
+                (:HP))))
+    ;checks systems of defender
+    (is (= [1 1] (-> missileAttackFinal
+                   (get 0)
+                   (:systems)
+                   (:engines))))
+    ;checks for ammo consumption for attacker
+    (is (= 1 (-> missileAttackFinal
+               (get 1)
+               (:ammo))))))
+  
+(deftest depletedShields
+  "simulated attacks with depleted player shields"
+  (let [sim-db {:playerShip {:systems {:lasers [2 1]
+                                       :missiles [2 1]
+                                       :shields [2 1]
+                                       :repairBay [2 1]
+                                       :engines [2 1]}
+                             :HP 100
+                             :ammo 2
+                             :shields 0}
+                :enemyShip {:systems {:lasers [2 1]
+                                      :missiles [2 1]
+                                      :shields [2 1]
+                                      :repairBay [2 1]
+                                      :engines [2 1]}
+                            :HP 100
+                            :shields 0
+                            :ammo 2}}
+        playerShip (:playerShip sim-db)
+        enemyShip (:enemyShip sim-db)
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
+        laserAttackFinal (-> laserAttackInit
+                           (events/newHP)
+                           (events/newShields)
+                           (events/newSystemHP)
+                           (events/newAmmo))
+        missileAttackInit [playerShip enemyShip :engines 40 :missiles]
+        missileAttackFinal (-> missileAttackInit
+                             (events/newHP)
+                             (events/newShields)
+                             (events/newSystemHP)
+                             (events/newAmmo))]
+    ;--------laser attack calculations--------
+
+    ;checks shields of defender   
+    (is (= 0 (-> laserAttackFinal
+                (get 0)
+                (:shields))))
+    ;checks HP of defender
+    (is (= 60 (-> laserAttackFinal
+                 (get 0)
+                 (:HP))))
+    ;checks targeted system of defender
+    (is (= [1 1] (-> laserAttackFinal
+                   (get 0)
+                   (:systems)
+                   (:engines))))
+    ;checks for ammo consumption for attacker
+    (is (= 2 (-> laserAttackFinal
+               (get 1)
+               (:ammo)))) 
+
+    ;---------missile attack calculations------
+
+    ;checks shields of defender   
+    (is (= 0 (-> missileAttackFinal
+               (get 0)
+               (:shields))))
+    ;checks HP of defender
+    (is (= 60 (-> missileAttackFinal
+                (get 0)
+                (:HP))))
+    ;checks systems of defender
+    (is (= [1 1] (-> missileAttackFinal
+                   (get 0)
+                   (:systems)
+                   (:engines))))
+    ;checks for ammo consumption for attacker
+    (is (= 1 (-> missileAttackFinal
+               (get 1)
+               (:ammo))))))
 
 
+(deftest damagedShip
+  "testing shielding, repairing, and ammo consumption functions on a damaged ship"
+  (let [randomAmount (events/diceRoll)
+        testShip {:systems {:lasers [1 1]
+                              :engines [0 3]
+                              :shields [2 1]
+                              :repairBay [2 1]}
+                    :HP 30
+                    :maxHP 200
+                    :shields 10
+                    :ammo 5}
+        newShip (-> [:engines testShip]
+                  (events/restoreHP)
+                  (events/restoreSystem)
+                  (get 1)
+                  (events/chargeShields randomAmount)
+                  (events/consumeAmmo))
+        newHP (:HP newShip)
+        newAmmo (:ammo newShip)
+        newShields (:shields newShip)
+        newEngines (-> newShip :systems :engines)
+        ]
 
+    ;checking HP
+    (is (= true (and (>= newHP 34)
+                     (<= newHP 54))))
+    
+    ;checking shields
+    (is (= true (and (>= newShields 18)
+                     (<= newShields 58))))
 
+    ;checking ammo
+    (is (= 4 newAmmo))
 
-
+    ;checking engine system
+    (is (= [4 3] newEngines))))
 
   
 
 
 (run-tests)
-

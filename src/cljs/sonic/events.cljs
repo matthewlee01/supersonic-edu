@@ -324,7 +324,7 @@
   (let [defenderHP (:HP defender)
         defenderShields (:shields defender)
         HPDamage (if (= firingType :lasers)
-                   (if (> (- defenderShields damage) 0)
+                   (if (> defenderShields damage)
                      0
                      (- damage defenderShields))
                    damage)
@@ -336,7 +336,7 @@
       (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
                                :playerShip
                                :enemyShip) true]))
-    [(assoc defender :HP (- defenderHP HPDamage)) 
+    [(assoc defender :HP newHPVal) 
      attacker system damage firingType]))
          
 ;calculates new shield value
