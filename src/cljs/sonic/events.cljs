@@ -453,10 +453,10 @@
     db))
 
 (defn setSystemRank 
-  [db [_ ship system [newHP newRank]]]
+  [db [_ ship system systemVec]]
   (let [targetShip (ship db)
         shipSystems (:systems targetShip)
-        newSystemsMap (assoc shipSystems system [newHP newRank])
+        newSystemsMap (assoc shipSystems system systemVec)
         newShip (assoc targetShip :systems newSystemsMap)]
     (assoc db ship newShip)))
   

@@ -30,7 +30,7 @@
     (println string)))
 
 (defn adjustSystem
-  [ship system [newHP newRank]]
+  [ship system systemVec]
   (rf/dispatch [::events/setSystemRank ship system [newHP newRank]]))
 
 (defn devMode
