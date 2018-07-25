@@ -170,6 +170,7 @@
      :dispatch [:gameEnd :playerShip false]}))
 
 ;used with map to create a list of all active player systems
+;takes in a key, returns the same key or false.
 (defn playerSystemsActive?
   [systemType]
   (let [ship @(rf/subscribe [:playerShip])
@@ -178,6 +179,9 @@
       systemType
       false)))
 
+;takes in a key from a vector, checks to see if it is damaged. 
+;if true, returns the key back. else, return false. 
+;used with map to create a vector of all damaged systems.
 (defn enemySystemsDamaged?
   [systemType]
   (let [ship @(rf/subscribe [:enemyShip])
