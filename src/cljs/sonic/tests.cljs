@@ -25,8 +25,7 @@
     (is (= 10 (events/refillAmmo 10 8)))
     (is (= 10 (events/refillAmmo 9 8)))
     (is (= 5 (events/refillAmmo 4 8)))
-    (is (= 5 (events/refillAmmo 5 5)))
-    ))
+    (is (= 5 (events/refillAmmo 5 5)))))
 
 
 
@@ -36,7 +35,7 @@
         sim-db db/default-db
         playerShip (:playerShip sim-db)
         enemyShip (:enemyShip sim-db)
-        laserAttackInit [playerShip enemyShip :engines 40 :laser]
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
         laserAttackFinal (-> laserAttackInit
                            (events/newHP)
                            (events/newShields)
@@ -60,10 +59,10 @@
                  (:HP))))
     ;checks targeted system of defender
     (is (= 2 (-> laserAttackFinal
-                   (get 0)
-                   (:systems)
-                   (:engines)
-                   (get 0))))
+               (get 0)
+               (:systems)
+               (:engines)
+               (get 0))))
     ;checks for ammo consumption for attacker
     (is (= 2 (-> laserAttackFinal
                (get 1)
@@ -81,19 +80,14 @@
                 (:HP))))
     ;checks systems of defender
     (is (= 1 (-> missileAttackFinal
-                   (get 0)
-                   (:systems)
-                   (:engines)
-                   (get 0))))
+               (get 0)
+               (:systems)
+               (:engines)
+               (get 0))))
     ;checks for ammo consumption for attacker
     (is (= 1 (-> missileAttackFinal
                (get 1)
                (:ammo)))))) 
-
-
-
-
-  
 
 (deftest reducedShields
   "tests with reduced player health and shields"
@@ -117,7 +111,7 @@
                             :shields 20}}
         playerShip (:playerShip sim-db)
         enemyShip (:enemyShip sim-db)
-        laserAttackInit [playerShip enemyShip :engines 40 :laser]
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
         laserAttackFinal (-> laserAttackInit
                            (events/newHP)
                            (events/newShields)
@@ -133,12 +127,12 @@
 
     ;checks shields of defender   
     (is (= 0 (-> laserAttackFinal
-                (get 0)
-                (:shields))))
+               (get 0)
+               (:shields))))
     ;checks HP of defender
     (is (= 80 (-> laserAttackFinal
-                 (get 0)
-                 (:HP))))
+                (get 0)
+                (:HP))))
     ;checks targeted system of defender
     (is (= [1 1] (-> laserAttackFinal
                    (get 0)
@@ -153,8 +147,8 @@
 
     ;checks shields of defender   
     (is (= 20 (-> missileAttackFinal
-                 (get 0)
-                 (:shields))))
+                (get 0)
+                (:shields))))
     ;checks HP of defender
     (is (= 60 (-> missileAttackFinal
                 (get 0)
@@ -171,21 +165,25 @@
   
 (deftest depletedShields
   "tests with depleted player shields"
-  (let [sim-db {:playerShip {:systems {:weapons [2 1]
+  (let [sim-db {:playerShip {:systems {:lasers [2 1]
+                                       :missiles [2 1]
                                        :shields [2 1]
+                                       :repairBay [2 1]
                                        :engines [2 1]}
                              :HP 100
-                             :shields 0
-                             :ammo 2}
-                :enemyShip {:systems {:weapons [2 1]
+                             :ammo 2
+                             :shields 0}
+                :enemyShip {:systems {:lasers [2 1]
+                                      :missiles [2 1]
                                       :shields [2 1]
+                                      :repairBay [2 1]
                                       :engines [2 1]}
                             :HP 100
-                            :shields 50
+                            :shields 0
                             :ammo 2}}
         playerShip (:playerShip sim-db)
         enemyShip (:enemyShip sim-db)
-        laserAttackInit [playerShip enemyShip :engines 40 :laser]
+        laserAttackInit [playerShip enemyShip :engines 40 :lasers]
         laserAttackFinal (-> laserAttackInit
                            (events/newHP)
                            (events/newShields)
@@ -213,7 +211,7 @@
                    (:systems)
                    (:engines))))
     ;checks for ammo consumption for attacker
-    (is (= 1 (-> laserAttackFinal
+    (is (= 2 (-> laserAttackFinal
                (get 1)
                (:ammo)))) 
 
@@ -221,8 +219,8 @@
 
     ;checks shields of defender   
     (is (= 0 (-> missileAttackFinal
-                 (get 0)
-                 (:shields))))
+               (get 0)
+               (:shields))))
     ;checks HP of defender
     (is (= 60 (-> missileAttackFinal
                 (get 0)
@@ -233,7 +231,7 @@
                    (:systems)
                    (:engines))))
     ;checks for ammo consumption for attacker
-    (is (= 2 (-> missileAttackFinal
+    (is (= 1 (-> missileAttackFinal
                (get 1)
                (:ammo))))))
 
