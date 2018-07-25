@@ -90,7 +90,6 @@
 
 (defn refillAmmo
   [ammo turn]
-  (println "+ammo")
   (if (and (> 10 ammo)
            (= 0 (mod turn 2))) 
       (inc ammo)
@@ -243,9 +242,9 @@
 (defn playerPhase
   [cofx effects]
   (let [newTurn (inc @(rf/subscribe [:turn]))
-        refilledAmmo (refillAmmo (:ammo @(rf/subscribe [:playerShip])) newTurn)
-        newPlayerShip (assoc @(rf/subscribe [:playerShip]) :ammo refilledAmmo)
-        ]
+        playerShip @(rf/subscribe [:playerShip])
+        refilledAmmo (refillAmmo (:ammo playerShip) newTurn)
+        newPlayerShip (assoc playerShip :ammo refilledAmmo)]
     (core/devLog "start of player phase")
     {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip)
      :dispatch [:logHistory]}))
@@ -374,8 +373,7 @@
 (defn newAmmo 
   [[defender attacker system damage firingType]]
   (let [currentAmmo (:ammo attacker)]
-    (if ;(and (< 0 currentAmmo)
-             (= firingType :missiles);)
+    (if (= firingType :missiles)
       [defender (consumeAmmo attacker) system damage firingType]
       [defender attacker system damage firingType])))
 
