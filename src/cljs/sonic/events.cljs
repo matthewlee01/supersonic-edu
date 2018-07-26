@@ -116,14 +116,28 @@
       (* attackRank)
       (* 5)))
 
-(defn criticalHP?
-  [attacker defender]
-  (let [potentialDamage (-> attacker
+;determines whether or not an attack of the specified type
+;can potentially kill the target
+;takes in attacker, defender, and firingType (:lasers or :missiles)
+;returns true if target can be killed
+(defn killRange?
+  [attacker defender firingType]
+  (let [calcType (if (= firingType :lasers)
+                   calcLaserDamage 
+                   calcMissileDamage)
+        vitality (if (= firingType :lasers)
+                   (+ (:HP defender) (:shields defender))
+                   (:HP defender))
+        supercharged? (shieldsSupercharged? attacker)
+        dmgFactor (if supercharged?
+                    9
+                    6)
+        potentialDamage (-> attacker
                             (:systems)
-                            (:missiles)
+                            (firingType)
                             (get 1)
-                            (calcMissileDamage 6))]
-    (if (<= (:HP defender) potentialDamage)
+                            (calcType dmgFactor))]
+    (if (>= potentialDamage vitality)
       true
       false)))
 
@@ -241,26 +255,42 @@
         enemyShields (:shields enemyShip)
         playerTargetSystem (getTargetSystem :target)
         enemyTargetSystem (getTargetSystem :repair)]
-    (if (and (criticalHP? playerShip enemyShip)
-             (not= nil enemyTargetSystem)
-             (false? (systemDisabled? :repairBay :enemyShip)))
-      (do (core/devLog "enemy has decided to repair their ship")
-          [:repairShip enemyTargetSystem :enemyShip])
-      (if (false? (systemDisabled? :missiles :enemyShip))
-        (do (core/devLog "enemy has decided to launch missiles")
-            [:damageShip playerTargetSystem :playerShip :missiles])
-        (if (false? (systemDisabled? :lasers :enemyShip))
-          (do (core/devLog "enemy has decided to fire lasers")
-              [:damageShip playerTargetSystem :playerShip :lasers])
-          (if (and (false? (systemDisabled? :shields :enemyShip))
-                   (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
-            (do (core/devLog "enemy has decided to charge their shields") 
+    (if (and (killRange? enemyShip playerShip :missiles)
+             (false? (systemDisabled? :missiles :enemyShip)))
+      (do (core/devLog "enemy has decided to launch missiles")
+          [:damageShip playerTargetSystem :playerShip :missiles])
+      (if (and (killRange? enemyShip playerShip :lasers)
+               (false? (systemDisabled? :lasers :enemyShip)))
+        (do (core/devLog "enemy has decided to fire lasers")
+            [:damageShip playerTargetSystem :playerShip :lasers])
+        (if (and (killRange? playerShip enemyShip :missiles)
+                 (not= nil enemyTargetSystem)
+                 (false? (systemDisabled? :repairBay :enemyShip)))
+          (do (core/devLog "enemy has decided to repair their ship")
+              [:repairShip enemyTargetSystem :enemyShip])
+          (if (and (killRange? playerShip enemyShip :lasers)
+                   (false? (systemDisabled? :shields :enemyShip)))
+            (do (core/devLog "enemy has decided to charge their shields")
                 [:enemyChargeShields])
-            (if (false? (systemDisabled? :repairBay :enemyShip))
-              (do (core/devLog "enemy has decided to repair their ship")
-                  [:repairShip enemyTargetSystem :enemyShip])
-              (do (core/devLog "enemy has decided to flee")
-                  [:gameEnd :enemyShip false]))))))))
+            (if (and (>= (:shields playerShip) 100)
+                     (false? (systemDisabled? :lasers :enemyShip)))
+              (do (core/devLog "enemy has decided to fire lasers")
+                  [:damageShip playerTargetSystem :playerShip :lasers])
+              (if (false? (systemDisabled? :missiles :enemyShip))
+                (do (core/devLog "enemy has decided to launch missiles")
+                    [:damageShip playerTargetSystem :playerShip :missiles])
+                (if (false? (systemDisabled? :lasers :enemyShip))
+                  (do (core/devLog "enemy has decided to fire lasers")
+                      [:damageShip playerTargetSystem :playerShip :lasers])
+                  (if (and (false? (systemDisabled? :shields :enemyShip))
+                           (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
+                    (do (core/devLog "enemy has decided to charge their shields") 
+                        [:enemyChargeShields])
+                    (if (false? (systemDisabled? :repairBay :enemyShip))
+                      (do (core/devLog "enemy has decided to repair their ship")
+                          [:repairShip enemyTargetSystem :enemyShip])
+                      (do (core/devLog "enemy has decided to flee")
+                          [:gameEnd :enemyShip false]))))))))))))
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
@@ -480,7 +510,7 @@
         finalDamage (if dodge?
                       0
                       (if supercharged?
-                        (* 2 baseDamage)
+                        (* 1.5 baseDamage)
                         baseDamage))
         devMsg (if dodge?
                  "attack dodged! no damage taken"
@@ -488,7 +518,7 @@
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times 2 for a total of " finalDamage " damage"))))]
+                    (if supercharged? (str " times 1.5 for a total of " finalDamage " damage"))))]
        (core/devLog devMsg)
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)

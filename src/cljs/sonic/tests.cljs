@@ -232,8 +232,8 @@
         newHP (:HP newShip)
         newAmmo (:ammo newShip)
         newShields (:shields newShip)
-        newEngines (-> newShip :systems :engines)
-        ]
+        newEngines (-> newShip :systems :engines)]
+        
 
     ;checking HP
     (is (= true (and (>= newHP 34)
