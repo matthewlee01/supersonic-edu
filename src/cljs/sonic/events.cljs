@@ -286,7 +286,7 @@
                          (= 0 (mod turn 2)))
                   (+ oldAmmo 1)
                   oldAmmo)]
-        (assoc ship :ammo newAmmo)))
+       (assoc ship :ammo newAmmo)))
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -372,6 +372,16 @@
   ::toggleDevMode
   toggleDevMode)
 
+(defn attackDodged?
+  [defender]
+  (let [enginesRank(-> defender
+                     (:systems)
+                     (:engines)
+                     (get 1))]
+     (if (> enginesRank (rand-int 20))
+       true
+       false)))
+
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
@@ -416,9 +426,10 @@
                               (:shields)
                               (get 1))
         shieldsMax (calcShieldsMax shieldsSystemRank)]
-    (if (or (and (<= defenderShields 0)
-                 (= firingType :lasers))
-            (= firingType :missiles))
+    (if (and (or (and (<= defenderShields 0)
+                      (= firingType :lasers))
+                 (= firingType :missiles))
+             (> damage 0))
       (let [systemHP (-> defender
                          (:systems)
                          (system)
@@ -462,17 +473,22 @@
                        (firingType)
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
+        dodge? (attackDodged? defender)
         baseDamage (if (= firingType :lasers)
                      (calcLaserDamage attackRank (diceRoll))
                      (calcMissileDamage attackRank (diceRoll)))
-        finalDamage (if supercharged?
+        finalDamage (if dodge?
+                      0
+                      (if supercharged?
                         (* 2 baseDamage)
-                        baseDamage)
-        devMsg (str (if (= type :enemyShip) (str "enemy ") (str "player "))
+                        baseDamage))
+        devMsg (if dodge?
+                 "attack dodged! no damage taken"
+                 (str (if (= type :enemyShip) (str "enemy ") (str "player "))
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times 2 for a total of " finalDamage " damage")))]
+                    (if supercharged? (str " times 2 for a total of " finalDamage " damage"))))]
        (core/devLog devMsg)
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
