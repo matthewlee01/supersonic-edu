@@ -4,6 +4,8 @@
    [re-frame.core :as rf]
    [sonic.db :as db]))
    
+(def DODGE_CHANCE_RANGE 20)
+
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
   [event]
@@ -402,13 +404,17 @@
   ::toggleDevMode
   toggleDevMode)
 
+;takes a ship and rolls for dodge chance,
+;taking the ship's engine rank and 
+;comparing it to a randomly generated integer.
+;returns true for a dodge and false for a hit.
 (defn attackDodged?
   [defender]
   (let [enginesRank(-> defender
                      (:systems)
                      (:engines)
                      (get 1))]
-     (if (> enginesRank (rand-int 20))
+     (if (> enginesRank (rand-int DODGE_CHANCE_RANGE))
        true
        false)))
 
@@ -520,6 +526,7 @@
                     " damage"
                     (if supercharged? (str " times 1.5 for a total of " finalDamage " damage"))))]
        (core/devLog devMsg)
+       (if dodge? (rf/dispatch [:shipDodge type]))
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
                           (newShields)
@@ -536,6 +543,16 @@
 (rf/reg-event-fx
   :damageShip
   damageShip)
+
+;event handler for shipDodge event, currently doesn't do anything
+(defn shipDodge
+  [db [_ shipType]]
+  (core/devLog "attack dodged")
+  db)
+
+(rf/reg-event-db
+  :shipDodge
+  shipDodge)
 
 (defn calcRepairStrength
   [repairRank diceRoll]
