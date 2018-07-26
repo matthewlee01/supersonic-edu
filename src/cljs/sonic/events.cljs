@@ -472,9 +472,9 @@
                      (calcLaserDamage attackRank (diceRoll))
                      (calcMissileDamage attackRank (diceRoll)))
         finalDamage (if supercharged?
-                        (* 2 baseDamage)
+                        (* 1.5 baseDamage)
                         baseDamage)
-        devMsg (str (if (= defender :playerShip) "player " "enemy ")
+        devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
                     baseDamage
                     " damage"
