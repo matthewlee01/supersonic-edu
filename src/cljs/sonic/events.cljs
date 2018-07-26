@@ -44,11 +44,12 @@
   ::gameStart
   (fn [cofx effects]
     (core/devLog "start of game")
-    {:db (assoc (:db cofx) :playerName (if-let [playerName (js/prompt "Enter your name:")] 
-                                          (if (= playerName "")
-                                            "Player"
-                                            playerName)
-                                          "Player"))
+    {:db (-> (assoc (:db cofx) :gameOver? false)
+             (assoc :playerName (if-let [playerName (js/prompt "Enter your name:")] 
+                                   (if (= playerName "")
+                                     "Player"
+                                     playerName)
+                                   "Player")))
      :dispatch [:playerPhase]}))
 
 ;sends an alert and disables main view
@@ -316,7 +317,7 @@
                          (= 0 (mod turn 2)))
                   (+ oldAmmo 1)
                   oldAmmo)]
-        (assoc ship :ammo newAmmo)))
+       (assoc ship :ammo newAmmo)))
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -502,7 +503,7 @@
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times 2 for a total of " finalDamage " damage")))]
+                    (if supercharged? (str " times 1.5 for a total of " finalDamage " damage")))]
        (core/devLog devMsg)
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
