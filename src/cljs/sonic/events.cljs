@@ -39,7 +39,7 @@
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
-	"calculates the maximum shield value given the rank of the ship's shield system"
+  "calculates the maximum shield value given the rank of the ship's shield system"
   [shieldsSystemRank]
   (-> shieldsSystemRank
       (- 1)
@@ -49,29 +49,29 @@
 
 ;initializes default db  
 (rf/reg-event-db
- ::initialize-db
- (fn [_ _]
-   (core/devLog "initializing")
-   db/default-db))
+  ::initialize-db
+  (fn [_ _]
+    (core/devLog "initializing")
+    db/default-db))
 
 (defn systemReset
-	"resets a system's HP based on its level"
-	[systemStats]
-	(vector (inc (get systemStats 1)) (get systemStats 1)))
+  "resets a system's HP based on its level"
+  [systemStats]
+  (vector (inc (get systemStats 1)) (get systemStats 1)))
 
 (defn shipReset
-	"resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
-	[ship]
-	(let [systemNames (keys (:systems ship))
-				oldSystemStats (vals (:systems ship))
-				newSystemStats (map systemReset oldSystemStats)
-				newSystems (zipmap systemNames newSystemStats)
-		  	newMaxHP (+ (:maxHP ship) HP_GAIN)
-		  	newShields (-> newSystems
-		  							   :shields
-		  							   (get 1)
-		  							   (calcShieldsMax))]
-		(assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
+  "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
+  [ship]
+  (let [systemNames (keys (:systems ship))
+		oldSystemStats (vals (:systems ship))
+		newSystemStats (map systemReset oldSystemStats)
+		newSystems (zipmap systemNames newSystemStats)
+	  	newMaxHP (+ (:maxHP ship) HP_GAIN)
+	  	newShields (-> newSystems
+					   :shields
+					   (get 1)
+					   (calcShieldsMax))]
+    (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
 
@@ -89,16 +89,16 @@
      :dispatch [:reset-db]}))
 
 (defn reset-db
-	"resets game state and applies HP buff using shipReset" 
-	[cofx effexts]
-	(let [newPlayerShip (-> cofx :db :playerShip shipReset)
-				newEnemyShip (-> cofx :db :enemyShip shipReset)]
-		{:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
-		 :dispatch [:playerPhase]}))
+  "resets game state and applies HP buff using shipReset" 
+  [cofx effexts]
+  (let [newPlayerShip (-> cofx :db :playerShip shipReset)
+		newEnemyShip (-> cofx :db :enemyShip shipReset)]
+	{:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
+	 :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx
-	:reset-db
-	reset-db)
+  :reset-db
+  reset-db)
 
 
 ;sends an alert and disables main view
