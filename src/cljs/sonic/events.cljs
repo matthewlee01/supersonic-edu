@@ -45,11 +45,13 @@
   (fn [cofx effects]
     (core/devLog "start of game")
     {:db (-> (assoc (:db cofx) :gameOver? false)
-             (assoc :playerName (if-let [playerName (js/prompt "Enter your name:")] 
+             (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
+                                  existingName
+                                  (if-let [playerName (js/prompt "Enter your name:")] 
                                    (if (= playerName "")
                                      "Player"
                                      playerName)
-                                   "Player")))
+                                   "Player"))))
      :dispatch [:playerPhase]}))
 
 ;sends an alert and disables main view

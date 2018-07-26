@@ -86,7 +86,9 @@
                                           1
                                           -1)}}
        [:fieldset
-        [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))} "whoops go back"]]]
+        [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                  :style {:font-size "200px"
+                          :padding "210px 0px"}} "whoops go back"]]]
       [:div.battle
         [:fieldset {:disabled gameOver?
                     :style {:position "absolute"}}
