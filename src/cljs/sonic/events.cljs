@@ -4,6 +4,12 @@
    [re-frame.core :as rf]
    [sonic.db :as db]))
    
+(def BASE_SHIELD_MAX 100)
+
+(def SHIELD_GAIN_MULIPLIER 15)
+
+(def HP_GAIN 50)
+
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
   [event]
@@ -33,11 +39,12 @@
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
+	"calculates the maximum shield value given the rank of the ship's shield system"
   [shieldsSystemRank]
   (-> shieldsSystemRank
       (- 1)
-      (* 15)
-      (+ 100)))
+      (* SHIELD_GAIN_MULIPLIER)
+      (+ BASE_SHIELD_MAX)))
 
 
 ;initializes default db  
@@ -48,16 +55,18 @@
    db/default-db))
 
 (defn systemReset
+	"resets a system's HP based on its level"
 	[systemStats]
 	(vector (inc (get systemStats 1)) (get systemStats 1)))
 
 (defn shipReset
+	"resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
 	[ship]
 	(let [systemNames (keys (:systems ship))
 				oldSystemStats (vals (:systems ship))
 				newSystemStats (map systemReset oldSystemStats)
 				newSystems (zipmap systemNames newSystemStats)
-		  	newMaxHP (+ (:maxHP ship) 50)
+		  	newMaxHP (+ (:maxHP ship) HP_GAIN)
 		  	newShields (-> newSystems
 		  							   :shields
 		  							   (get 1)
@@ -80,7 +89,7 @@
      :dispatch [:reset-db]}))
 
 (defn reset-db
-	"resets game state and applies HP buff" 
+	"resets game state and applies HP buff using shipReset" 
 	[cofx effexts]
 	(let [newPlayerShip (-> cofx :db :playerShip shipReset)
 				newEnemyShip (-> cofx :db :enemyShip shipReset)]
