@@ -116,6 +116,10 @@
       (* attackRank)
       (* 5)))
 
+;determines whether or not an attack of the specified type
+;can potentially kill the target
+;takes in attacker, defender, and firingType (:lasers or :missiles)
+;returns true if target can be killed
 (defn killRange?
   [attacker defender firingType]
   (let [calcType (if (= firingType :lasers)
