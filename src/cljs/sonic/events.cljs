@@ -208,7 +208,7 @@
 ;by filtering through priority list
 (defn getTargetSystem
   [filterType]
-  (get (->> (type enemyPriorityList)
+  (get (->> (filterType enemyPriorityList)
             (map (if (= filterType :repair)
                    enemySystemsDamaged?
                    playerSystemsActive?)) 
