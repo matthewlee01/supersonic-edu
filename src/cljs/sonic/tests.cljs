@@ -30,8 +30,8 @@
     (is (= 10 (events/refillAmmo 10 8)))
     (is (= 10 (events/refillAmmo 9 8)))
     (is (= 5 (events/refillAmmo 4 8)))
-    (is (= 5 (events/refillAmmo 5 5))))
-  )
+    (is (= 5 (events/refillAmmo 5 5)))))
+  
 
 
 
@@ -262,8 +262,8 @@
         newHP (:HP newShip)
         newAmmo (:ammo newShip)
         newShields (:shields newShip)
-        newEngines (-> newShip :systems :engines)
-        ]
+        newEngines (-> newShip :systems :engines)]
+        
 
     ;checking HP
     (is (= true (and (>= newHP 34)
