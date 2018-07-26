@@ -4,6 +4,8 @@
    [re-frame.core :as rf]
    [sonic.db :as db]))
    
+(def SUPERCHARGED_MULTIPLIER 1.5)
+
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
   [event]
@@ -499,13 +501,13 @@
                      (calcLaserDamage attackRank (diceRoll))
                      (calcMissileDamage attackRank (diceRoll)))
         finalDamage (if supercharged?
-                        (* 1.5 baseDamage)
+                        (* SUPERCHARGED_MULTIPLIER baseDamage)
                         baseDamage)
         devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times 1.5 for a total of " finalDamage " damage")))]
+                    (if supercharged? (str " times " SUPERCHARGED_MULTIPLIER " for a total of " finalDamage " damage")))]
        (core/devLog devMsg)
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
