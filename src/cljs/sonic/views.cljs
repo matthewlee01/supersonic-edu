@@ -4,6 +4,14 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+(defn pickColour []
+  "creates a random hex colour code (no blue values)"
+  (str "#" (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    "00"))
+
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?]) 
@@ -38,7 +46,9 @@
         systemRank (get systemVec 1)
         systemHP (get systemVec 0)             
         shieldedStatus (if (> (:shields ship) 0)
-                         "lightblue"
+                         (if (events/shieldsSupercharged? @(rf/subscribe [type]))
+                           "violet"
+                           "lightblue")
                          "orange")]
     [:button.system
      (if (= type :playerShip)
@@ -115,7 +125,7 @@
         [systemButton :shields :playerShip "Shields"]
         [systemButton :repairBay :playerShip "Repair Bay"]
         [systemButton :engines :playerShip "Engines"]]
-       [:div.enemyShip
+       [:div.enemyShip {:style {:background-color (pickColour)}}
         [:div.vitalityDisplayArea
          [shipVitalityDisplay enemyShields "Shields"]
          [shipVitalityDisplay enemyHP "HP"]]
