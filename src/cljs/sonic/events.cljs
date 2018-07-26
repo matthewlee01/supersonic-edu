@@ -103,6 +103,30 @@
       (* shieldsSystemRank)
       (* 8)))
 
+;formula for damage: randomfactor x weaponrank x 10dmg
+(defn calcLaserDamage
+  [attackRank diceRoll]
+  (-> diceRoll
+      (* attackRank)
+      (* 10)))
+
+(defn calcMissileDamage
+  [attackRank diceRoll]
+  (-> diceRoll
+      (* attackRank)
+      (* 5)))
+
+(defn criticalHP?
+  [attacker defender]
+  (let [potentialDamage (-> attacker
+                            (:systems)
+                            (:missiles)
+                            (get 1)
+                            (calcMissileDamage 6))]
+    (if (<= (:HP defender) potentialDamage)
+      true
+      false)))
+
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
   (let [shieldsSystem (-> ship
@@ -164,11 +188,24 @@
      :dispatch [:gameEnd :playerShip false]}))
 
 ;used with map to create a list of all active player systems
+;takes in a key, returns the same key or false.
 (defn playerSystemsActive?
   [systemType]
   (let [ship @(rf/subscribe [:playerShip])
         system (systemType (:systems ship))]
     (if (> (get system 0) 0)
+      systemType
+      false)))
+
+;takes in a key from a vector, checks to see if it is damaged. 
+;if true, returns the key back. else, return false. 
+;used with map to create a vector of all damaged systems.
+(defn enemySystemsDamaged?
+  [systemType]
+  (let [ship @(rf/subscribe [:enemyShip])
+        system (systemType (:systems ship))]
+    (if (-> (get system 0)
+            (< (+ (get system 1) 1)))
       systemType
       false)))
 
@@ -180,32 +217,52 @@
     {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
      :dispatch [:changePhase]}))
 
+;holds priority list for enemy attacks and repairs
+(def enemyPriorityList
+  {:target [:lasers :missiles :shields :repairBay :engines]
+   :repair [:missiles :lasers :shields :repairBay :engines]})
+
+;selects a system target for enemy AI
+;by filtering through priority list
+(defn getTargetSystem
+  [filterType]
+  (get (->> (filterType enemyPriorityList)
+            (map (if (= filterType :repair)
+                   enemySystemsDamaged?
+                   playerSystemsActive?)) 
+            (remove false?)
+            (vec)) 0))
+   
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
   (core/devLog "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
         enemyShields (:shields enemyShip)
-        playerSystems (-> playerShip
-                          (:systems)
-                          (keys))
-        playerActiveSystems (->> playerSystems
-                                 (map playerSystemsActive?)
-                                 (remove false?))]
-    (if (false? (systemDisabled? :missiles :enemyShip))
-      (do (core/devLog "enemy has decided to launch missiles")
-          [:damageShip (rand-nth playerActiveSystems) :playerShip :missiles])
-      (if (false? (systemDisabled? :lasers :enemyShip))
-        (do (core/devLog "enemy has decided to fire")
-            [:damageShip (rand-nth playerActiveSystems) :playerShip :lasers])
-        (if (false? (systemDisabled? :shields :enemyShip))
-          (do (core/devLog "enemy has decided to charge their shields") 
-              [:enemyChargeShields])
-          (do (core/devLog "enemy has decided to flee")
-              [:gameEnd :enemyShip false]))))))
+        playerTargetSystem (getTargetSystem :target)
+        enemyTargetSystem (getTargetSystem :repair)]
+    (if (and (criticalHP? playerShip enemyShip)
+             (not= nil enemyTargetSystem)
+             (false? (systemDisabled? :repairBay :enemyShip)))
+      (do (core/devLog "enemy has decided to repair their ship")
+          [:repairShip enemyTargetSystem :enemyShip])
+      (if (false? (systemDisabled? :missiles :enemyShip))
+        (do (core/devLog "enemy has decided to launch missiles")
+            [:damageShip playerTargetSystem :playerShip :missiles])
+        (if (false? (systemDisabled? :lasers :enemyShip))
+          (do (core/devLog "enemy has decided to fire lasers")
+              [:damageShip playerTargetSystem :playerShip :lasers])
+          (if (and (false? (systemDisabled? :shields :enemyShip))
+                   (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
+            (do (core/devLog "enemy has decided to charge their shields") 
+                [:enemyChargeShields])
+            (if (false? (systemDisabled? :repairBay :enemyShip))
+              (do (core/devLog "enemy has decided to repair their ship")
+                  [:repairShip enemyTargetSystem :enemyShip])
+              (do (core/devLog "enemy has decided to flee")
+                  [:gameEnd :enemyShip false]))))))))
 
 ;toggles phase between player and enemy after each action
-              
 (defn changePhase
   [cofx effects]
   (if (false? (:gameOver? (:db cofx)))
@@ -227,7 +284,6 @@
            (= 0 (mod turn 2))) 
     (inc ammo)
     ammo))
-
 
 ;initiates enemy AI
 (rf/reg-event-fx
@@ -251,7 +307,6 @@
                          (concat [db])
                          (vec))]
       (assoc db :history newHistory))))
-
 
 ;initiates player phase, 
 ;saves a copy of current state
@@ -315,19 +370,6 @@
 (rf/reg-event-db
   ::toggleDevMode
   toggleDevMode)
-
-;formula for damage: randomfactor x weaponrank x 10dmg
-(defn calcLaserDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* 10)))
-
-(defn calcMissileDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* 5)))
 
 (defn consumeAmmo
   [ship]
