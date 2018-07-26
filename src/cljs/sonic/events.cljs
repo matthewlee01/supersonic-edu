@@ -279,6 +279,7 @@
 
 
 (defn refillAmmo
+  "takes an ammo amount and a turn number, returns the ammo +1 if turn is divisible by 2, otherwise returns the same ammo"
   [ammo turn]
   (if (and (> 10 ammo)
            (= 0 (mod turn 2))) 
@@ -291,13 +292,9 @@
   (fn [cofx effects]
     (core/devLog "start of enemy phase")
     (let [playerShip (:playerShip (:db cofx))
-          enemyShip (:enemyShip (:db cofx))
-          turn (inc (:turn (:db cofx)))
-          refilledAmmo (refillAmmo (:ammo enemyShip) turn)
-          newEnemyShip (assoc enemyShip :ammo refilledAmmo)]
-          
-      {:db (assoc (:db cofx) :enemyShip newEnemyShip)
-       :dispatch (enemyChooseAction newEnemyShip playerShip)})))
+          enemyShip (:enemyShip (:db cofx))]
+      {:db (:db cofx)
+       :dispatch (enemyChooseAction enemyShip playerShip)})))
           
 (rf/reg-event-db
   :logHistory
@@ -310,14 +307,18 @@
 
 ;initiates player phase, 
 ;saves a copy of current state
+;refills ammo for player and enemy
 (defn playerPhase
   [cofx effects]
   (let [newTurn (inc (:turn (:db cofx)))
         playerShip (:playerShip (:db cofx))
-        refilledAmmo (refillAmmo (:ammo playerShip) newTurn)
-        newPlayerShip (assoc playerShip :ammo refilledAmmo)]
+        newPlayerAmmo (refillAmmo (:ammo playerShip) newTurn)
+        newPlayerShip (assoc playerShip :ammo newPlayerAmmo)
+        enemyShip (:enemyShip (:db cofx))
+        newEnemyAmmo (refillAmmo (:ammo enemyShip) newTurn)
+        newEnemyShip (assoc enemyShip :ammo newEnemyAmmo)]
     (core/devLog "start of player phase")
-    {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip)
+    {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip :enemyShip newEnemyShip)
      :dispatch [:logHistory]}))
 
 (rf/reg-event-fx
@@ -372,10 +373,11 @@
   toggleDevMode)
 
 (defn consumeAmmo
+  "takes a ship and returns the same ship with -1 ammo"
   [ship]
   (let [ammo (:ammo ship)
         nAmmo (- ammo 1)]
-   (assoc ship :ammo nAmmo)))
+    (assoc ship :ammo nAmmo)))
 
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
@@ -445,12 +447,13 @@
          attacker system damage firingType])
       [defender attacker system damage firingType])))
 
-(defn newAmmo 
+(defn newAmmo
+  "reduces attacker ammo by 1 if they used missiles to attack"
   [[defender attacker system damage firingType]]
-  (let [currentAmmo (:ammo attacker)]
-    [defender (if (= firingType :missiles)
-                (consumeAmmo attacker)
-                attacker) system damage firingType]))
+  (let [newAttacker (if (= firingType :missiles)
+                      (consumeAmmo attacker)
+                      attacker)]
+    [defender newAttacker system damage firingType]))
 
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
@@ -474,7 +477,7 @@
         finalDamage (if supercharged?
                         (* 2 baseDamage)
                         baseDamage)
-        devMsg (str (if (= defender :playerShip) "player " "enemy ")
+        devMsg (str (if (= type :enemyShip) (str "enemy ") (str "player "))
                     "took "
                     baseDamage
                     " damage"
