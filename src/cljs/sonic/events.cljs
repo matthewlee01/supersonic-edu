@@ -31,6 +31,14 @@
     true
     false))
 
+;calculates the maximum shields the ship can have
+(defn calcShieldsMax
+  [shieldsSystemRank]
+  (-> shieldsSystemRank
+      (- 1)
+      (* 15)
+      (+ 100)))
+
 
 ;initializes default db  
 (rf/reg-event-db
@@ -38,6 +46,26 @@
  (fn [_ _]
    (core/devLog "initializing")
    db/default-db))
+
+(defn systemReset
+	[systemStats]
+	(vector (inc (get systemStats 1)) (get systemStats 1)))
+
+(defn shipReset
+	[ship]
+	(let [systemNames (keys (:systems ship))
+				oldSystemStats (vals (:systems ship))
+				newSystemStats (map systemReset oldSystemStats)
+				newSystems (zipmap systemNames newSystemStats)
+		  	newMaxHP (+ (:maxHP ship) 50)
+		  	newShields (-> newSystems
+		  							   :shields
+		  							   (get 1)
+		  							   (calcShieldsMax))]
+		(assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
+
+
+
 
 ;prompts player for playerName value
 (rf/reg-event-fx
@@ -49,7 +77,20 @@
                                             "Player"
                                             playerName)
                                           "Player"))
-     :dispatch [:playerPhase]}))
+     :dispatch [:reset-db]}))
+
+(defn reset-db
+	"resets game state and applies HP buff" 
+	[cofx effexts]
+	(let [newPlayerShip (-> cofx :db :playerShip shipReset)
+				newEnemyShip (-> cofx :db :enemyShip shipReset)]
+		{:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
+		 :dispatch [:playerPhase]}))
+
+(rf/reg-event-fx
+	:reset-db
+	reset-db)
+
 
 ;sends an alert and disables main view
 (rf/reg-event-db
@@ -66,13 +107,6 @@
                       fleeMessage))
           (assoc db :gameOver? true)))))
 
-;calculates the maximum shields the ship can have
-(defn calcShieldsMax
-  [shieldsSystemRank]
-  (-> shieldsSystemRank
-      (- 1)
-      (* 15)
-      (+ 100)))
 
 
 
