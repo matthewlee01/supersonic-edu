@@ -4,6 +4,14 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+(defn pickColour []
+  "creates a random hex colour code (no blue values)"
+  (str "#" (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+    "00"))
+
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?]) 
@@ -38,7 +46,9 @@
         systemRank (get systemVec 1)
         systemHP (get systemVec 0)             
         shieldedStatus (if (> (:shields ship) 0)
-                         "lightblue"
+                         (if (events/shieldsSupercharged? @(rf/subscribe [type]))
+                           "violet"
+                           "lightblue")
                          "orange")]
     [:button.system
      (if (= type :playerShip)
@@ -81,18 +91,28 @@
         firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
-    [:fieldset {:disabled gameOver?}
-     [:div.flexContainer
-      [:div.infoDisplayArea 
-       [:textarea.infoDisplay {:value (if gameOver?
-                                        "Game End!"
-                                        (str phaseName "'s Turn"))
-                               :readOnly true
-                               :style {:color (if (= phase 0)
-                                                "blue"
-                                                "red")}}]
-       [:textarea.infoDisplay {:value (str "Turn #: " turn)
-                               :readOnly true}]]
+    [:div.mainPanel
+      [:div.management {:style {:z-index (if gameOver?
+                                          1
+                                          -1)}}
+       [:fieldset
+        [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                  :style {:font-size "200px"
+                          :padding "210px 0px"}} "whoops go back"]]]
+      [:div.battle
+        [:fieldset {:disabled gameOver?
+                    :style {:position "absolute"}}
+         [:div.flexContainer
+          [:div.infoDisplayArea 
+           [:textarea.infoDisplay {:value (if gameOver?
+                                            "Game End!"
+                                            (str phaseName "'s Turn"))
+                                   :readOnly true
+                                   :style {:color (if (= phase 0)
+                                                    "blue"
+                                                    "red")}}]
+           [:textarea.infoDisplay {:value (str "Turn #: " turn)
+                                   :readOnly true}]]
        
       [:textarea.infoDisplay {:value (if repairing?
                                        "Repairing Mode"
@@ -115,7 +135,7 @@
         [systemButton :shields :playerShip "Shields"]
         [systemButton :repairBay :playerShip "Repair Bay"]
         [systemButton :engines :playerShip "Engines"]]
-       [:div.enemyShip
+       [:div.enemyShip {:style {:background-color (pickColour)}}
         [:div.vitalityDisplayArea
          [shipVitalityDisplay enemyShields "Shields"]
          [shipVitalityDisplay enemyHP "HP"]]
