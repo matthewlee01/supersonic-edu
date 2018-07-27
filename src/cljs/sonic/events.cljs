@@ -165,19 +165,6 @@
       (* shieldsSystemRank)
       (* SHIELD_RECHARGE_MULTIPLIER)))
 
-;formula for damage: randomfactor x weaponrank x 10dmg
-(defn calcLaserDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* LASER_DAMAGE_MULIPLIER)))
-
-(defn calcMissileDamage
-  [attackRank diceRoll]
-  (-> diceRoll
-      (* attackRank)
-      (* MISSILE_DAMAGE_MULTIPLIER)))
-
 (defn calcAttackDamage
   "calculates the damage of an attack given the rank of the attacking system,
   the type of the attack, and the base amount"
