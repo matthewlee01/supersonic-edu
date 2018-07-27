@@ -3,8 +3,14 @@
    [sonic.core :as core]
    [re-frame.core :as rf]
    [sonic.db :as db]))
-   
-(def DODGE_CHANCE_RANGE 20)
+
+(def BASE_SHIELD_MAX 100)
+
+(def SHIELD_GAIN_MULIPLIER 15)
+
+(def HP_GAIN 50)
+
+(def SUPERCHARGED_MULTIPLIER 1.5)
 
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
@@ -33,13 +39,44 @@
     true
     false))
 
+;calculates the maximum shields the ship can have
+(defn calcShieldsMax
+  "calculates the maximum shield value given the rank of the ship's shield system"
+  [shieldsSystemRank]
+  (-> shieldsSystemRank
+      (- 1)
+      (* SHIELD_GAIN_MULIPLIER)
+      (+ BASE_SHIELD_MAX)))
+
 
 ;initializes default db  
 (rf/reg-event-db
- ::initialize-db
- (fn [_ _]
-   (core/devLog "initializing")
-   db/default-db))
+  ::initialize-db
+  (fn [_ _]
+    (core/devLog "initializing")
+    db/default-db))
+
+(defn systemReset
+  "resets a system's HP based on its level"
+  [systemStats]
+  (vector (inc (get systemStats 1)) (get systemStats 1)))
+
+(defn shipReset
+  "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
+  [ship]
+  (let [systemNames (keys (:systems ship))
+		oldSystemStats (vals (:systems ship))
+		newSystemStats (map systemReset oldSystemStats)
+		newSystems (zipmap systemNames newSystemStats)
+	  	newMaxHP (+ (:maxHP ship) HP_GAIN)
+	  	newShields (-> newSystems
+					   :shields
+					   (get 1)
+					   (calcShieldsMax))]
+    (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
+
+
+
 
 ;prompts player for playerName value
 (rf/reg-event-fx
@@ -54,7 +91,19 @@
                                      "Player"
                                      playerName)
                                    "Player"))))
-     :dispatch [:playerPhase]}))
+     :dispatch [:reset-db]}))
+
+(defn reset-db
+  "resets game state and applies HP buff using shipReset" 
+  [cofx effexts]
+  (let [newPlayerShip (-> cofx :db :playerShip shipReset)
+		newEnemyShip (-> cofx :db :enemyShip shipReset)]
+	{:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
+	 :dispatch [:playerPhase]}))
+
+(rf/reg-event-fx
+  :reset-db
+  reset-db)
 
 ;sends an alert and disables main view
 (rf/reg-event-db
@@ -71,13 +120,6 @@
                       fleeMessage))
           (assoc db :gameOver? true)))))
 
-;calculates the maximum shields the ship can have
-(defn calcShieldsMax
-  [shieldsSystemRank]
-  (-> shieldsSystemRank
-      (- 1)
-      (* 15)
-      (+ 100)))
 
 
 
@@ -407,20 +449,6 @@
   ::toggleDevMode
   toggleDevMode)
 
-;takes a ship and rolls for dodge chance,
-;taking the ship's engine rank and 
-;comparing it to a randomly generated integer.
-;returns true for a dodge and false for a hit.
-(defn attackDodged?
-  [defender]
-  (let [enginesRank(-> defender
-                     (:systems)
-                     (:engines)
-                     (get 1))]
-     (if (> enginesRank (rand-int DODGE_CHANCE_RANGE))
-       true
-       false)))
-
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
@@ -465,10 +493,9 @@
                               (:shields)
                               (get 1))
         shieldsMax (calcShieldsMax shieldsSystemRank)]
-    (if (and (or (and (<= defenderShields 0)
-                      (= firingType :lasers))
-                 (= firingType :missiles))
-             (> damage 0))
+    (if (or (and (<= defenderShields 0)
+                 (= firingType :lasers))
+            (= firingType :missiles))
       (let [systemHP (-> defender
                          (:systems)
                          (system)
@@ -512,24 +539,18 @@
                        (firingType)
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
-        dodge? (attackDodged? defender)
         baseDamage (if (= firingType :lasers)
                      (calcLaserDamage attackRank (diceRoll))
                      (calcMissileDamage attackRank (diceRoll)))
-        finalDamage (if dodge?
-                      0
-                      (if supercharged?
-                        (* 1.5 baseDamage)
-                        baseDamage))
-        devMsg (if dodge?
-                 "attack dodged! no damage taken"
-                 (str (if (= type :enemyShip) (str "enemy ") (str "player "))
+        finalDamage (if supercharged?
+                        (* SUPERCHARGED_MULTIPLIER baseDamage)
+                        baseDamage)
+        devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times 1.5 for a total of " finalDamage " damage"))))]
+                    (if supercharged? (str " times " SUPERCHARGED_MULTIPLIER " for a total of " finalDamage " damage")))]
        (core/devLog devMsg)
-       (if dodge? (rf/dispatch [:shipDodge type]))
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
                           (newShields)
@@ -546,16 +567,6 @@
 (rf/reg-event-fx
   :damageShip
   damageShip)
-
-;event handler for shipDodge event, currently doesn't do anything
-(defn shipDodge
-  [db [_ shipType]]
-  (core/devLog "attack dodged")
-  db)
-
-(rf/reg-event-db
-  :shipDodge
-  shipDodge)
 
 (defn calcRepairStrength
   [repairRank diceRoll]
