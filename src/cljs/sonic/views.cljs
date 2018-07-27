@@ -12,6 +12,7 @@
     (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
     "00"))
 
+(def enemyColour (pickColour))
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?]) 
@@ -114,41 +115,41 @@
            [:textarea.infoDisplay {:value (str "Turn #: " turn)
                                    :readOnly true}]]
        
-      [:textarea.infoDisplay {:value (if repairing?
-                                       "Repairing Mode"
-                                       (if firing?
-                                         "Firing Mode"
-                                         "Select an Action"))
-                              :readOnly true
-                              :style {:color (if repairing?
-                                                "green"
-                                                (if firing?
-                                                  "red"
-                                                  "black"))}}]
-      [:div.ships
-       [:div.playerShip
-        [:div.vitalityDisplayArea
-         [shipVitalityDisplay playerShields "Shields"]
-         [shipVitalityDisplay playerHP "HP"]]
-        [systemButton :lasers :playerShip "Lasers"]
-        [systemButton :missiles :playerShip "Missiles"]
-        [systemButton :shields :playerShip "Shields"]
-        [systemButton :repairBay :playerShip "Repair Bay"]
-        [systemButton :engines :playerShip "Engines"]]
-       [:div.enemyShip {:style {:background-color (pickColour)}}
-        [:div.vitalityDisplayArea
-         [shipVitalityDisplay enemyShields "Shields"]
-         [shipVitalityDisplay enemyHP "HP"]]
-        [systemButton :lasers :enemyShip "Lasers"]
-        [systemButton :missiles :enemyShip "Missiles"]
-        [systemButton :shields :enemyShip "Shields"]
-        [systemButton :repairBay :enemyShip "Repair Bay"]
-        [systemButton :engines :enemyShip "Engines"]]]
-      [:div.actionBar
-       [actionButton :lasers :actionFire "Fire Lasers"]
-       [actionButton :missiles :actionLaunch "Launch Missiles"]
-       [actionButton :shields :actionChargeShields "Charge Shields"]
-       [actionButton :repairBay :actionRepairShip "Repair Ship"]
-       [actionButton :engines :actionFlee "Flee"]]]]))
+          [:textarea.infoDisplay {:value (if repairing?
+                                           "Repairing Mode"
+                                           (if firing?
+                                             "Firing Mode"
+                                             "Select an Action"))
+                                  :readOnly true
+                                  :style {:color (if repairing?
+                                                    "green"
+                                                    (if firing?
+                                                      "red"
+                                                      "black"))}}]
+          [:div.ships
+           [:div.playerShip
+            [:div.vitalityDisplayArea
+             [shipVitalityDisplay playerShields "Shields"]
+             [shipVitalityDisplay playerHP "HP"]]
+            [systemButton :lasers :playerShip "Lasers"]
+            [systemButton :missiles :playerShip "Missiles"]
+            [systemButton :shields :playerShip "Shields"]
+            [systemButton :repairBay :playerShip "Repair Bay"]
+            [systemButton :engines :playerShip "Engines"]]
+           [:div.enemyShip {:style {:background-color enemyColour}}
+            [:div.vitalityDisplayArea
+             [shipVitalityDisplay enemyShields "Shields"]
+             [shipVitalityDisplay enemyHP "HP"]]
+            [systemButton :lasers :enemyShip "Lasers"]
+            [systemButton :missiles :enemyShip "Missiles"]
+            [systemButton :shields :enemyShip "Shields"]
+            [systemButton :repairBay :enemyShip "Repair Bay"]
+            [systemButton :engines :enemyShip "Engines"]]]
+          [:div.actionBar
+           [actionButton :lasers :actionFire "Fire Lasers"]
+           [actionButton :missiles :actionLaunch "Launch Missiles"]
+           [actionButton :shields :actionChargeShields "Charge Shields"]
+           [actionButton :repairBay :actionRepairShip "Repair Ship"]
+           [actionButton :engines :actionFlee "Flee"]]]]]]))
       
      

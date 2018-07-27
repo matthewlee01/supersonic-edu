@@ -65,14 +65,14 @@
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
   [ship]
   (let [systemNames (keys (:systems ship))
-		oldSystemStats (vals (:systems ship))
-		newSystemStats (map systemReset oldSystemStats)
-		newSystems (zipmap systemNames newSystemStats)
-	  	newMaxHP (+ (:maxHP ship) HP_GAIN)
-	  	newShields (-> newSystems
-					   :shields
-					   (get 1)
-					   (calcShieldsMax))]
+        oldSystemStats (vals (:systems ship))
+        newSystemStats (map systemReset oldSystemStats)
+        newSystems (zipmap systemNames newSystemStats)
+        newMaxHP (+ (:maxHP ship) HP_GAIN)
+        newShields (-> newSystems
+                    :shields
+                    (get 1)
+                    (calcShieldsMax))]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
@@ -97,9 +97,9 @@
   "resets game state and applies HP buff using shipReset" 
   [cofx effexts]
   (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-		newEnemyShip (-> cofx :db :enemyShip shipReset)]
-	{:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
-	 :dispatch [:playerPhase]}))
+        newEnemyShip (-> cofx :db :enemyShip shipReset)]
+   {:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
+     :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx
   :reset-db
