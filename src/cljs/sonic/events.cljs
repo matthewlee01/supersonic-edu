@@ -26,6 +26,8 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
+(def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen"])
+
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
@@ -63,15 +65,10 @@
       (* SHIELD_UPGRADE_MULIPLIER)
       (+ BASE_SHIELD_MAX)))
 
-
 (defn randShipColour
   "creates a random hex colour code (no blue values) and sets ship to that colour"
   [ship]
-  (let [randColour (str "#" (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-                            "00")]
+  (let [randColour (rand-nth ENEMY_COLOUR_LIST)]
     (assoc ship :colour randColour)))
 
 ;initializes default db
@@ -94,10 +91,7 @@
         newSystemStats (map systemReset oldSystemStats)
         newSystems (zipmap systemNames newSystemStats)
         newMaxHP (+ (:maxHP ship) HP_GAIN)
-        newShields (-> newSystems
-                       :shields
-                       (get 1)
-                       (calcShieldsMax))]
+        newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
