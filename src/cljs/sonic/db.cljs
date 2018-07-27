@@ -23,7 +23,7 @@
    :firing? false
    :firingType nil
    :repairing? false
-   :playerName "Player"
+   :playerName nil
    :gameOver? false
    :phase 0
    :history []
