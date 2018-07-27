@@ -12,6 +12,7 @@
 
 (def SUPERCHARGED_MULTIPLIER 1.5)
 
+(def REPAIR_DEFAULT :lasers)
 ;provides a skeleton of actions for the enemy to choose from.
 ;:targetSystem gets updated to current values when this is called
 (def ENEMY_ACTION_LIST 
@@ -19,9 +20,10 @@
    [:damageShip :targetSystem :playerShip :lasers] 
    [:repairShip :targetSystem :enemyShip] 
    [:enemyChargeShields]])
-
-(def OUTCOMES_LIST
-  (map #(vector % 0) ENEMY_ACTION_LIST))
+  
+(defn createOutcomesList
+  [actionList]
+  (map #(vector % 0) actionList))
   
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
@@ -282,12 +284,15 @@
       false)))
 
 ;calls chargeShields on enemyShip and updates value
+(defn enemyChargeShields
+  [cofx events]
+  (core/devLog "enemy charging shields")
+  {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
+   :dispatch [:changePhase]})
+
 (rf/reg-event-fx 
   :enemyChargeShields
-  (fn [cofx events]
-    (core/devLog "enemy charging shields")
-    {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
-     :dispatch [:changePhase]}))
+  enemyChargeShields)
 
 ;holds priority list for enemy attacks and repairs
 (def enemyPriorityList
@@ -298,12 +303,14 @@
 ;by filtering through priority list
 (defn getTargetSystem
   [filterType]
-  (get (->> (filterType enemyPriorityList)
-            (map (if (= filterType :repair)
-                   enemySystemsDamaged?
-                   playerSystemsActive?)) 
-            (remove false?)
-            (vec)) 0))
+  (if-let [target (get (->> (filterType enemyPriorityList)
+                        (map (if (= filterType :repair)
+                               enemySystemsDamaged?
+                               playerSystemsActive?)) 
+                        (remove false?)
+                        (vec)) 0)]
+    target
+    REPAIR_DEFAULT))
    
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
@@ -374,8 +381,9 @@
 
 (defn newEnemyChooseAction
   []
-  (let [actionList (getCurrentActionList ENEMY_ACTION_LIST)]
-    (->> OUTCOMES_LIST
+  (let [actionList (getCurrentActionList ENEMY_ACTION_LIST)
+        outcomes (createOutcomesList actionList)]
+    (->> outcomes
          (map calcOutcome)
          (getBestOutcome)
          (first))))
