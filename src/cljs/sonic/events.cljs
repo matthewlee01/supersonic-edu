@@ -64,6 +64,16 @@
       (+ BASE_SHIELD_MAX)))
 
 
+(defn randShipColour
+  "creates a random hex colour code (no blue values) and sets ship to that colour"
+  [ship]
+  (let [randColour (str "#" (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+                            (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
+                            "00")]
+    (assoc ship :colour randColour)))
+
 ;initializes default db
 (rf/reg-event-db
   ::initialize-db
@@ -110,9 +120,9 @@
 
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
-  [cofx effexts]
+  [cofx _]
   (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-        newEnemyShip (-> cofx :db :enemyShip shipReset)]
+        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)]
    {:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
      :dispatch [:playerPhase]}))
 

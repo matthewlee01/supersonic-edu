@@ -4,18 +4,14 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
-(defn pickColour []
-  "creates a random hex colour code (no blue values)"
-  (str "#" (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-    (rand-nth ["5" "6" "7" "8" "9" "a" "b" "c" "d"])
-    "00"))
 
-(def enemyColour (pickColour))
+(defn getShipColour
+  [type]
+  (:colour @(rf/subscribe [type])))
+
 (defn actionDisabled?
   [text requiredSystem]
-  (if (or (and @(rf/subscribe [:firing?]) 
+  (if (or (and @(rf/subscribe [:firing?])
                (not= text "Fire Lasers")
                (= @(rf/subscribe [:firingType]) :lasers))
           (and @(rf/subscribe [:firing?])
@@ -32,9 +28,9 @@
   [requiredSystem event text]
   (fn []
     [:button.action {:on-click (events/actionDispatch event)
-                     :disabled (actionDisabled? text requiredSystem)} 
+                     :disabled (actionDisabled? text requiredSystem)}
                     text]))
-   
+
 (defn systemButton
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
@@ -45,7 +41,7 @@
                       (:systems)
                       (system))
         systemRank (get systemVec 1)
-        systemHP (get systemVec 0)             
+        systemHP (get systemVec 0)
         shieldedStatus (if (> (:shields ship) 0)
                          (if (events/shieldsSupercharged? @(rf/subscribe [type]))
                            "violet"
@@ -54,7 +50,7 @@
     [:button.system
      (if (= type :playerShip)
        (if repairing?
-         {:on-click (events/repairDispatch system type) 
+         {:on-click (events/repairDispatch system type)
           :style {:background-color shieldedStatus}}
          (if firing?
            {:disabled (or firing?
@@ -69,13 +65,13 @@
      (if (= system :missiles)
         (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
         (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
-                                 
+
 (defn shipVitalityDisplay
   [value text]
   [:textarea.vitalityDisplay {:value (str text ": " value)
-                              :readOnly true}]) 
- 
-(defn main-panel 
+                              :readOnly true}])
+
+(defn main-panel
   []
   (let [playerHP (:HP @(rf/subscribe [:playerShip]))
         playerShields (:shields @(rf/subscribe [:playerShip]))
@@ -83,12 +79,14 @@
         enemyShields (:shields @(rf/subscribe [:enemyShip]))
         enemySystems (:systems @(rf/subscribe [:enemyShip]))
         playerSystems (:systems @(rf/subscribe [:playerShip]))
+        playerColour (getShipColour :playerShip)
+        enemyColour (getShipColour :enemyShip)
         turn @(rf/subscribe [:turn])
         phase @(rf/subscribe [:phase])
         phaseName (if (= phase 0)
                    @(rf/subscribe [:playerName])
                    "Enemy")
-        
+
         firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
@@ -104,7 +102,7 @@
         [:fieldset {:disabled gameOver?
                     :style {:position "absolute"}}
          [:div.flexContainer
-          [:div.infoDisplayArea 
+          [:div.infoDisplayArea
            [:textarea.infoDisplay {:value (if gameOver?
                                             "Game End!"
                                             (str phaseName "'s Turn"))
@@ -114,7 +112,7 @@
                                                     "red")}}]
            [:textarea.infoDisplay {:value (str "Turn #: " turn)
                                    :readOnly true}]]
-       
+
           [:textarea.infoDisplay {:value (if repairing?
                                            "Repairing Mode"
                                            (if firing?
@@ -127,7 +125,7 @@
                                                       "red"
                                                       "black"))}}]
           [:div.ships
-           [:div.playerShip
+           [:div.playerShip {:style {:background-color playerColour}}
             [:div.vitalityDisplayArea
              [shipVitalityDisplay playerShields "Shields"]
              [shipVitalityDisplay playerHP "HP"]]
@@ -151,5 +149,3 @@
            [actionButton :shields :actionChargeShields "Charge Shields"]
            [actionButton :repairBay :actionRepairShip "Repair Ship"]
            [actionButton :engines :actionFlee "Flee"]]]]]]))
-      
-     
