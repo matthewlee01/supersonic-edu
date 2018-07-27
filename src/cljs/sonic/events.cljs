@@ -12,6 +12,17 @@
 
 (def SUPERCHARGED_MULTIPLIER 1.5)
 
+;provides a skeleton of actions for the enemy to choose from.
+;:targetSystem gets updated to current values when this is called
+(def ENEMY_ACTION_LIST 
+  [[:damageShip :targetSystem :playerShip :missiles] 
+   [:damageShip :targetSystem :playerShip :lasers] 
+   [:repairShip :targetSystem :enemyShip] 
+   [:enemyChargeShields]])
+
+(def OUTCOMES_LIST
+  (map #(vector % 0) ENEMY_ACTION_LIST))
+  
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
   [event]
@@ -339,6 +350,36 @@
                       (do (core/devLog "enemy has decided to flee")
                           [:gameEnd :enemyShip false]))))))))))))
 
+(defn updateAction
+  [action]
+  (let [actionType (get action 0)]
+    (case actionType
+      :enemyChargeShields action
+      :repairShip (assoc action 1 (getTargetSystem :repair))
+      :damageShip (assoc action 1 (getTargetSystem :target)))))
+
+(defn getCurrentActionList
+  [actionList]
+  (map updateAction actionList))
+
+(defn calcOutcome
+  [[action score]]
+  [action (rand-int 4)])
+
+(defn getBestOutcome
+  [outcomeList]
+  (reduce #(if (> (get %1 1) (get %2 1))
+             %1
+             %2) outcomeList))
+
+(defn newEnemyChooseAction
+  []
+  (let [actionList (getCurrentActionList ENEMY_ACTION_LIST)]
+    (->> OUTCOMES_LIST
+         (map calcOutcome)
+         (getBestOutcome)
+         (first))))
+
 ;toggles phase between player and enemy after each action
 (defn changePhase
   [cofx effects]
@@ -373,7 +414,7 @@
     (let [playerShip (:playerShip (:db cofx))
           enemyShip (:enemyShip (:db cofx))]
       {:db (:db cofx)
-       :dispatch (enemyChooseAction enemyShip playerShip)})))
+       :dispatch (newEnemyChooseAction)})))
           
 (rf/reg-event-db
   :logHistory
@@ -608,6 +649,7 @@
   [cofx [_ system type]]
   (if (= type :playerShip)
     (rf/dispatch [:toggleRepairingMode]))
+  (core/devLog "repairing ship")
   (let [ship (type (:db cofx))
         repairedShip (-> [system ship]
                          (restoreHP)
