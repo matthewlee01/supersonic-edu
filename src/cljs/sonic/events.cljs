@@ -4,7 +4,7 @@
    [re-frame.core :as rf]
    [sonic.db :as db]))
    
-(def SUPERCHARGED_MULTIPLIER 1.5)
+(def DODGE_CHANCE_RANGE 20)
 
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
@@ -407,6 +407,20 @@
   ::toggleDevMode
   toggleDevMode)
 
+;takes a ship and rolls for dodge chance,
+;taking the ship's engine rank and 
+;comparing it to a randomly generated integer.
+;returns true for a dodge and false for a hit.
+(defn attackDodged?
+  [defender]
+  (let [enginesRank(-> defender
+                     (:systems)
+                     (:engines)
+                     (get 1))]
+     (if (> enginesRank (rand-int DODGE_CHANCE_RANGE))
+       true
+       false)))
+
 ;calculates new HP after taking damage, 
 ;triggers game over if necessary
 (defn newHP
@@ -451,9 +465,10 @@
                               (:shields)
                               (get 1))
         shieldsMax (calcShieldsMax shieldsSystemRank)]
-    (if (or (and (<= defenderShields 0)
-                 (= firingType :lasers))
-            (= firingType :missiles))
+    (if (and (or (and (<= defenderShields 0)
+                      (= firingType :lasers))
+                 (= firingType :missiles))
+             (> damage 0))
       (let [systemHP (-> defender
                          (:systems)
                          (system)
@@ -497,18 +512,24 @@
                        (firingType)
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
+        dodge? (attackDodged? defender)
         baseDamage (if (= firingType :lasers)
                      (calcLaserDamage attackRank (diceRoll))
                      (calcMissileDamage attackRank (diceRoll)))
-        finalDamage (if supercharged?
-                        (* SUPERCHARGED_MULTIPLIER baseDamage)
-                        baseDamage)
-        devMsg (str (if (= type :playerShip) "player " "enemy ")
+        finalDamage (if dodge?
+                      0
+                      (if supercharged?
+                        (* 1.5 baseDamage)
+                        baseDamage))
+        devMsg (if dodge?
+                 "attack dodged! no damage taken"
+                 (str (if (= type :enemyShip) (str "enemy ") (str "player "))
                     "took "
                     baseDamage
                     " damage"
-                    (if supercharged? (str " times " SUPERCHARGED_MULTIPLIER " for a total of " finalDamage " damage")))]
+                    (if supercharged? (str " times 1.5 for a total of " finalDamage " damage"))))]
        (core/devLog devMsg)
+       (if dodge? (rf/dispatch [:shipDodge type]))
        (let [newShips (-> [defender attacker system finalDamage firingType]
                           (newHP)
                           (newShields)
@@ -525,6 +546,16 @@
 (rf/reg-event-fx
   :damageShip
   damageShip)
+
+;event handler for shipDodge event, currently doesn't do anything
+(defn shipDodge
+  [db [_ shipType]]
+  (core/devLog "attack dodged")
+  db)
+
+(rf/reg-event-db
+  :shipDodge
+  shipDodge)
 
 (defn calcRepairStrength
   [repairRank diceRoll]
