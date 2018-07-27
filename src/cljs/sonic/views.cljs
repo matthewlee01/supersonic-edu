@@ -91,18 +91,28 @@
         firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
-    [:fieldset {:disabled gameOver?}
-     [:div.flexContainer
-      [:div.infoDisplayArea 
-       [:textarea.infoDisplay {:value (if gameOver?
-                                        "Game End!"
-                                        (str phaseName "'s Turn"))
-                               :readOnly true
-                               :style {:color (if (= phase 0)
-                                                "blue"
-                                                "red")}}]
-       [:textarea.infoDisplay {:value (str "Turn #: " turn)
-                               :readOnly true}]]
+    [:div.mainPanel
+      [:div.management {:style {:z-index (if gameOver?
+                                          1
+                                          -1)}}
+       [:fieldset
+        [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                  :style {:font-size "200px"
+                          :padding "210px 0px"}} "whoops go back"]]]
+      [:div.battle
+        [:fieldset {:disabled gameOver?
+                    :style {:position "absolute"}}
+         [:div.flexContainer
+          [:div.infoDisplayArea 
+           [:textarea.infoDisplay {:value (if gameOver?
+                                            "Game End!"
+                                            (str phaseName "'s Turn"))
+                                   :readOnly true
+                                   :style {:color (if (= phase 0)
+                                                    "blue"
+                                                    "red")}}]
+           [:textarea.infoDisplay {:value (str "Turn #: " turn)
+                                   :readOnly true}]]
        
       [:textarea.infoDisplay {:value (if repairing?
                                        "Repairing Mode"
