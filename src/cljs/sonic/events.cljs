@@ -178,16 +178,23 @@
       (* attackRank)
       (* MISSILE_DAMAGE_MULTIPLIER)))
 
+(defn calcAttackDamage
+  "calculates the damage of an attack given the rank of the attacking system,
+  the type of the attack, and the base amount"
+  [attackRank attackType amount]
+  (* attackRank amount (if (= attackType :lasers)
+                         LASER_DAMAGE_MULIPLIER
+                         MISSILE_DAMAGE_MULTIPLIER)))
+
+
+
 ;determines whether or not an attack of the specified type
 ;can potentially kill the target
 ;takes in attacker, defender, and firingType (:lasers or :missiles)
 ;returns true if target can be killed
 (defn killRange?
   [attacker defender firingType]
-  (let [calcType (if (= firingType :lasers)
-                   calcLaserDamage
-                   calcMissileDamage)
-        vitality (if (= firingType :lasers)
+  (let [vitality (if (= firingType :lasers)
                    (+ (:HP defender) (:shields defender))
                    (:HP defender))
         supercharged? (shieldsSupercharged? attacker)
@@ -198,7 +205,7 @@
                             (:systems)
                             (firingType)
                             (get 1)
-                            (calcType dmgFactor))]
+                            (calcAttackDamage firingType dmgFactor))]
     (if (>= potentialDamage vitality)
       true
       false)))
@@ -554,9 +561,7 @@
                        (firingType)
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
-        baseDamage (if (= firingType :lasers)
-                     (calcLaserDamage attackRank (diceRoll))
-                     (calcMissileDamage attackRank (diceRoll)))
+        baseDamage (calcAttackDamage attackRank firingType (diceRoll))
         finalDamage (if supercharged?
                         (* SUPERCHARGED_MULTIPLIER baseDamage)
                         baseDamage)
