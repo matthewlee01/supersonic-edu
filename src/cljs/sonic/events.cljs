@@ -4,15 +4,30 @@
    [re-frame.core :as rf]
    [sonic.db :as db]))
 
-(def BASE_SHIELD_MAX 100)
+(def BASE_SHIELD_MAX 100) ;starting maximum shield level
 
-(def SHIELD_GAIN_MULIPLIER 15)
+(def SHIELD_UPGRADE_MULIPLIER 15) ;amount that max shields increases per rank of shield systems
 
-(def HP_GAIN 50)
+(def SHIELD_RECHARGE_MULTIPLIER 8) ;multiplier for shield recharge
 
-(def SUPERCHARGED_MULTIPLIER 1.5)
+(def LASER_DAMAGE_MULIPLIER 10) ;multiplier for laser attack
 
-;dispatches an action based on which action button was pressed 
+(def MISSILE_DAMAGE_MULTIPLIER 5) ;multiplier for missile attack
+
+(def HP_GAIN 50) ;amount of max hp increased per stage
+
+(def SUPERCHARGED_MULTIPLIER 1.5) ;damage multiplier for supercharged shield effect
+
+(def SUPERCHARGE_THRESHOLD 0) ;threshold for supercharged shield effect
+
+(def MAX_AMMO 10) ;ammo capacity for ship
+
+(def AMMO_RECHARGE_RATE 2) ;number of turns per ammo refill
+
+(def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
+
+
+;dispatches an action based on which action button was pressed
 (defn actionDispatch
   [event]
   (fn [] (rf/dispatch [event])))
@@ -21,7 +36,7 @@
 (defn damageDispatch
   [system type firingType]
   (fn [] (rf/dispatch [:damageShip system type firingType])))
-   
+
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
   [system type]
@@ -31,9 +46,9 @@
 (defn systemDisabled?
   [system type]
   (if (or (>= 0 (-> @(rf/subscribe [type])
-                     (:systems)
-                     (system)
-                     (get 0)))
+                    (:systems)
+                    (system)
+                    (get 0)))
           (and (= 0 (:ammo  @(rf/subscribe [type])))
                (= system :missiles)))
     true
@@ -45,11 +60,11 @@
   [shieldsSystemRank]
   (-> shieldsSystemRank
       (- 1)
-      (* SHIELD_GAIN_MULIPLIER)
+      (* SHIELD_UPGRADE_MULIPLIER)
       (+ BASE_SHIELD_MAX)))
 
 
-;initializes default db  
+;initializes default db
 (rf/reg-event-db
   ::initialize-db
   (fn [_ _]
@@ -70,9 +85,9 @@
         newSystems (zipmap systemNames newSystemStats)
         newMaxHP (+ (:maxHP ship) HP_GAIN)
         newShields (-> newSystems
-                    :shields
-                    (get 1)
-                    (calcShieldsMax))]
+                       :shields
+                       (get 1)
+                       (calcShieldsMax))]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
@@ -86,7 +101,7 @@
     {:db (-> (assoc (:db cofx) :gameOver? false)
              (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
                                   existingName
-                                  (if-let [playerName (js/prompt "Enter your name:")] 
+                                  (if-let [playerName (js/prompt "Enter your name:")]
                                    (if (= playerName "")
                                      "Player"
                                      playerName)
@@ -94,7 +109,7 @@
      :dispatch [:reset-db]}))
 
 (defn reset-db
-  "resets game state and applies HP buff using shipReset" 
+  "resets game state and applies HP buff using shipReset"
   [cofx effexts]
   (let [newPlayerShip (-> cofx :db :playerShip shipReset)
         newEnemyShip (-> cofx :db :enemyShip shipReset)]
@@ -126,13 +141,13 @@
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
-  (let [maxShields (-> ship 
+  (let [maxShields (-> ship
                      (:systems)
                      (:shields)
                      (get 1)
                      (calcShieldsMax))
         shipShields (:shields ship)
-        threshold maxShields] ;threshold can be changed in future to balance power of supercharged effect
+        threshold (- maxShields SUPERCHARGE_THRESHOLD)] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
       true
       false)))
@@ -142,26 +157,26 @@
 (defn diceRoll
   []
   (+ 1 (rand-int 6)))
-  
+
 ;calculates strength of shield charge
 (defn calcShieldsStrength
   [shieldsSystemRank amount]
   (-> amount
       (* shieldsSystemRank)
-      (* 8)))
+      (* SHIELD_RECHARGE_MULTIPLIER)))
 
 ;formula for damage: randomfactor x weaponrank x 10dmg
 (defn calcLaserDamage
   [attackRank diceRoll]
   (-> diceRoll
       (* attackRank)
-      (* 10)))
+      (* LASER_DAMAGE_MULIPLIER)))
 
 (defn calcMissileDamage
   [attackRank diceRoll]
   (-> diceRoll
       (* attackRank)
-      (* 5)))
+      (* MISSILE_DAMAGE_MULTIPLIER)))
 
 ;determines whether or not an attack of the specified type
 ;can potentially kill the target
@@ -170,7 +185,7 @@
 (defn killRange?
   [attacker defender firingType]
   (let [calcType (if (= firingType :lasers)
-                   calcLaserDamage 
+                   calcLaserDamage
                    calcMissileDamage)
         vitality (if (= firingType :lasers)
                    (+ (:HP defender) (:shields defender))
@@ -199,7 +214,7 @@
         shieldsStrength (calcShieldsStrength shieldsSystemRank amount)
         newShields (+ shieldsCurrentValue shieldsStrength)]
     (if @(rf/subscribe [:devMode])
-      (println (str "shields boosted by " (- newShields shieldsCurrentValue))))    
+      (println (str "shields boosted by " (- newShields shieldsCurrentValue))))
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
@@ -211,7 +226,7 @@
     (core/devLog "player toggling firing mode")
     {:db (:db cofx)
      :dispatch [:setFiringType :lasers]}))
-    
+
 (rf/reg-event-fx
   :actionLaunch
   (fn [cofx event]
@@ -219,7 +234,7 @@
     {:db (:db cofx)
      :dispatch [:setFiringType :missiles]}))
 
-;calls chargeShields on playerShip when corresponding button is pressed, 
+;calls chargeShields on playerShip when corresponding button is pressed,
 ;then ends player phase
 (defn actionChargeShields
   [cofx events]
@@ -231,18 +246,18 @@
   :actionChargeShields
   actionChargeShields)
 
-(defn actionRepairShip 
+(defn actionRepairShip
   [cofx effects]
   {:db (:db cofx)
    :dispatch [:toggleRepairingMode]})
-  
+
 (rf/reg-event-fx
   :actionRepairShip
   actionRepairShip)
 
-;attempt to escape the battle 
+;attempt to escape the battle
 (rf/reg-event-fx
-  :actionFlee 
+  :actionFlee
   (fn [cofx effects]
     (core/devLog "player fleeing")
     {:db (:db cofx)
@@ -258,8 +273,8 @@
       systemType
       false)))
 
-;takes in a key from a vector, checks to see if it is damaged. 
-;if true, returns the key back. else, return false. 
+;takes in a key from a vector, checks to see if it is damaged.
+;if true, returns the key back. else, return false.
 ;used with map to create a vector of all damaged systems.
 (defn enemySystemsDamaged?
   [systemType]
@@ -271,7 +286,7 @@
       false)))
 
 ;calls chargeShields on enemyShip and updates value
-(rf/reg-event-fx 
+(rf/reg-event-fx
   :enemyChargeShields
   (fn [cofx events]
     (core/devLog "enemy charging shields")
@@ -290,10 +305,10 @@
   (get (->> (filterType enemyPriorityList)
             (map (if (= filterType :repair)
                    enemySystemsDamaged?
-                   playerSystemsActive?)) 
+                   playerSystemsActive?))
             (remove false?)
             (vec)) 0))
-   
+
 ;enemy chooses actions based on which systems are available
 (defn enemyChooseAction
   [enemyShip playerShip]
@@ -331,7 +346,7 @@
                       [:damageShip playerTargetSystem :playerShip :lasers])
                   (if (and (false? (systemDisabled? :shields :enemyShip))
                            (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
-                    (do (core/devLog "enemy has decided to charge their shields") 
+                    (do (core/devLog "enemy has decided to charge their shields")
                         [:enemyChargeShields])
                     (if (false? (systemDisabled? :repairBay :enemyShip))
                       (do (core/devLog "enemy has decided to repair their ship")
@@ -359,8 +374,8 @@
   "takes a ship and a turn number, adds 1 to ship's ammo if turn is divisible by two; returns new ship"
   [ship turn]
   (let [oldAmmo (:ammo ship)
-        newAmmo (if (and (> 10 oldAmmo)
-                         (= 0 (mod turn 2)))
+        newAmmo (if (and (> MAX_AMMO oldAmmo)
+                         (= 0 (mod turn AMMO_RECHARGE_RATE)))
                   (+ oldAmmo 1)
                   oldAmmo)]
        (assoc ship :ammo newAmmo)))
@@ -374,7 +389,7 @@
           enemyShip (:enemyShip (:db cofx))]
       {:db (:db cofx)
        :dispatch (enemyChooseAction enemyShip playerShip)})))
-          
+
 (rf/reg-event-db
   :logHistory
   (fn [db _]
@@ -384,7 +399,7 @@
                          (vec))]
       (assoc db :history newHistory))))
 
-;initiates player phase, 
+;initiates player phase,
 ;saves a copy of current state
 ;refills ammo for player and enemy
 (defn playerPhase
@@ -415,7 +430,7 @@
   [cofx [_ firingType]]
   {:db (assoc (:db cofx) :firingType firingType)
    :dispatch [:toggleFiringMode]})
-  
+
 (rf/reg-event-fx
   :setFiringType
   setFiringType)
@@ -429,7 +444,7 @@
 (rf/reg-event-db
   :toggleFiringMode
   toggleFiringMode)
-      
+
 (defn toggleRepairingMode [db _]
   (assoc db :repairing? (if (:repairing? db)
                           false
@@ -449,7 +464,7 @@
   ::toggleDevMode
   toggleDevMode)
 
-;calculates new HP after taking damage, 
+;calculates new HP after taking damage,
 ;triggers game over if necessary
 (defn newHP
   [[defender attacker system damage firingType]]
@@ -468,11 +483,11 @@
       (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
                                :playerShip
                                :enemyShip) true]))
-    [(assoc defender :HP newHPVal) 
+    [(assoc defender :HP newHPVal)
      attacker system damage firingType]))
-         
+
 ;calculates new shield value
-(defn newShields 
+(defn newShields
   [[defender attacker system damage firingType]]
   (let [defenderShields (:shields defender)
         shieldsDamage (if (= firingType :lasers)
@@ -480,10 +495,10 @@
                           damage
                           defenderShields)
                         0)]
-    [(assoc defender :shields (- defenderShields shieldsDamage)) 
+    [(assoc defender :shields (- defenderShields shieldsDamage))
      attacker system damage firingType]))
 
-;calculates new system status if shields are down, 
+;calculates new system status if shields are down,
 ;otherwise no system damage taken
 (defn newSystemHP
   [[defender attacker system damage firingType]]
@@ -511,9 +526,9 @@
                            (:systems)
                            (system)
                            (get 1))
-            newSystem [(- systemHP systemDamage) systemRank]       
+            newSystem [(- systemHP systemDamage) systemRank]
             newSystemsMap (assoc (:systems defender) system newSystem)]
-        [(assoc defender :systems newSystemsMap) 
+        [(assoc defender :systems newSystemsMap)
          attacker system damage firingType])
       [defender attacker system damage firingType])))
 
@@ -523,7 +538,7 @@
   (let [oldAmmo (:ammo ship)]
     (assoc ship :ammo (- oldAmmo 1))))
 
-;performs all the steps of damaging the ship 
+;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
   [cofx [_ system type firingType]]
@@ -572,8 +587,8 @@
   [repairRank diceRoll]
   (-> repairRank
       (* diceRoll)
-      (* 4)))
-  
+      (* REPAIR_STRENGTH_MULTIPLIER)))
+
 (defn createRepairedSystem
   [systemRank]
   [(+ systemRank 1) systemRank])
@@ -592,7 +607,7 @@
                 (+ currentHP repairStrength))
         newShip (assoc ship :HP newHP)]
     [system newShip]))
-  
+
 (defn restoreSystem
   [[system ship]]
   (let [systemRank (-> ship
@@ -603,7 +618,7 @@
         newSystemsMap (assoc (:systems ship) system newSystem)
         newShip (assoc ship :systems newSystemsMap)]
     [system newShip]))
-    
+
 (defn repairShip
   [cofx [_ system type]]
   (if (= type :playerShip)
@@ -615,19 +630,19 @@
                          (get 1))]
     {:db (assoc (:db cofx) type repairedShip)
      :dispatch [:changePhase]}))
-    
+
 (rf/reg-event-fx
   :repairShip
-  repairShip) 
+  repairShip)
 
-(defn setSystemRank 
+(defn setSystemRank
   [db [_ ship system systemVec]]
   (let [targetShip (ship db)
         shipSystems (:systems targetShip)
         newSystemsMap (assoc shipSystems system systemVec)
         newShip (assoc targetShip :systems newSystemsMap)]
     (assoc db ship newShip)))
-  
+
 (rf/reg-event-db
   ::setSystemRank
   setSystemRank)
@@ -638,9 +653,3 @@
   (fn [db _]
     (core/devLog "doing nothing")
     db))
-
-
-
-
-
-
