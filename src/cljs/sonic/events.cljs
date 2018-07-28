@@ -13,6 +13,9 @@
 (def SUPERCHARGED_MULTIPLIER 1.5)
 
 (def REPAIR_DEFAULT :lasers)
+
+(def AI_SYSTEM_STRENGTH_FACTOR 300)
+
 ;provides a skeleton of actions for the enemy to choose from.
 ;:targetSystem gets updated to current values when this is called
 (def ENEMY_ACTION_LIST 
@@ -21,9 +24,11 @@
    [:repairShip :targetSystem :enemyShip] 
    [:enemyChargeShields]])
   
+;creates a data structure to be used by the AI
+;takes the form of [[action] score correspondingFunction]
 (defn createOutcomesList
-  [actionList]
-  (map #(vector % 0) actionList))
+  [actionList functionList]
+  (map #(vector %1 0 %2) actionList functionList))
   
 ;dispatches an action based on which action button was pressed 
 (defn actionDispatch
@@ -133,9 +138,6 @@
                       fleeMessage))
           (assoc db :gameOver? true)))))
 
-
-
-
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
@@ -149,7 +151,6 @@
     (if (>= shipShields threshold)
       true
       false)))
-
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -313,7 +314,7 @@
     REPAIR_DEFAULT))
    
 ;enemy chooses actions based on which systems are available
-(defn enemyChooseAction
+(defn oldEnemyChooseAction
   [enemyShip playerShip]
   (core/devLog "enemy choosing action")
   (let [enemySystems (:systems enemyShip)
@@ -369,24 +370,52 @@
   [actionList]
   (map updateAction actionList))
 
-(defn calcOutcome
-  [[action score]]
-  [action (rand-int 4)])
+(defn calcShipStrength
+  [ship]
+  (let [{HP :HP
+         shieldsCapacity :shields
+         systems :systems} ship
+        {:keys [lasers missiles shields repairBay engines]} systems
+        superchargedFactor (if (shieldsSupercharged? ship)
+                             SUPERCHARGED_MULTIPLIER
+                             1)
+        score (->> [lasers missiles missiles repairBay engines]
+                   (map (fn [[hp rank]] (* hp rank AI_SYSTEM_STRENGTH_FACTOR)))
+                   (reduce +)
+                   (+ shieldsCapacity)
+                   (* superchargedFactor)
+                   (* HP))]
+    (core/devLog score)
+    score))
+
+(defn calcOutcomeScore
+  [db]
+  (let [{:keys [playerShip enemyShip]} db]
+    (-> (calcShipStrength enemyShip)
+        (- (calcShipStrength playerShip)))))
+
+(defn genOutcome
+  [db [action score function]]
+  [action (-> db
+              (function action)
+              (:db)
+              (calcOutcomeScore)) function])
 
 (defn getBestOutcome
   [outcomeList]
-  (reduce #(if (> (get %1 1) (get %2 1))
+  (reduce #(if (> (second %1) (second %2))
              %1
              %2) outcomeList))
 
 (defn newEnemyChooseAction
-  []
-  (let [actionList (getCurrentActionList ENEMY_ACTION_LIST)
-        outcomes (createOutcomesList actionList)]
-    (->> outcomes
-         (map calcOutcome)
-         (getBestOutcome)
-         (first))))
+  [db actionList functionList]
+  (let [currentActionList (getCurrentActionList actionList)
+        outcomes (createOutcomesList currentActionList functionList)
+        bestOutcome (->> outcomes
+                         (map genOutcome (repeat {:db db}))
+                         (getBestOutcome)
+                         (first))]
+    bestOutcome))
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
@@ -414,16 +443,6 @@
                   oldAmmo)]
        (assoc ship :ammo newAmmo)))
 
-;initiates enemy AI
-(rf/reg-event-fx
-  :enemyPhase
-  (fn [cofx effects]
-    (core/devLog "start of enemy phase")
-    (let [playerShip (:playerShip (:db cofx))
-          enemyShip (:enemyShip (:db cofx))]
-      {:db (:db cofx)
-       :dispatch (newEnemyChooseAction)})))
-          
 (rf/reg-event-db
   :logHistory
   (fn [db _]
@@ -665,7 +684,23 @@
                          (get 1))]
     {:db (assoc (:db cofx) type repairedShip)
      :dispatch [:changePhase]}))
-    
+
+(def ENEMY_FUNCTION_LIST
+ [damageShip
+  damageShip
+  repairShip
+  enemyChargeShields])
+
+ 
+;initiates enemy AI
+(rf/reg-event-fx
+  :enemyPhase
+  (fn [cofx effects]
+    (core/devLog "start of enemy phase")
+    {:db (:db cofx)
+     :dispatch (newEnemyChooseAction (:db cofx) ENEMY_ACTION_LIST ENEMY_FUNCTION_LIST)}))
+          
+  
 (rf/reg-event-fx
   :repairShip
   repairShip) 
