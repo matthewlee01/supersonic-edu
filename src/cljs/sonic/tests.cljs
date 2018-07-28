@@ -37,8 +37,8 @@
        EXPECTED_SHIELD_STRENGTH 120
        EXPECTED_REPAIR_STRENGTH 64
        EXPECTED_REPAIRED_SYSTEM [4 3]]
-   (is (= EXPECTED_LASER_DAMAGE (events/calcAttackDamage LASERS_RANK :lasers LASER_DAMAGE_ROLL)))
-   (is (= EXPECTED_MISSILE_DAMAGE (events/calcAttackDamage MISSILES_RANK :missiles MISSILE_DAMAGE_ROLL)))
+   (is (= EXPECTED_LASER_DAMAGE (events/calcAttackDamage LASERS_RANK :lasers LASER_DAMAGE_ROLL false)))
+   (is (= EXPECTED_MISSILE_DAMAGE (events/calcAttackDamage MISSILES_RANK :missiles MISSILE_DAMAGE_ROLL false)))
    (is (= EXPECTED_SHIELDS_MAX (events/calcShieldsMax SHIELDS_RANK)))
    (is (= EXPECTED_SHIELD_STRENGTH (events/calcShieldsStrength SHIELDS_RANK SHIELD_ROLL)))
    (is (= EXPECTED_REPAIR_STRENGTH (events/calcRepairStrength REPAIR_RANK REPAIR_ROLL)))

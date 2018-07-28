@@ -168,10 +168,12 @@
 (defn calcAttackDamage
   "calculates the damage of an attack given the rank of the attacking system,
   the type of the attack, and the base amount"
-  [attackRank attackType amount]
+  [attackRank attackType amount supercharged?]
   (* attackRank amount (if (= attackType :lasers)
                          LASER_DAMAGE_MULIPLIER
-                         MISSILE_DAMAGE_MULTIPLIER)))
+                         MISSILE_DAMAGE_MULTIPLIER) (if supercharged?
+                                                      SUPERCHARGED_MULTIPLIER
+                                                      1)))
 
 
 
@@ -185,14 +187,12 @@
                    (+ (:HP defender) (:shields defender))
                    (:HP defender))
         supercharged? (shieldsSupercharged? attacker)
-        dmgFactor (if supercharged?
-                    9
-                    6)
+        dmgFactor 6
         potentialDamage (-> attacker
                             (:systems)
                             (firingType)
                             (get 1)
-                            (calcAttackDamage firingType dmgFactor))]
+                            (calcAttackDamage firingType dmgFactor (shieldsSupercharged? attacker)))]
     (if (>= potentialDamage vitality)
       true
       false)))
@@ -460,6 +460,34 @@
 
 ;calculates new HP after taking damage,
 ;triggers game over if necessary
+
+(defn newNewShieldsAndAmmo
+  [[defender attacker system damage firingType]]
+  (let [newDefenderShields (- (:shields defender) damage)]
+    (if (= firingType :lasers)
+      (if (pos? newDefenderShields)
+        [(assoc defender :shields newDefenderShields) attacker system 0 firingType]
+        [(assoc defender :shields 0) attacker system (- newDefenderShields) firingType])
+      [defender (consumeAmmo attacker) system damage firingType])))
+
+(defn damageSystem
+  [[defender attacker system damage firingType]]
+  (let [newSystemHP (- (-> defender :systems system first) (-> attacker :systems firingType second))]
+    (if (pos? damage)
+      (if (pos? newSystemHP)
+        [(assoc-in defender [:systems system 1] newSystemHP) attacker damage]
+        [(assoc-in defender [:systems system 1] 0) attacker damage])
+      [defender attacker damage])))
+
+(defn newNewHP
+  [[defender attacker damage]]
+  (let [newDefenderHP (- (:HP defender) damage)]
+    (if (false? (pos? newDefenderHP))
+      (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
+                                :playerShip
+                                :enemyShip) true]))
+    [(assoc defender :HP newDefenderHP) attacker]))
+
 (defn newHP
   [[defender attacker system damage firingType]]
   (let [defenderHP (:HP defender)
@@ -494,7 +522,7 @@
 
 ;calculates new system status if shields are down,
 ;otherwise no system damage taken
-(defn newSystemHP
+(defn notnewSystemHP
   [[defender attacker system damage firingType]]
   (let [defenderShields (:shields defender)
         shieldsSystemRank (-> defender
@@ -538,37 +566,27 @@
   [cofx [_ system type firingType]]
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
-  (let [defender (type (:db cofx))
+  (let [defender (-> cofx :db type)
         attackerType (if (= type :playerShip)
                        :enemyShip
                        :playerShip)
-        attacker (attackerType (:db cofx))
-        attackRank (-> attacker
-                       (:systems)
-                       (firingType)
-                       (get 1))
-        supercharged? (shieldsSupercharged? attacker)
-        baseDamage (calcAttackDamage attackRank firingType (diceRoll))
-        finalDamage (if supercharged?
-                        (* SUPERCHARGED_MULTIPLIER baseDamage)
-                        baseDamage)
+        attacker (-> cofx :db attackerType)
+        attackRank (get-in attacker [:systems firingType 1])
+        damage (calcAttackDamage attackRank firingType (diceRoll) (shieldsSupercharged? attacker))
         devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
-                    baseDamage
-                    " damage"
-                    (if supercharged? (str " times " SUPERCHARGED_MULTIPLIER " for a total of " finalDamage " damage")))]
+                    damage
+                    " damage")]
        (core/devLog devMsg)
-       (let [newShips (-> [defender attacker system finalDamage firingType]
-                          (newHP)
-                          (newShields)
-                          (newSystemHP))
-             newDefenderType (get newShips 0)
-             newAttackerType (if (= firingType :missiles)
-                               (consumeAmmo (get newShips 1))
-                               (get newShips 1))]
+       (let [newShips (-> [defender attacker system damage firingType]
+                          (newNewShieldsAndAmmo)
+                          (damageSystem)
+                          (newNewHP))
+             newDefender (first newShips)
+             newAttacker (second newShips)]
             {:db (assoc (:db cofx)
-                    type newDefenderType
-                    attackerType newAttackerType)
+                    type newDefender
+                    attackerType newAttacker)
              :dispatch [:changePhase]})))
 
 (rf/reg-event-fx
