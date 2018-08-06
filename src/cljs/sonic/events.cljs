@@ -167,7 +167,7 @@
 
 (defn calcAttackDamage
   "calculates the damage of an attack given the rank of the attacking system,
-  the type of the attack, and the base amount"
+  the type of the attack, whether or not the attacker is supercharged, and a base multiplier"
   [attackRank attackType amount supercharged?]
   (* attackRank amount (if (= attackType :lasers)
                          LASER_DAMAGE_MULIPLIER
@@ -461,26 +461,35 @@
 ;calculates new HP after taking damage,
 ;triggers game over if necessary
 
-(defn newNewShieldsAndAmmo
+
+(defn newShieldsAndAmmo
+  "calculates new shields for defender if laser type attack,
+  calculates new ammo for attacker if missile type attack"
   [[defender attacker system damage firingType]]
   (let [newDefenderShields (- (:shields defender) damage)]
     (if (= firingType :lasers)
       (if (pos? newDefenderShields)
+        ;returns 0 as new damage value if shields are able to absorb the attack
         [(assoc defender :shields newDefenderShields) attacker system 0 firingType]
+        ;otherwise, returns unabsorbed damage as new damage value, which triggers newSystemHP and newHP
         [(assoc defender :shields 0) attacker system (- newDefenderShields) firingType])
+      ;consumes ammo if firingType is :missiles
       [defender (consumeAmmo attacker) system damage firingType])))
 
-(defn damageSystem
+(defn newSystemHP
+  "calculates system damage if residual damage from newShieldsAndAmmo"
   [[defender attacker system damage firingType]]
-  (let [newSystemHP (- (-> defender :systems system first) (-> attacker :systems firingType second))]
-    (println newSystemHP)
+  (let [newSystemHP (- (-> defender :systems system first)
+                       (-> attacker :systems firingType second))]
     (if (pos? damage)
       (if (pos? newSystemHP)
         [(assoc-in defender [:systems system 0] newSystemHP) attacker damage]
         [(assoc-in defender [:systems system 0] 0) attacker damage])
       [defender attacker damage])))
 
-(defn newNewHP
+(defn newHP
+  "calculates HP damage if residual damage from newShieldsAndAmmo,
+  dispatches :gameEnd if HP <= 0"
   [[defender attacker damage]]
   (let [newDefenderHP (- (:HP defender) damage)]
     (if (false? (pos? newDefenderHP))
@@ -488,72 +497,6 @@
                                 :playerShip
                                 :enemyShip) true]))
     [(assoc defender :HP newDefenderHP) attacker]))
-
-(defn newHP
-  [[defender attacker system damage firingType]]
-  (let [defenderHP (:HP defender)
-        defenderShields (:shields defender)
-        HPDamage (if (= firingType :lasers)
-                   (if (> defenderShields damage)
-                     0
-                     (- damage defenderShields))
-                   damage)
-        newHPVal (- defenderHP HPDamage)
-        destroyed? (if (<= newHPVal 0)
-                     true
-                     false)]
-    (if destroyed?
-      (rf/dispatch [:gameEnd (if (= defender @(rf/subscribe [:playerShip]))
-                               :playerShip
-                               :enemyShip) true]))
-    [(assoc defender :HP newHPVal)
-     attacker system damage firingType]))
-
-;calculates new shield value
-(defn newShields
-  [[defender attacker system damage firingType]]
-  (let [defenderShields (:shields defender)
-        shieldsDamage (if (= firingType :lasers)
-                        (if (> (- defenderShields damage) 0)
-                          damage
-                          defenderShields)
-                        0)]
-    [(assoc defender :shields (- defenderShields shieldsDamage))
-     attacker system damage firingType]))
-
-;calculates new system status if shields are down,
-;otherwise no system damage taken
-(defn newSystemHP
-  [[defender attacker system damage firingType]]
-  (let [defenderShields (:shields defender)
-        shieldsSystemRank (-> defender
-                              (:systems)
-                              (:shields)
-                              (get 1))
-        shieldsMax (calcShieldsMax shieldsSystemRank)]
-    (if (or (and (<= defenderShields 0)
-                 (= firingType :lasers))
-            (= firingType :missiles))
-      (let [systemHP (-> defender
-                         (:systems)
-                         (system)
-                         (get 0))
-            attackRank (-> attacker
-                           (:systems)
-                           (:lasers)
-                           (get 1))
-            systemDamage (if (> (- systemHP attackRank) 0)
-                           attackRank
-                           systemHP)
-            systemRank (-> defender
-                           (:systems)
-                           (system)
-                           (get 1))
-            newSystem [(- systemHP systemDamage) systemRank]
-            newSystemsMap (assoc (:systems defender) system newSystem)]
-        [(assoc defender :systems newSystemsMap)
-         attacker system damage firingType])
-      [defender attacker system damage firingType])))
 
 (defn consumeAmmo
   "reduces ship's ammo by 1; returns new ship"
@@ -580,9 +523,9 @@
                     " damage")]
        (core/devLog devMsg)
        (let [newShips (-> [defender attacker system damage firingType]
-                          (newNewShieldsAndAmmo)
-                          (damageSystem)
-                          (newNewHP))
+                          (newShieldsAndAmmo)
+                          (newSystemHP)
+                          (newHP))
              newDefender (first newShips)
              newAttacker (second newShips)]
             {:db (assoc (:db cofx)

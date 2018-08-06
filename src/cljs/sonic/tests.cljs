@@ -54,14 +54,14 @@
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
         laserAttackFinal (-> laserAttackInit
-                             (events/newHP)
-                             (events/newShields)
-                             (events/newSystemHP))
+                             (events/newShieldsAndAmmo)
+                             (events/newSystemHP)
+                             (events/newHP))
         missileAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :missiles]
         missileAttackFinal (-> missileAttackInit
-                               (events/newHP)
-                               (events/newShields)
-                               (events/newSystemHP))
+                               (events/newShieldsAndAmmo)
+                               (events/newSystemHP)
+                               (events/newHP))
         EXPECTED_HP_LASER 100
         EXPECTED_SHIELDS_LASER 60
         EXPECTED_SYSTEM_LASER [2 1]
@@ -127,14 +127,14 @@
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
         laserAttackFinal (-> laserAttackInit
-                             (events/newHP)
-                             (events/newShields)
-                             (events/newSystemHP))
+                             (events/newShieldsAndAmmo)
+                             (events/newSystemHP)
+                             (events/newHP))
         missileAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :missiles]
         missileAttackFinal (-> missileAttackInit
-                               (events/newHP)
-                               (events/newShields)
-                               (events/newSystemHP))
+                               (events/newShieldsAndAmmo)
+                               (events/newSystemHP)
+                               (events/newHP))
         EXPECTED_HP_LASER 80
         EXPECTED_SHIELDS_LASER 0
         EXPECTED_SYSTEM_LASER [1 1]
@@ -198,14 +198,14 @@
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
         laserAttackFinal (-> laserAttackInit
-                             (events/newHP)
-                             (events/newShields)
-                             (events/newSystemHP))
+                             (events/newShieldsAndAmmo)
+                             (events/newSystemHP)
+                             (events/newHP))
         missileAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :missiles]
         missileAttackFinal (-> missileAttackInit
-                               (events/newHP)
-                               (events/newShields)
-                               (events/newSystemHP))
+                               (events/newShieldsAndAmmo)
+                               (events/newSystemHP)
+                               (events/newHP))
         EXPECTED_HP_LASER 60
         EXPECTED_SHIELDS_LASER 0
         EXPECTED_SYSTEM_LASER [1 1]
