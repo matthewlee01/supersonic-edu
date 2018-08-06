@@ -473,10 +473,11 @@
 (defn damageSystem
   [[defender attacker system damage firingType]]
   (let [newSystemHP (- (-> defender :systems system first) (-> attacker :systems firingType second))]
+    (println newSystemHP)
     (if (pos? damage)
       (if (pos? newSystemHP)
-        [(assoc-in defender [:systems system 1] newSystemHP) attacker damage]
-        [(assoc-in defender [:systems system 1] 0) attacker damage])
+        [(assoc-in defender [:systems system 0] newSystemHP) attacker damage]
+        [(assoc-in defender [:systems system 0] 0) attacker damage])
       [defender attacker damage])))
 
 (defn newNewHP
@@ -522,7 +523,7 @@
 
 ;calculates new system status if shields are down,
 ;otherwise no system damage taken
-(defn notnewSystemHP
+(defn newSystemHP
   [[defender attacker system damage firingType]]
   (let [defenderShields (:shields defender)
         shieldsSystemRank (-> defender
