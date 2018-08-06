@@ -26,6 +26,8 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
+(def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
+
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
@@ -63,6 +65,11 @@
       (* SHIELD_UPGRADE_MULIPLIER)
       (+ BASE_SHIELD_MAX)))
 
+(defn randShipColour
+  "creates a random hex colour code (no blue values) and sets ship to that colour"
+  [ship]
+  (let [randColour (rand-nth ENEMY_COLOUR_LIST)]
+    (assoc ship :colour randColour)))
 
 ;initializes default db
 (rf/reg-event-db
@@ -84,10 +91,7 @@
         newSystemStats (map systemReset oldSystemStats)
         newSystems (zipmap systemNames newSystemStats)
         newMaxHP (+ (:maxHP ship) HP_GAIN)
-        newShields (-> newSystems
-                       :shields
-                       (get 1)
-                       (calcShieldsMax))]
+        newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
@@ -110,9 +114,9 @@
 
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
-  [cofx effexts]
+  [cofx _]
   (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-        newEnemyShip (-> cofx :db :enemyShip shipReset)]
+        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)]
    {:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
      :dispatch [:playerPhase]}))
 
