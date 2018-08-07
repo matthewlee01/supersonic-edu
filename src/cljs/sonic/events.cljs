@@ -450,10 +450,13 @@
                    functionList
                    prereqList)
         availableOutcomes (remove outcomeDisabled? outcomes)
-        bestOutcome (->> availableOutcomes
+        bestOutcome (if (not (empty? availableOutcomes))
+                      (->> availableOutcomes
                          (map genOutcome (repeat {:db db}))
                          (getBestOutcome)
-                         (first))]
+                         (first))
+                      ;if there are no available actions, enemyShip will flee
+                      [:gameEnd :enemyShip false])]
     (case (get bestOutcome 0)
       :damageShip (assoc bestOutcome 4 (diceRoll))
       :enemyChargeShields (assoc bestOutcome 1 (diceRoll))
