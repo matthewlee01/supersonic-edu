@@ -322,52 +322,6 @@
                         (vec)) 0)]
     target
     REPAIR_DEFAULT))
-   
-;enemy chooses actions based on which systems are available
-;OLD
-(defn oldEnemyChooseAction
-  [enemyShip playerShip]
-  (core/devLog "enemy choosing action")
-  (let [enemySystems (:systems enemyShip)
-        enemyShields (:shields enemyShip)
-        playerTargetSystem (getTargetSystem :target)
-        enemyTargetSystem (getTargetSystem :repair)]
-    (if (and (killRange? enemyShip playerShip :missiles)
-             (false? (systemDisabled? :missiles :enemyShip)))
-      (do (core/devLog "enemy has decided to launch missiles")
-          [:damageShip playerTargetSystem :playerShip :missiles])
-      (if (and (killRange? enemyShip playerShip :lasers)
-               (false? (systemDisabled? :lasers :enemyShip)))
-        (do (core/devLog "enemy has decided to fire lasers")
-            [:damageShip playerTargetSystem :playerShip :lasers])
-        (if (and (killRange? playerShip enemyShip :missiles)
-                 (not= nil enemyTargetSystem)
-                 (false? (systemDisabled? :repairBay :enemyShip)))
-          (do (core/devLog "enemy has decided to repair their ship")
-              [:repairShip enemyTargetSystem :enemyShip])
-          (if (and (killRange? playerShip enemyShip :lasers)
-                   (false? (systemDisabled? :shields :enemyShip)))
-            (do (core/devLog "enemy has decided to charge their shields")
-                [:enemyChargeShields])
-            (if (and (>= (:shields playerShip) 100)
-                     (false? (systemDisabled? :lasers :enemyShip)))
-              (do (core/devLog "enemy has decided to fire lasers")
-                  [:damageShip playerTargetSystem :playerShip :lasers])
-              (if (false? (systemDisabled? :missiles :enemyShip))
-                (do (core/devLog "enemy has decided to launch missiles")
-                    [:damageShip playerTargetSystem :playerShip :missiles])
-                (if (false? (systemDisabled? :lasers :enemyShip))
-                  (do (core/devLog "enemy has decided to fire lasers")
-                      [:damageShip playerTargetSystem :playerShip :lasers])
-                  (if (and (false? (systemDisabled? :shields :enemyShip))
-                           (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
-                    (do (core/devLog "enemy has decided to charge their shields") 
-                        [:enemyChargeShields])
-                    (if (false? (systemDisabled? :repairBay :enemyShip))
-                      (do (core/devLog "enemy has decided to repair their ship")
-                          [:repairShip enemyTargetSystem :enemyShip])
-                      (do (core/devLog "enemy has decided to flee")
-                          [:gameEnd :enemyShip false]))))))))))))
 
 ;updates the default action with current values to replace placeholders
 (defn updateAction
