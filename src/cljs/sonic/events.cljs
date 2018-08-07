@@ -450,17 +450,20 @@
                    functionList
                    prereqList)
         availableOutcomes (remove outcomeDisabled? outcomes)
-        bestOutcome (if (not (empty? availableOutcomes))
-                      (->> availableOutcomes
+        bestOutcome (->> availableOutcomes
                          (map genOutcome (repeat {:db db}))
                          (getBestOutcome)
                          (first))
-                      ;if there are no available actions, enemyShip will flee
-                      [:gameEnd :enemyShip false])]
-    (case (get bestOutcome 0)
-      :damageShip (assoc bestOutcome 4 (diceRoll))
-      :enemyChargeShields (assoc bestOutcome 1 (diceRoll))
-      bestOutcome)))
+        chosenOutcome (if (not (empty? availableOutcomes))
+                        bestOutcome
+                        ;if there are no available actions, enemyShip will flee
+                        (if (systemDisabled? :engines :enemyShip)
+                          [:changePhase]
+                          [:gameEnd :enemyShip false]))]
+    (case (get chosenOutcome 0)
+      :damageShip (assoc chosenOutcome 4 (diceRoll))
+      :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
+      chosenOutcome)))
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
