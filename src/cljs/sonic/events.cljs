@@ -16,11 +16,13 @@
 
 (def AI_SYSTEM_STRENGTH_FACTOR 300)
 
+(def MEAN_DICEROLL 3.5)
+
 ;provides a skeleton of actions for the enemy to choose from.
-;:targetSystem gets updated to current values when this is called
+;:targetSystem gets updated to current values when this is used
 (def ENEMY_ACTION_LIST 
-  [[:damageShip :targetSystem :playerShip :missiles] 
-   [:damageShip :targetSystem :playerShip :lasers] 
+  [[:damageShip :targetSystem :playerShip :missiles MEAN_DICEROLL] 
+   [:damageShip :targetSystem :playerShip :lasers MEAN_DICEROLL] 
    [:repairShip :targetSystem :enemyShip] 
    [:enemyChargeShields]])
   
@@ -31,6 +33,11 @@
    :repairBay
    :shields])
  
+;selects a random number from 1-6
+(defn diceRoll
+  []
+  (+ 1 (rand-int 6)))
+
 ;creates a data structure to be used by the AI
 ;takes the form of [[action] score correspondingFunction prereqSystem]
 (defn createOutcomesList
@@ -45,7 +52,7 @@
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
   [system type firingType]
-  (fn [] (rf/dispatch [:damageShip system type firingType])))
+  (fn [] (rf/dispatch [:damageShip system type firingType (diceRoll)])))
    
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
@@ -159,10 +166,6 @@
       true
       false)))
 
-;selects a random number from 1-6
-(defn diceRoll
-  []
-  (+ 1 (rand-int 6)))
   
 ;calculates strength of shield charge
 (defn calcShieldsStrength
@@ -449,7 +452,9 @@
                          (map genOutcome (repeat {:db db}))
                          (getBestOutcome)
                          (first))]
-    bestOutcome))
+    (case (get bestOutcome 0)
+      :damageShip (assoc bestOutcome 4 (diceRoll))
+      bestOutcome)))
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
@@ -628,7 +633,7 @@
 ;performs all the steps of damaging the ship 
 ;(and systems if necessary)
 (defn damageShip
-  [cofx [_ system type firingType]]
+  [cofx [_ system type firingType diceRoll]]
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
   (let [defender (type (:db cofx))
@@ -642,8 +647,8 @@
                        (get 1))
         supercharged? (shieldsSupercharged? attacker)
         baseDamage (if (= firingType :lasers)
-                     (calcLaserDamage attackRank (diceRoll))
-                     (calcMissileDamage attackRank (diceRoll)))
+                     (calcLaserDamage attackRank diceRoll)
+                     (calcMissileDamage attackRank diceRoll))
         finalDamage (if supercharged?
                         (* SUPERCHARGED_MULTIPLIER baseDamage)
                         baseDamage)

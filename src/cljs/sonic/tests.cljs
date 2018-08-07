@@ -26,8 +26,8 @@
     (is (= 115 (events/calcShieldsMax 2)))
     (is (= 120 (events/calcShieldsStrength 3 5)))
     (is (= 64 (events/calcRepairStrength 4 4)))
-    (is (= [4 3] (events/createRepairedSystem 3)))
-  ))
+    (is (= [4 3] (events/createRepairedSystem 3)))))
+  
 
 
 
@@ -256,17 +256,17 @@
   (let [testShip {:systems {:lasers [1 1]}
                   :ammo 5}]
 
-  (is (= 5 (-> testShip
-             (events/refillAmmo 1)
-             (:ammo))))
+   (is (= 5 (-> testShip
+              (events/refillAmmo 1)
+              (:ammo))))
 
-  (is (= 6 (-> testShip
-             (events/refillAmmo 4)
-             (:ammo))))
+   (is (= 6 (-> testShip
+              (events/refillAmmo 4)
+              (:ammo))))
 
-  (is (= 4 (-> testShip
-             (events/consumeAmmo)
-             (:ammo))))))
+   (is (= 4 (-> testShip
+              (events/consumeAmmo)
+              (:ammo))))))
 
 
 
