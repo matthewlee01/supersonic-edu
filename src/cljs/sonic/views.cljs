@@ -94,10 +94,19 @@
       [:div.management {:style {:z-index (if gameOver?
                                           1
                                           -1)}}
-       [:fieldset
-        [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-                  :style {:font-size "200px"
-                          :padding "210px 0px"}} "whoops go back"]]]
+       [:div.manageShip
+        [:div.shipDisplay "ship"]
+        [:div.upgradeUI "upgrade buttons"]]
+       [:div.utility 
+        [:div.sitrep
+         [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                   :style {:font-size "20px"
+                           :padding "0px 0px"}} "whoops go back"]
+         (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
+        [:div.stats 
+         ;this is a crude way to check battle # but it works right now and can be changed in the future
+         (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
+        [:div.menuButtons "menu buttons"]]]
       [:div.battle
         [:fieldset {:disabled gameOver?
                     :style {:position "absolute"}}

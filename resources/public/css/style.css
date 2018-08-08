@@ -19,7 +19,10 @@
     height: 900px;
     position: absolute;
     background-color: lightgreen;
+    display: flex;
+    flex-direction: row;
 }
+
 .ships {
     display: flex;
     flex-direction: row;
@@ -83,6 +86,7 @@
     justify-content: space-around;
     align-items: center;
 }
+
 .infoDisplay {
     height: 50px;
     width: 300px;
@@ -92,8 +96,51 @@
     margin: 10px 50px;
 }
 
+.manageShip {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    width: 650px;
+    height: 900px;
+    background-color: blue
+}
 
+.shipDisplay {
+    width: 620px;
+    height: 620px;
+    background-color: teal;
+}
 
+.upgradeUI {
+    width: 620px;
+    height: 250px;
+    background-color: lightblue;
+}
+.utility {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    width: 450px;
+    height: 900px;
+    background-color: orange
+}
 
+.sitrep {
+    width: 420px;
+    height: 420px;
+    background-color: darkorange;
+}
 
+.stats {
+    width: 420px;
+    height: 270px;
+    background-color: yellow;
+}
 
+.menuButtons {
+    width: 420px;
+    height: 150px; 
+    background-color: olive;
+}
