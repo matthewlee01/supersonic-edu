@@ -95,18 +95,31 @@
                                           1
                                           -1)}}
        [:div.manageShip
-        [:div.shipDisplay "ship"]
-        [:div.upgradeUI "upgrade buttons"]]
+        [:div.shipDisplay
+         [:div.playerShip {:style {:background-color playerColour}}
+            [:div.vitalityDisplayArea
+             [shipVitalityDisplay playerShields "Shields"]
+             [shipVitalityDisplay playerHP "HP"]]
+            [systemButton :lasers :playerShip "Lasers"]
+            [systemButton :missiles :playerShip "Missiles"]
+            [systemButton :shields :playerShip "Shields"]
+            [systemButton :repairBay :playerShip "Repair Bay"]
+            [systemButton :engines :playerShip "Engines"]]]
+        [:div.upgradeUI
+         [:button.upgradeShip "Upgrade Systems"]
+         [:button.upgradeShip "Upgrade Ship"]]]
        [:div.utility 
         [:div.sitrep
-         [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-                   :style {:font-size "20px"
-                           :padding "0px 0px"}} "whoops go back"]
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
         [:div.stats 
          ;this is a crude way to check battle # but it works right now and can be changed in the future
          (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
-        [:div.menuButtons "menu buttons"]]]
+        [:div.menuButtons
+         [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                   :style {:font-size "35px"
+                           :padding "5px 10px"}} "Next Battle"]
+         [:button {:style {:font-size "35px"
+                           :padding "5px 10px"}} "Restart Game"]]]]
       [:div.battle
         [:fieldset {:disabled gameOver?
                     :style {:position "absolute"}}
