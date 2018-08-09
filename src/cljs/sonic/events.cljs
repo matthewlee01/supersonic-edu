@@ -126,9 +126,6 @@
         newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
-
-
-
 ;prompts player for playerName value
 (rf/reg-event-fx
   ::gameStart
@@ -143,18 +140,6 @@
                                      playerName)
                                    "Player"))))
      :dispatch [:reset-db]}))
-
-(defn reset-db
-  "resets game state and applies HP buff using shipReset"
-  [cofx _]
-  (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)]
-   {:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
-     :dispatch [:playerPhase]}))
-
-(rf/reg-event-fx
-  :reset-db
-  reset-db)
 
 ;sends an alert and disables main view
 (rf/reg-event-db
@@ -436,6 +421,33 @@
       :damageShip (assoc chosenOutcome 4 (diceRoll))
       :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
       chosenOutcome)))
+
+(defn calcScore
+  [ship]
+  (-> (calcShipStrength ship)
+      (/ 500)))
+  
+(defn reset-db
+  "resets game state and applies HP buff using shipReset"
+  [cofx _]
+  (let [newPlayerShip (-> cofx :db :playerShip shipReset)
+        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)
+        scoreEarned (-> cofx :db :battleScore)]
+   {:db (assoc (:db cofx) 
+               :playerShip newPlayerShip 
+               :enemyShip newEnemyShip 
+               :gameOver? false 
+               :turn 0 
+               :history [] 
+               :phase 0
+               :money (+ scoreEarned (-> cofx :db :money))
+               :totalScore (+ scoreEarned (-> cofx :db :totalScore))
+               :battleScore (calcScore newEnemyShip))
+     :dispatch [:playerPhase]}))
+
+(rf/reg-event-fx
+  :reset-db
+  reset-db)
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
