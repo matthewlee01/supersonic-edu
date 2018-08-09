@@ -106,8 +106,10 @@
             [systemButton :repairBay :playerShip "Repair Bay"]
             [systemButton :engines :playerShip "Engines"]]]
         [:div.upgradeUI
-         [:button.upgradeShip "Upgrade Systems"]
-         [:button.upgradeShip "Upgrade Ship"]]]
+         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleUpgradingSystems]))}
+          "Upgrade Systems"]
+         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleUpgradingShip]))}
+          "Upgrade Ship"]]]
        [:div.utility 
         [:div.sitrep
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
@@ -118,7 +120,10 @@
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Next Battle"]
-         [:button {:style {:font-size "35px"
+         [:button {:on-click (fn [] 
+                               (rf/dispatch [::events/initialize-db])
+                               (rf/dispatch [::events/gameStart]))
+                   :style {:font-size "35px"
                            :padding "5px 10px"}} "Restart Game"]]]]
       [:div.battle
         [:fieldset {:disabled gameOver?

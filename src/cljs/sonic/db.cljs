@@ -29,4 +29,6 @@
    :gameOver? false
    :phase 0
    :history []
-   :devMode true})
+   :devMode true
+   :upgradingSystems? false
+   :upgradingShip? false})
