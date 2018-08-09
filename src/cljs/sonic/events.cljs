@@ -28,7 +28,6 @@
 
 (def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
 
-
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
   [event]
@@ -95,8 +94,6 @@
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
-
-
 ;prompts player for playerName value
 (rf/reg-event-fx
   ::gameStart
@@ -139,9 +136,6 @@
                       fleeMessage))
           (assoc db :gameOver? true)))))
 
-
-
-
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
@@ -155,7 +149,6 @@
     (if (>= shipShields threshold)
       true
       false)))
-
 
 ;selects a random number from 1-6
 (defn diceRoll
