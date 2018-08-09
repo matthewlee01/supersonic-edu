@@ -186,7 +186,6 @@
   (let [vitality (if (= firingType :lasers)
                    (+ (:HP defender) (:shields defender))
                    (:HP defender))
-        supercharged? (shieldsSupercharged? attacker)
         dmgFactor 6
         potentialDamage (-> attacker
                             (:systems)
