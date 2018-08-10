@@ -1,6 +1,6 @@
 (ns sonic.db)
 
-(def default-db 
+(def default-db
   {:playerShip {:systems {:lasers [2 1]
                           :missiles [2 1]
                           :shields [2 1]
@@ -9,7 +9,8 @@
                 :HP 100
                 :maxHP 50
                 :shields 100
-                :ammo 2}
+                :ammo 2
+                :colour "blue"}
    :enemyShip {:systems {:lasers [2 1]
                          :missiles [2 1]
                          :shields [2 1]
@@ -18,7 +19,8 @@
                :HP 100
                :maxHP 50
                :shields 100
-               :ammo 2}
+               :ammo 2
+               :colour "red"}
    :turn 0
    :firing? false
    :firingType nil

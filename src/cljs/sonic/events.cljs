@@ -12,6 +12,38 @@
 
 (def LASER_DAMAGE_MULIPLIER 10) ;multiplier for laser attack
 
+(def REPAIR_DEFAULT :lasers) ;default repair target for enemy ai
+
+(def AI_SYSTEM_STRENGTH_FACTOR 300) ;coefficient for ai formula
+
+(def MEAN_DICEROLL 3.5) ;average roll for diceRoll, used for ai
+
+;provides a skeleton of actions for the enemy to choose from.
+;:targetSystem gets updated to current values when this is used
+(def ENEMY_ACTION_LIST 
+  [[:damageShip :targetSystem :playerShip :missiles MEAN_DICEROLL] 
+   [:damageShip :targetSystem :playerShip :lasers MEAN_DICEROLL] 
+   [:repairShip :targetSystem :enemyShip] 
+   [:enemyChargeShields MEAN_DICEROLL]])
+  
+;required system for each corresponding action
+(def ENEMY_ACTION_PREREQ_LIST
+  [:missiles
+   :lasers
+   :repairBay
+   :shields])
+ 
+;selects a random number from 1-6
+(defn diceRoll
+  []
+  (+ 1 (rand-int 6)))
+
+;creates a data structure to be used by the AI
+;takes the form of [[action] score correspondingFunction prereqSystem]
+(defn createOutcomesList
+  [actionList functionList prereqList]
+  (map #(vector %1 0 %2 %3) actionList functionList prereqList))
+  
 (def MISSILE_DAMAGE_MULTIPLIER 5) ;multiplier for missile attack
 
 (def HP_GAIN 50) ;amount of max hp increased per stage
@@ -26,6 +58,8 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
+(def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
+
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
@@ -35,7 +69,7 @@
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
   [system type firingType]
-  (fn [] (rf/dispatch [:damageShip system type firingType])))
+  (fn [] (rf/dispatch [:damageShip system type firingType (diceRoll)])))
 
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
@@ -63,6 +97,11 @@
       (* SHIELD_UPGRADE_MULIPLIER)
       (+ BASE_SHIELD_MAX)))
 
+(defn randShipColour
+  "creates a random hex colour code (no blue values) and sets ship to that colour"
+  [ship]
+  (let [randColour (rand-nth ENEMY_COLOUR_LIST)]
+    (assoc ship :colour randColour)))
 
 ;initializes default db
 (rf/reg-event-db
@@ -84,10 +123,7 @@
         newSystemStats (map systemReset oldSystemStats)
         newSystems (zipmap systemNames newSystemStats)
         newMaxHP (+ (:maxHP ship) HP_GAIN)
-        newShields (-> newSystems
-                       :shields
-                       (get 1)
-                       (calcShieldsMax))]
+        newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
@@ -110,9 +146,9 @@
 
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
-  [cofx effexts]
+  [cofx _]
   (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-        newEnemyShip (-> cofx :db :enemyShip shipReset)]
+        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)]
    {:db (assoc (:db cofx) :playerShip newPlayerShip :enemyShip newEnemyShip :gameOver? false :turn 0 :history [] :phase 0)
      :dispatch [:playerPhase]}))
 
@@ -135,9 +171,6 @@
                       fleeMessage))
           (assoc db :gameOver? true)))))
 
-
-
-
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
@@ -151,12 +184,6 @@
     (if (>= shipShields threshold)
       true
       false)))
-
-
-;selects a random number from 1-6
-(defn diceRoll
-  []
-  (+ 1 (rand-int 6)))
 
 ;calculates strength of shield charge
 (defn calcShieldsStrength
@@ -279,12 +306,15 @@
       false)))
 
 ;calls chargeShields on enemyShip and updates value
+(defn enemyChargeShields
+  [cofx [_ diceRoll]]
+  (core/devLog "enemy charging shields")
+  {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) diceRoll))
+   :dispatch [:changePhase]})
+
 (rf/reg-event-fx
   :enemyChargeShields
-  (fn [cofx events]
-    (core/devLog "enemy charging shields")
-    {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) (diceRoll)))
-     :dispatch [:changePhase]}))
+  enemyChargeShields)
 
 ;holds priority list for enemy attacks and repairs
 (def enemyPriorityList
@@ -295,57 +325,110 @@
 ;by filtering through priority list
 (defn getTargetSystem
   [filterType]
-  (get (->> (filterType enemyPriorityList)
-            (map (if (= filterType :repair)
-                   enemySystemsDamaged?
-                   playerSystemsActive?))
-            (remove false?)
-            (vec)) 0))
+  (if-let [target (get (->> (filterType enemyPriorityList)
+                        (map (if (= filterType :repair)
+                               enemySystemsDamaged?
+                               playerSystemsActive?)) 
+                        (remove false?)
+                        (vec)) 0)]
+    target
+    REPAIR_DEFAULT))
 
-;enemy chooses actions based on which systems are available
+;updates the default action with current values to replace placeholders
+(defn updateAction
+  [action]
+  (let [actionType (get action 0)]
+    (case actionType
+      :enemyChargeShields action
+      :repairShip (assoc action 1 (getTargetSystem :repair))
+      :damageShip (assoc action 1 (getTargetSystem :target)))))
+
+;updates the default actionList value to current values
+(defn getCurrentActionList
+  [actionList]
+  (map updateAction actionList))
+
+;calculates the general strength of a ship based on several factors,
+;takes a ship map and returns an integer
+(defn calcShipStrength
+  [ship]
+  (let [{HP :HP
+         shieldsCapacity :shields
+         systems :systems} ship
+        {:keys [lasers missiles shields repairBay engines]} systems
+        superchargedFactor (if (shieldsSupercharged? ship)
+                             SUPERCHARGED_MULTIPLIER
+                             1)
+        ;formula for calculating ship score:
+        ;(sum of (syshp * sysrank * scorefactor)) + shieldscapacity * superchargedfactor * hp
+        ;places high emphasis on having full shields, having at least 1 hp on all systems, and damaging player systems
+        score (->> [lasers missiles missiles repairBay engines]
+                   (map (fn [[hp rank]] (* hp rank AI_SYSTEM_STRENGTH_FACTOR)))
+                   (reduce +)
+                   (+ shieldsCapacity)
+                   (* superchargedFactor)
+                   (* HP))]
+    (core/devLog score)
+    score))
+
+;calculates how good this outcome is based on how big of an
+;advantage it gives the enemyShip
+(defn calcOutcomeScore
+  [db]
+  (let [{:keys [playerShip enemyShip]} db
+        score (-> (calcShipStrength enemyShip)
+                (- (calcShipStrength playerShip)))]
+    (core/devLog (str "outcome score: " score))
+    score))
+
+;gets an outcome score by running calcOutcomeScore on a db 
+;generated by an enemy action handler
+(defn genOutcome
+  [db [action score function]]
+  [action (-> db
+              (function action)
+              (:db)
+              (calcOutcomeScore)) function])
+
+;takes the list of outcomes and checks their scores against each other, 
+(defn getBestOutcome
+  [outcomeList]
+  (reduce #(if (> (second %1) (second %2))
+             %1
+             %2) outcomeList))
+
+;checks if outcome can be executed based on prereq system on enemy ship
+(defn outcomeDisabled?
+  [outcome]
+  (-> (get outcome 3)
+      (systemDisabled? :enemyShip)))
+
+;returns the action handler which results in the most advantageous outcome
+;for the enemy using the calcOutcomeScore formula
 (defn enemyChooseAction
-  [enemyShip playerShip]
-  (core/devLog "enemy choosing action")
-  (let [enemySystems (:systems enemyShip)
-        enemyShields (:shields enemyShip)
-        playerTargetSystem (getTargetSystem :target)
-        enemyTargetSystem (getTargetSystem :repair)]
-    (if (and (killRange? enemyShip playerShip :missiles)
-             (false? (systemDisabled? :missiles :enemyShip)))
-      (do (core/devLog "enemy has decided to launch missiles")
-          [:damageShip playerTargetSystem :playerShip :missiles])
-      (if (and (killRange? enemyShip playerShip :lasers)
-               (false? (systemDisabled? :lasers :enemyShip)))
-        (do (core/devLog "enemy has decided to fire lasers")
-            [:damageShip playerTargetSystem :playerShip :lasers])
-        (if (and (killRange? playerShip enemyShip :missiles)
-                 (not= nil enemyTargetSystem)
-                 (false? (systemDisabled? :repairBay :enemyShip)))
-          (do (core/devLog "enemy has decided to repair their ship")
-              [:repairShip enemyTargetSystem :enemyShip])
-          (if (and (killRange? playerShip enemyShip :lasers)
-                   (false? (systemDisabled? :shields :enemyShip)))
-            (do (core/devLog "enemy has decided to charge their shields")
-                [:enemyChargeShields])
-            (if (and (>= (:shields playerShip) 100)
-                     (false? (systemDisabled? :lasers :enemyShip)))
-              (do (core/devLog "enemy has decided to fire lasers")
-                  [:damageShip playerTargetSystem :playerShip :lasers])
-              (if (false? (systemDisabled? :missiles :enemyShip))
-                (do (core/devLog "enemy has decided to launch missiles")
-                    [:damageShip playerTargetSystem :playerShip :missiles])
-                (if (false? (systemDisabled? :lasers :enemyShip))
-                  (do (core/devLog "enemy has decided to fire lasers")
-                      [:damageShip playerTargetSystem :playerShip :lasers])
-                  (if (and (false? (systemDisabled? :shields :enemyShip))
-                           (< enemyShields (calcShieldsMax (get (:shields enemySystems) 1))))
-                    (do (core/devLog "enemy has decided to charge their shields")
-                        [:enemyChargeShields])
-                    (if (false? (systemDisabled? :repairBay :enemyShip))
-                      (do (core/devLog "enemy has decided to repair their ship")
-                          [:repairShip enemyTargetSystem :enemyShip])
-                      (do (core/devLog "enemy has decided to flee")
-                          [:gameEnd :enemyShip false]))))))))))))
+  [db actionList functionList prereqList]
+  (let [currentActionList (getCurrentActionList actionList)
+        ;outcomes are data structures that contain all the necessary data
+        ;to evaluate and return an outcome score
+        outcomes (createOutcomesList 
+                   currentActionList 
+                   functionList
+                   prereqList)
+        availableOutcomes (remove outcomeDisabled? outcomes)
+        bestOutcome (->> availableOutcomes
+                         (map genOutcome (repeat {:db db}))
+                         (getBestOutcome)
+                         (first))
+        chosenOutcome (if (not (empty? availableOutcomes))
+                        bestOutcome
+                        ;if there are no available actions, enemyShip will flee
+                        (if (systemDisabled? :engines :enemyShip)
+                          [:changePhase]
+                          [:gameEnd :enemyShip false]))]
+    (case (get chosenOutcome 0)
+      :damageShip (assoc chosenOutcome 4 (diceRoll))
+      :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
+      chosenOutcome)))
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
@@ -372,16 +455,6 @@
                   (+ oldAmmo 1)
                   oldAmmo)]
        (assoc ship :ammo newAmmo)))
-
-;initiates enemy AI
-(rf/reg-event-fx
-  :enemyPhase
-  (fn [cofx effects]
-    (core/devLog "start of enemy phase")
-    (let [playerShip (:playerShip (:db cofx))
-          enemyShip (:enemyShip (:db cofx))]
-      {:db (:db cofx)
-       :dispatch (enemyChooseAction enemyShip playerShip)})))
 
 (rf/reg-event-db
   :logHistory
@@ -506,7 +579,7 @@
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
-  [cofx [_ system type firingType]]
+  [cofx [_ system type firingType diceRoll]]
   (if (= type :enemyShip)
     (rf/dispatch [:toggleFiringMode]))
   (let [defender (-> cofx :db type)
@@ -576,6 +649,7 @@
   [cofx [_ system type]]
   (if (= type :playerShip)
     (rf/dispatch [:toggleRepairingMode]))
+  (core/devLog "repairing ship")
   (let [ship (type (:db cofx))
         repairedShip (-> [system ship]
                          (restoreHP)
@@ -583,6 +657,23 @@
                          (get 1))]
     {:db (assoc (:db cofx) type repairedShip)
      :dispatch [:changePhase]}))
+
+(def ENEMY_FUNCTION_LIST
+ [damageShip
+  damageShip
+  repairShip
+  enemyChargeShields])
+
+;initiates enemy AI
+(rf/reg-event-fx
+  :enemyPhase
+  (fn [cofx effects]
+    (core/devLog "start of enemy phase")
+    {:db (:db cofx)
+     :dispatch (enemyChooseAction (:db cofx) 
+                                  ENEMY_ACTION_LIST 
+                                  ENEMY_FUNCTION_LIST
+                                  ENEMY_ACTION_PREREQ_LIST)}))
 
 (rf/reg-event-fx
   :repairShip
