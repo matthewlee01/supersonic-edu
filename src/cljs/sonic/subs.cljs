@@ -56,3 +56,13 @@
   (fn [db _]
     (:devMode db)))
 
+(rf/reg-sub
+  :upgradingSystems?
+  (fn [db _]
+    (:upgradingSystems? db)))
+
+(rf/reg-sub 
+  :upgradingShip?
+  (fn [db _]
+    (:upgradingShip? db)))
+  

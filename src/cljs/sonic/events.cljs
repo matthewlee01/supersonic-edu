@@ -151,8 +151,6 @@
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 
-
-
 ;prompts player for playerName value
 (rf/reg-event-fx
   ::gameStart
@@ -537,6 +535,26 @@
   (assoc db :firing? (if (:firing? db)
                        false
                        true)))
+
+(defn toggleUpgradeSystems
+  [db _]
+  (assoc db :upgradingSystems? (if (:upgradingSystems? db)
+                                 false
+                                 true)))
+
+(rf/reg-event-db
+  ::toggleUpgradingSystems
+  toggleUpgradeSystems)
+
+(defn toggleUpgradeShip
+  [db _]
+  (assoc db :upgradingShip? (if (:upgradingShip? db)
+                              false
+                              true)))
+
+(rf/reg-event-db 
+  ::toggleUpgradingShip
+  toggleUpgradeShip)
 
 (rf/reg-event-db
   :toggleFiringMode
