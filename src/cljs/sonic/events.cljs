@@ -58,8 +58,20 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
-(def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
-
+(def ENEMY_COLOUR_LIST ["red" 
+                        "orange" 
+                        "green" 
+                        "greenyellow" 
+                        "lightslategray" 
+                        "mediumvioletred" 
+                        "orangered" 
+                        "tomato" 
+                        "springgreen" 
+                        "magenta" 
+                        "maroon" 
+                        "orchid" 
+                        "pink" 
+                        "seagreen"])
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
@@ -87,6 +99,18 @@
                (= system :missiles)))
     true
     false))
+
+(defn upgradeSystemsDispatch
+  [system ship]
+  (fn [] (rf/dispatch [:upgradeSystem system ship])))
+
+(defn upgradeSystem
+  [cofx [_ system ship]]
+  {:db (:db cofx)})
+
+(rf/reg-event-fx
+  :upgradeSystem
+  upgradeSystem)
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
