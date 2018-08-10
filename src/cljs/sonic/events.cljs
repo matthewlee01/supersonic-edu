@@ -61,6 +61,12 @@
 (def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
 
 
+;prints a message to console if devMode is on
+(defn devLog
+  [string]
+  (if @(rf/subscribe [:devMode])
+    (println string)))
+
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
   [event]
@@ -107,7 +113,7 @@
 (rf/reg-event-db
   ::initialize-db
   (fn [_ _]
-    (core/devLog "initializing")
+    (devLog "initializing")
     db/default-db))
 
 (defn systemReset
@@ -133,7 +139,7 @@
 (rf/reg-event-fx
   ::gameStart
   (fn [cofx effects]
-    (core/devLog "start of game")
+    (devLog "start of game")
     {:db (-> (assoc (:db cofx) :gameOver? false)
              (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
                                   existingName
@@ -160,7 +166,7 @@
 (rf/reg-event-db
   :gameEnd
   (fn [db [_ loser gameOver?]]
-    (core/devLog "end of battle")
+    (devLog "end of battle")
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
@@ -243,14 +249,14 @@
 (rf/reg-event-fx
   :actionFire
   (fn [cofx event]
-    (core/devLog "player toggling firing mode")
+    (devLog "player toggling firing mode")
     {:db (:db cofx)
      :dispatch [:setFiringType :lasers]}))
 
 (rf/reg-event-fx
   :actionLaunch
   (fn [cofx event]
-    (core/devLog "player toggling launch mode")
+    (devLog "player toggling launch mode")
     {:db (:db cofx)
      :dispatch [:setFiringType :missiles]}))
 
@@ -258,7 +264,7 @@
 ;then ends player phase
 (defn actionChargeShields
   [cofx events]
-  (core/devLog "player charging shields")
+  (devLog "player charging shields")
   {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll)))
    :dispatch [:changePhase]})
 
@@ -279,7 +285,7 @@
 (rf/reg-event-fx
   :actionFlee
   (fn [cofx effects]
-    (core/devLog "player fleeing")
+    (devLog "player fleeing")
     {:db (:db cofx)
      :dispatch [:gameEnd :playerShip false]}))
 
@@ -434,7 +440,7 @@
 (defn changePhase
   [cofx effects]
   (if (false? (:gameOver? (:db cofx)))
-    (do (core/devLog "changing phase")
+    (do (devLog "changing phase")
         (if (zero? (:phase (:db cofx)))
           {:db (assoc (:db cofx) :phase 1)
            :dispatch [:enemyPhase]}
@@ -459,7 +465,7 @@
 (rf/reg-event-db
   :logHistory
   (fn [db _]
-    (core/devLog "logging turn")
+    (devLog "logging turn")
     (let [newHistory (-> (:history db)
                          (concat [db])
                          (vec))]
@@ -475,7 +481,7 @@
         newPlayerShip (refillAmmo playerShip newTurn)
         enemyShip (:enemyShip (:db cofx))
         newEnemyShip (refillAmmo enemyShip newTurn)]
-    (core/devLog "start of player phase")
+    (devLog "start of player phase")
     {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip :enemyShip newEnemyShip)
      :dispatch [:logHistory]}))
 
@@ -486,7 +492,7 @@
 (rf/reg-event-fx
   ::rewindTurn
   (fn [cofx [_ turn]]
-    (core/devLog (str "rewinding to turn " turn))
+    (devLog (str "rewinding to turn " turn))
     {:db (-> (:history (:db cofx))
              (get (- turn 1)))
      :dispatch [:logHistory]}))
@@ -593,7 +599,7 @@
                     "took "
                     damage
                     " damage")]
-       (core/devLog devMsg)
+       (devLog devMsg)
        (let [newShips (-> [defender attacker system damage firingType]
                           (newShieldsAndAmmo)
                           (newSystemHP)
@@ -695,5 +701,5 @@
 (rf/reg-event-db
   :doNothing
   (fn [db _]
-    (core/devLog "doing nothing")
+    (devLog "doing nothing")
     db))

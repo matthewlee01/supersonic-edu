@@ -8,13 +8,13 @@
    [sonic.tests :as tests]
    [sonic.db :as db]))
 
-(defn dev-setup 
+(defn dev-setup
   []
   (when config/debug?
     (enable-console-print!)
     (println "dev mode")))
 
-(defn mount-root 
+(defn mount-root
   []
   (rf/clear-subscription-cache!)
   (r/render [views/main-panel]
@@ -24,11 +24,6 @@
   [turn]
   (rf/dispatch [::events/rewindTurn turn]))
 
-(defn devLog
-  [string]
-  (if @(rf/subscribe [:devMode])
-    (println string)))
-
 (defn adjustSystem
   [ship system systemVec]
   (rf/dispatch [::events/setSystemRank ship system systemVec]))
@@ -36,11 +31,10 @@
 (defn devMode
   []
   (rf/dispatch [::events/toggleDevMode]))
-  
-(defn ^:export init 
+
+(defn ^:export init
   []
   (rf/dispatch-sync [::events/initialize-db])
   (rf/dispatch [::events/gameStart])
   (dev-setup)
   (mount-root))
-
