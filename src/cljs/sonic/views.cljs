@@ -4,7 +4,6 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
-
 (defn getShipColour
   [type]
   (:colour @(rf/subscribe [type])))
@@ -35,6 +34,7 @@
   [system type text]
   (let [firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
+        upgradingSystems? @(rf/subscribe [:upgradingSystems?])
         ship @(rf/subscribe [type])
         ammo (:ammo ship)
         systemVec (-> ship
@@ -55,7 +55,10 @@
          (if firing?
            {:disabled (or firing?
                           (events/systemDisabled? system type))}
-           {:style {:background-color shieldedStatus}}))
+           (if upgradingSystems?
+             {:on-click (events/upgradeSystemsDispatch system type)
+              :style {:background-color "lightgreen"}}
+             {:style {:background-color shieldedStatus}})))
        (if firing?
          {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}

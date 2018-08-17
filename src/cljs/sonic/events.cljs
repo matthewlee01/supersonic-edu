@@ -60,8 +60,20 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
-(def ENEMY_COLOUR_LIST ["red" "orange" "green" "greenyellow" "lightslategray" "mediumvioletred" "orangered" "tomato" "springgreen" "magenta" "maroon" "orchid" "pink" "seagreen"])
-
+(def ENEMY_COLOUR_LIST ["red" 
+                        "orange" 
+                        "green" 
+                        "greenyellow" 
+                        "lightslategray" 
+                        "mediumvioletred" 
+                        "orangered" 
+                        "tomato" 
+                        "springgreen" 
+                        "magenta" 
+                        "maroon" 
+                        "orchid" 
+                        "pink" 
+                        "seagreen"])
 
 ;prints a message to console if devMode is on
 (defn devLog
@@ -96,6 +108,35 @@
     true
     false))
 
+;dispatches an upgradeSystem event when the button is pressed
+;used in .views file
+(defn upgradeSystemsDispatch
+  [system ship]
+  (fn [] (rf/dispatch [:upgradeSystem system ship])))
+
+;increases the rank of a system and returns a 
+;new sysvec with rank and corresponding HP (rank +1)
+(defn incSystemRank
+  [systemVector]
+  (let [newRank (inc (second systemVector))]
+    [(inc newRank) newRank]))
+
+;takes a target system and target ship, update target ship with
+;the target system 1 rank higher.
+(defn upgradeSystem
+  [cofx [_ system ship]]
+  (core/devLog (str "upgrading " system))
+  (let [systemsMap (get-in cofx [:db ship :systems])
+        newSystemsMap (->> (incSystemRank (system systemsMap))
+                          (assoc systemsMap system))]
+    {:db (->> (assoc (get-in cofx [:db ship]) :systems newSystemsMap)
+              (assoc (:db cofx) ship))
+     :dispatch [::toggleUpgradingSystems]}))
+
+(rf/reg-event-fx
+  :upgradeSystem
+  upgradeSystem)
+
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
   "calculates the maximum shield value given the rank of the ship's shield system"
@@ -125,12 +166,12 @@
 
 (defn shipReset
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
-  [ship]
+  [ship HPgain]
   (let [systemNames (keys (:systems ship))
         oldSystemStats (vals (:systems ship))
         newSystemStats (map systemReset oldSystemStats)
         newSystems (zipmap systemNames newSystemStats)
-        newMaxHP (+ (:maxHP ship) HP_GAIN)
+        newMaxHP (+ (:maxHP ship) HPgain)
         newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
@@ -162,7 +203,8 @@
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
-          (assoc db :gameOver? true)))))
+          (-> (assoc db :playerShip (shipReset (:playerShip db) 0))
+              (assoc :gameOver? true))))))
 
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
@@ -527,7 +569,7 @@
                        false
                        true)))
 
-(defn toggleUpgradeSystems
+(defn toggleUpgradingSystems
   [db _]
   (assoc db :upgradingSystems? (if (:upgradingSystems? db)
                                  false
@@ -535,9 +577,9 @@
 
 (rf/reg-event-db
   ::toggleUpgradingSystems
-  toggleUpgradeSystems)
+  toggleUpgradingSystems)
 
-(defn toggleUpgradeShip
+(defn toggleUpgradingShip
   [db _]
   (assoc db :upgradingShip? (if (:upgradingShip? db)
                               false
@@ -545,7 +587,7 @@
 
 (rf/reg-event-db 
   ::toggleUpgradingShip
-  toggleUpgradeShip)
+  toggleUpgradingShip)
 
 (rf/reg-event-db
   :toggleFiringMode
