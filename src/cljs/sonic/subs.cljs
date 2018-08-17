@@ -57,6 +57,16 @@
     (:devMode db)))
 
 (rf/reg-sub
+  :upgradingSystems?
+  (fn [db _]
+    (:upgradingSystems? db)))
+
+(rf/reg-sub 
+  :upgradingShip?
+  (fn [db _]
+    (:upgradingShip? db)))
+  
+(rf/reg-sub
   :battleScore
   (fn [db _]
     (:battleScore db)))
@@ -70,6 +80,7 @@
   :money
   (fn [db _]
     (:money db)))
+
 
 
 

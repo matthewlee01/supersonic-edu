@@ -527,6 +527,26 @@
                        false
                        true)))
 
+(defn toggleUpgradeSystems
+  [db _]
+  (assoc db :upgradingSystems? (if (:upgradingSystems? db)
+                                 false
+                                 true)))
+
+(rf/reg-event-db
+  ::toggleUpgradingSystems
+  toggleUpgradeSystems)
+
+(defn toggleUpgradeShip
+  [db _]
+  (assoc db :upgradingShip? (if (:upgradingShip? db)
+                              false
+                              true)))
+
+(rf/reg-event-db 
+  ::toggleUpgradingShip
+  toggleUpgradeShip)
+
 (rf/reg-event-db
   :toggleFiringMode
   toggleFiringMode)
