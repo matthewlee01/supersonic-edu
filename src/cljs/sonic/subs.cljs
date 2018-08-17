@@ -66,3 +66,46 @@
   (fn [db _]
     (:upgradingShip? db)))
   
+(rf/reg-sub
+  :battleScore
+  (fn [db _]
+    (:battleScore db)))
+
+(rf/reg-sub 
+  :totalScore
+  (fn [db _]
+    (:totalScore db)))
+
+(rf/reg-sub 
+  :money
+  (fn [db _]
+    (:money db)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> src/cljs/sonic/subs.cljs
