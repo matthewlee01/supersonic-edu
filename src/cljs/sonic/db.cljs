@@ -32,3 +32,6 @@
    :devMode true
    :upgradingSystems? false
    :upgradingShip? false})
+   :battleScore 0
+   :totalScore 0
+   :money 0})
