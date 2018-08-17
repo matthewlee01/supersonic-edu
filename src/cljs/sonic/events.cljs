@@ -18,6 +18,8 @@
 
 (def MEAN_DICEROLL 3.5) ;average roll for diceRoll, used for ai
 
+(def SCORE_REDUCTION_FACTOR 500)
+
 ;provides a skeleton of actions for the enemy to choose from.
 ;:targetSystem gets updated to current values when this is used
 (def ENEMY_ACTION_LIST 
@@ -425,7 +427,7 @@
 (defn calcScore
   [ship]
   (-> (calcShipStrength ship)
-      (/ 500)))
+      (/ SCORE_REDUCTION_FACTOR)))
   
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
