@@ -29,4 +29,7 @@
    :gameOver? false
    :phase 0
    :history []
-   :devMode true})
+   :devMode true
+   :battleScore 0
+   :totalScore 0
+   :money 0})

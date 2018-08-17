@@ -56,3 +56,45 @@
   (fn [db _]
     (:devMode db)))
 
+(rf/reg-sub
+  :battleScore
+  (fn [db _]
+    (:battleScore db)))
+
+(rf/reg-sub 
+  :totalScore
+  (fn [db _]
+    (:totalScore db)))
+
+(rf/reg-sub 
+  :money
+  (fn [db _]
+    (:money db)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
