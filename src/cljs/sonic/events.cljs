@@ -131,7 +131,7 @@
                           (assoc systemsMap system))]
     {:db (->> (assoc (get-in cofx [:db ship]) :systems newSystemsMap)
               (assoc (:db cofx) ship))
-     :dispatch [::toggleUpgradingSystems]}))
+     :dispatch [::toggleVal :upgradingSystems?]}))
 
 (rf/reg-event-fx
   :upgradeSystem
@@ -304,7 +304,7 @@
 (defn actionRepairShip
   [cofx effects]
   {:db (:db cofx)
-   :dispatch [:toggleRepairingMode]})
+   :dispatch [::toggleVal :repairing?]})
 
 (rf/reg-event-fx
   :actionRepairShip
@@ -564,60 +564,21 @@
 (defn setFiringType
   [cofx [_ firingType]]
   {:db (assoc (:db cofx) :firingType firingType)
-   :dispatch [:toggleFiringMode]})
+   :dispatch [::toggleVal :firing?]})
 
 (rf/reg-event-fx
   :setFiringType
   setFiringType)
 
-;toggles firing mode when player pushes fire or ends their phase
-(defn toggleFiringMode [db _]
-  (assoc db :firing? (if (:firing? db)
-                       false
-                       true)))
-
-(defn toggleUpgradingSystems
-  [db _]
-  (assoc db :upgradingSystems? (if (:upgradingSystems? db)
-                                 false
-                                 true)))
+(defn toggleVal
+ [db [_ value]]
+ (assoc db value (if (value db)
+                   false
+                   true)))
 
 (rf/reg-event-db
-  ::toggleUpgradingSystems
-  toggleUpgradingSystems)
-
-(defn toggleUpgradingShip
-  [db _]
-  (assoc db :upgradingShip? (if (:upgradingShip? db)
-                              false
-                              true)))
-
-(rf/reg-event-db 
-  ::toggleUpgradingShip
-  toggleUpgradingShip)
-
-(rf/reg-event-db
-  :toggleFiringMode
-  toggleFiringMode)
-
-(defn toggleRepairingMode [db _]
-  (assoc db :repairing? (if (:repairing? db)
-                          false
-                          true)))
-
-(rf/reg-event-db
-  :toggleRepairingMode
-  toggleRepairingMode)
-
-;toggles :devMode between true and false
-(defn toggleDevMode [db _]
-  (assoc db :devMode (if (:devMode db)
-                       false
-                       true)))
-
-(rf/reg-event-db
-  ::toggleDevMode
-  toggleDevMode)
+  ::toggleVal
+  toggleVal)
 
 ;calculates new HP after taking damage,
 ;triggers game over if necessary
@@ -669,7 +630,7 @@
 (defn damageShip
   [cofx [_ system type firingType diceRoll]]
   (if (= type :enemyShip)
-    (rf/dispatch [:toggleFiringMode]))
+    (rf/dispatch [::toggleVal :firing?]))
   (let [defender (-> cofx :db type)
         attackerType (if (= type :playerShip)
                        :enemyShip
@@ -736,7 +697,7 @@
 (defn repairShip
   [cofx [_ system type]]
   (if (= type :playerShip)
-    (rf/dispatch [:toggleRepairingMode]))
+    (rf/dispatch [::toggleVal :repairing?]))
   (devLog "repairing ship")
   (let [ship (type (:db cofx))
         repairedShip (-> [system ship]

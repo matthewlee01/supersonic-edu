@@ -30,7 +30,7 @@
 
 (defn devMode
   []
-  (rf/dispatch [::events/toggleDevMode]))
+  (rf/dispatch [::events/toggleVal :devMode]))
 
 (defn ^:export init
   []
