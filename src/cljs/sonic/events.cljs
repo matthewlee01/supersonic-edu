@@ -125,7 +125,7 @@
 ;the target system 1 rank higher.
 (defn upgradeSystem
   [cofx [_ system ship]]
-  (core/devLog (str "upgrading " system))
+  (devLog (str "upgrading " system))
   (let [systemsMap (get-in cofx [:db ship :systems])
         newSystemsMap (->> (incSystemRank (system systemsMap))
                           (assoc systemsMap system))]
@@ -269,7 +269,7 @@
         shieldsStrength (calcShieldsStrength shieldsSystemRank amount)
         newShields (+ shieldsCurrentValue shieldsStrength)]
     (if @(rf/subscribe [:devMode])
-      (println (str "shields boosted by " (- newShields shieldsCurrentValue))))
+      (devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
     (assoc ship :shields (if (> newShields shieldsMax)
                            shieldsMax
                            newShields))))
@@ -343,7 +343,7 @@
 ;calls chargeShields on enemyShip and updates value
 (defn enemyChargeShields
   [cofx [_ diceRoll]]
-  (core/devLog "enemy charging shields")
+  (devLog "enemy charging shields")
   {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) diceRoll))
    :dispatch [:changePhase]})
 
@@ -403,7 +403,7 @@
                    (+ shieldsCapacity)
                    (* superchargedFactor)
                    (* HP))]
-    (core/devLog score)
+    (devLog score)
     score))
 
 ;calculates how good this outcome is based on how big of an
@@ -413,7 +413,7 @@
   (let [{:keys [playerShip enemyShip]} db
         score (-> (calcShipStrength enemyShip)
                 (- (calcShipStrength playerShip)))]
-    (core/devLog (str "outcome score: " score))
+    (devLog (str "outcome score: " score))
     score))
 
 ;gets an outcome score by running calcOutcomeScore on a db 
@@ -473,8 +473,15 @@
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
   [cofx _]
-  (let [newPlayerShip (-> cofx :db :playerShip shipReset)
-        newEnemyShip (-> cofx :db :enemyShip shipReset randShipColour)
+  (let [newPlayerShip (-> cofx 
+                          :db 
+                          :playerShip 
+                          (shipReset HP_GAIN))
+        newEnemyShip (-> cofx 
+                         :db 
+                         :enemyShip 
+                         (shipReset HP_GAIN) 
+                         randShipColour)
         scoreEarned (-> cofx :db :battleScore)]
    {:db (assoc (:db cofx) 
                :playerShip newPlayerShip 
@@ -615,6 +622,11 @@
 ;calculates new HP after taking damage,
 ;triggers game over if necessary
 
+(defn consumeAmmo
+  "reduces ship's ammo by 1; returns new ship"
+  [ship]
+  (let [oldAmmo (:ammo ship)]
+    (assoc ship :ammo (- oldAmmo 1))))
 
 (defn newShieldsAndAmmo
   "calculates new shields for defender if laser type attack,
@@ -652,12 +664,6 @@
                                 :enemyShip) true]))
     [(assoc defender :HP newDefenderHP) attacker]))
 
-(defn consumeAmmo
-  "reduces ship's ammo by 1; returns new ship"
-  [ship]
-  (let [oldAmmo (:ammo ship)]
-    (assoc ship :ammo (- oldAmmo 1))))
-
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
@@ -670,7 +676,7 @@
                        :playerShip)
         attacker (-> cofx :db attackerType)
         attackRank (get-in attacker [:systems firingType 1])
-        damage (calcAttackDamage attackRank firingType (diceRoll) (shieldsSupercharged? attacker))
+        damage (calcAttackDamage attackRank firingType diceRoll (shieldsSupercharged? attacker))
         devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
                     damage
@@ -731,7 +737,7 @@
   [cofx [_ system type]]
   (if (= type :playerShip)
     (rf/dispatch [:toggleRepairingMode]))
-  (core/devLog "repairing ship")
+  (devLog "repairing ship")
   (let [ship (type (:db cofx))
         repairedShip (-> [system ship]
                          (restoreHP)
@@ -750,7 +756,7 @@
 (rf/reg-event-fx
   :enemyPhase
   (fn [cofx effects]
-    (core/devLog "start of enemy phase")
+    (devLog "start of enemy phase")
     {:db (:db cofx)
      :dispatch (enemyChooseAction (:db cofx) 
                                   ENEMY_ACTION_LIST 
@@ -772,6 +778,7 @@
 (rf/reg-event-db
   ::setSystemRank
   setSystemRank)
+
 
 ;test handler for trying new things and placeholding
 (rf/reg-event-db
