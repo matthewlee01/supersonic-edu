@@ -111,8 +111,18 @@
 ;dispatches an upgradeSystem event when the button is pressed
 ;used in .views file
 (defn upgradeSystemsDispatch
-  [system ship]
-  (fn [] (rf/dispatch [:upgradeSystem system ship])))
+  [system ship cost]
+  (fn [] (rf/dispatch [:buySystemUpgrade system ship cost])))
+
+(defn buySystemUpgrade 
+  [cofx [_ system ship cost]]
+  (let [db (:db cofx)]
+   {:db (assoc db :money (- (:money db) cost))
+    :dispatch [:upgradeSystem system ship]}))
+
+(rf/reg-event-fx
+  :buySystemUpgrade
+  buySystemUpgrade)
 
 ;increases the rank of a system and returns a 
 ;new sysvec with rank and corresponding HP (rank +1)
@@ -492,7 +502,8 @@
                :phase 0
                :money (+ scoreEarned (-> cofx :db :money))
                :totalScore (+ scoreEarned (-> cofx :db :totalScore))
-               :battleScore (calcScore newEnemyShip))
+               :battleScore (calcScore newEnemyShip)
+               :upgradingSystems? false)
      :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx

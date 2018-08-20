@@ -4,6 +4,8 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+(def UPGRADE_COST_FACTOR 500)
+
 (defn getShipColour
   [type]
   (:colour @(rf/subscribe [type])))
@@ -29,6 +31,16 @@
     [:button.action {:on-click (events/actionDispatch event)
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
+
+(defn calcUpgradeCost
+  [systemRank]
+  (* UPGRADE_COST_FACTOR systemRank))
+  
+(defn canAffordUpgrade?
+  [systemRank money]
+  (if (>= money (calcUpgradeCost systemRank))
+    true
+    false))
 
 (defn systemButton
   [system type text]
@@ -56,8 +68,10 @@
            {:disabled (or firing?
                           (events/systemDisabled? system type))}
            (if upgradingSystems?
-             {:on-click (events/upgradeSystemsDispatch system type)
-              :style {:background-color "lightgreen"}}
+             (if (canAffordUpgrade? systemRank @(rf/subscribe [:money]))
+              {:on-click (events/upgradeSystemsDispatch system type (calcUpgradeCost systemRank))
+               :style {:background-color "lightgreen"}}
+              {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
          {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
@@ -111,8 +125,7 @@
         [:div.upgradeUI
          [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))}
           "Upgrade Systems"]
-         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingShip?]))}
-          "Upgrade Ship"]]]
+         [:textarea.moneyDisplay {:value @(rf/subscribe [:money])}]]]
        [:div.utility 
         [:div.sitrep
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
