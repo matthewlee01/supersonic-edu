@@ -14,10 +14,10 @@
   (let [testRoll (events/diceRoll)
         sim-db db/default-db]
     (is (= true (-> sim-db
-                    (events/toggleFiringMode nil)
+                    (events/toggleVal [nil :firing?])
                     (:firing?))))
     (is (= true (-> sim-db
-                    (events/toggleRepairingMode nil)
+                    (events/toggleVal [nil :repairing?])
                     (:repairing?))))
     (is (= true (and (> testRoll 0)
                      (< testRoll 7)))))

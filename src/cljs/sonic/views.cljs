@@ -109,9 +109,9 @@
             [systemButton :repairBay :playerShip "Repair Bay"]
             [systemButton :engines :playerShip "Engines"]]]
         [:div.upgradeUI
-         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleUpgradingSystems]))}
+         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))}
           "Upgrade Systems"]
-         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleUpgradingShip]))}
+         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingShip?]))}
           "Upgrade Ship"]]]
        [:div.utility 
         [:div.sitrep
