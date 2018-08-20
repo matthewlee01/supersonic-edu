@@ -79,9 +79,11 @@
          (if repairing?
            {:disabled true}
            {:style {:background-color shieldedStatus}})))
-     (if (= system :missiles)
-        (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
-        (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
+     (if @(rf/subscribe [:gameOver?])
+      (str "Rank " systemRank " " text " (Upgrade: $" (calcUpgradeCost systemRank)")")
+      (if (= system :missiles)
+       (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
+       (str "Rank " systemRank " " text " (" systemHP " HP)")))]))
 
 (defn shipVitalityDisplay
   [value text]
@@ -125,7 +127,8 @@
         [:div.upgradeUI
          [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))}
           "Upgrade Systems"]
-         [:textarea.moneyDisplay {:value @(rf/subscribe [:money])}]]]
+         [:textarea.moneyDisplay {:value (str "$" @(rf/subscribe [:money]))
+                                  :readOnly true}]]]
        [:div.utility 
         [:div.sitrep
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
