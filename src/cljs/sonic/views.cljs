@@ -8,6 +8,12 @@
   [shipType]
   (:colour @(rf/subscribe [shipType])))
 
+(defn getPhaseName
+  [phase]
+  (if (= phase 0)
+    @(rf/subscribe [:playerName])
+    "Enemy"))
+
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?])
@@ -74,34 +80,18 @@
   [:textarea.vitalityDisplay {:value (str text ": " value)
                               :readOnly true}])
 
-(defn main-panel
+(defn management-screen
   []
-  (let [playerHP (:HP @(rf/subscribe [:playerShip]))
-        playerShields (:shields @(rf/subscribe [:playerShip]))
-        enemyHP (:HP @(rf/subscribe [:enemyShip]))
-        enemyShields (:shields @(rf/subscribe [:enemyShip]))
-        enemySystems (:systems @(rf/subscribe [:enemyShip]))
-        playerSystems (:systems @(rf/subscribe [:playerShip]))
-        playerColour (getShipColour :playerShip)
-        enemyColour (getShipColour :enemyShip)
-        turn @(rf/subscribe [:turn])
-        phase @(rf/subscribe [:phase])
-        phaseName (if (= phase 0)
-                   @(rf/subscribe [:playerName])
-                   "Enemy")
-        firing? @(rf/subscribe [:firing?])
-        repairing? @(rf/subscribe [:repairing?])
-        gameOver? @(rf/subscribe [:gameOver?])]
-    [:div.mainPanel
-      [:div.management {:style {:z-index (if gameOver?
+  (let [playerShip @(rf/subscribe [:playerShip])]
+    [:div.management {:style {:z-index (if @(rf/subscribe [:gameOver?])
                                           1
                                           -1)}}
        [:div.manageShip
         [:div.shipDisplay
-         [:div.playerShip {:style {:background-color playerColour}}
+         [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
             [:div.vitalityDisplayArea
-             [shipVitalityDisplay playerShields "Shields"]
-             [shipVitalityDisplay playerHP "HP"]]
+             [shipVitalityDisplay (:shields playerShip) "Shields"]
+             [shipVitalityDisplay (:HP playerShip) "HP"]]
             [systemButton :lasers :playerShip "Lasers"]
             [systemButton :missiles :playerShip "Missiles"]
             [systemButton :shields :playerShip "Shields"]
@@ -115,12 +105,12 @@
        [:div.utility 
         [:div.sitrep
          [:textarea.sitrepText
-          {:value (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")
+          {:value (str "Your previous battle lasted " @(rf/subscribe [:turn]) " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")
            :readOnly true}]]
         [:div.stats 
          [:textarea.statsText
           ;this is a crude way to check battle # but it works right now and can be changed in the future
-          {:value (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))
+          {:value (str "Battles completed: " (/ (- (:maxHP playerShip) 50) 50))
            :readOnly true}]]
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
@@ -130,55 +120,72 @@
                                (rf/dispatch [::events/initialize-db])
                                (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
-                           :padding "5px 10px"}} "Restart Game"]]]]
-      [:div.battle
-        [:fieldset {:disabled gameOver?
-                    :style {:position "absolute"}}
-         [:div.flexContainer
-          [:div.infoDisplayArea
-           [:textarea.infoDisplay {:value (if gameOver?
-                                            "Game End!"
-                                            (str phaseName "'s Turn"))
-                                   :readOnly true
-                                   :style {:color (if (= phase 0)
-                                                    "blue"
-                                                    "red")}}]
-           [:textarea.infoDisplay {:value (str "Turn #: " turn)
-                                   :readOnly true}]]
+                           :padding "5px 10px"}} "Restart Game"]]]]))
 
-          [:textarea.infoDisplay {:value (if repairing?
-                                           "Repairing Mode"
-                                           (if firing?
-                                             "Firing Mode"
-                                             "Select an Action"))
-                                  :readOnly true
-                                  :style {:color (if repairing?
-                                                    "green"
-                                                    (if firing?
-                                                      "red"
-                                                      "black"))}}]
-          [:div.ships
-           [:div.playerShip {:style {:background-color playerColour}}
-            [:div.vitalityDisplayArea
-             [shipVitalityDisplay playerShields "Shields"]
-             [shipVitalityDisplay playerHP "HP"]]
-            [systemButton :lasers :playerShip "Lasers"]
-            [systemButton :missiles :playerShip "Missiles"]
-            [systemButton :shields :playerShip "Shields"]
-            [systemButton :repairBay :playerShip "Repair Bay"]
-            [systemButton :engines :playerShip "Engines"]]
-           [:div.enemyShip {:style {:background-color enemyColour}}
-            [:div.vitalityDisplayArea
-             [shipVitalityDisplay enemyShields "Shields"]
-             [shipVitalityDisplay enemyHP "HP"]]
-            [systemButton :lasers :enemyShip "Lasers"]
-            [systemButton :missiles :enemyShip "Missiles"]
-            [systemButton :shields :enemyShip "Shields"]
-            [systemButton :repairBay :enemyShip "Repair Bay"]
-            [systemButton :engines :enemyShip "Engines"]]]
-          [:div.actionBar
-           [actionButton :lasers :actionFire "Fire Lasers"]
-           [actionButton :missiles :actionLaunch "Launch Missiles"]
-           [actionButton :shields :actionChargeShields "Charge Shields"]
-           [actionButton :repairBay :actionRepairShip "Repair Ship"]
-           [actionButton :engines :actionFlee "Flee"]]]]]]))
+(defn battle-screen
+  []
+  (let [gameOver? @(rf/subscribe [:gameOver?])
+        phase @(rf/subscribe [:phase])
+        repairing? @(rf/subscribe [:repairing?])
+        firing? @(rf/subscribe [:firing?])
+        playerShip @(rf/subscribe [:playerShip])
+        enemyShip @(rf/subscribe [:enemyShip])] 
+    [:div.battle
+     [:fieldset {:disabled gameOver?
+                 :style {:position "absolute"}}
+      [:div.flexContainer
+       [:div.infoDisplayArea
+        [:textarea.infoDisplay {:value (if gameOver?
+                                         "Game End!"
+                                         (str (getPhaseName phase) "'s Turn"))
+                                :readOnly true
+                                :style {:color (if (= phase 0)
+                                                 "blue"
+                                                 "red")}}]
+        [:textarea.infoDisplay {:value (str "Turn #: " @(rf/subscribe [:turn]))
+                                :readOnly true}]]
+
+       [:textarea.infoDisplay {:value (if repairing?
+                                        "Repairing Mode"
+                                        (if firing?
+                                          "Firing Mode"
+                                          "Select an Action"))
+                               :readOnly true
+                               :style {:color (if repairing?
+                                                 "green"
+                                                 (if firing?
+                                                   "red"
+                                                   "black"))}}]
+       [:div.ships
+        [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
+         [:div.vitalityDisplayArea
+          [shipVitalityDisplay (:shields playerShip) "Shields"]
+          [shipVitalityDisplay (:HP playerShip) "HP"]]
+         [systemButton :lasers :playerShip "Lasers"]
+         [systemButton :missiles :playerShip "Missiles"]
+         [systemButton :shields :playerShip "Shields"]
+         [systemButton :repairBay :playerShip "Repair Bay"]
+         [systemButton :engines :playerShip "Engines"]]
+        [:div.enemyShip {:style {:background-color (getShipColour :enemyShip)}}
+         [:div.vitalityDisplayArea
+          [shipVitalityDisplay (:shields enemyShip) "Shields"]
+          [shipVitalityDisplay (:HP enemyShip) "HP"]]
+         [systemButton :lasers :enemyShip "Lasers"]
+         [systemButton :missiles :enemyShip "Missiles"]
+         [systemButton :shields :enemyShip "Shields"]
+         [systemButton :repairBay :enemyShip "Repair Bay"]
+         [systemButton :engines :enemyShip "Engines"]]]
+       [:div.actionBar
+        [actionButton :lasers :actionFire "Fire Lasers"]
+        [actionButton :missiles :actionLaunch "Launch Missiles"]
+        [actionButton :shields :actionChargeShields "Charge Shields"]
+        [actionButton :repairBay :actionRepairShip "Repair Ship"]
+        [actionButton :engines :actionFlee "Flee"]]]]]))
+
+(defn main-panel
+  []
+  [:div.mainPanel
+   (management-screen)
+   (battle-screen)])
+
+     
