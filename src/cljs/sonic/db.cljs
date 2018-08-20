@@ -34,8 +34,7 @@
    :upgradingShip? false
    :battleScore 0
    :totalScore 0
-   :gameStats {
-               :missilesFired 0
+   :gameStats {:missilesFired 0
                :lasersFired 0
                :damageDealt 0
                :damageTaken 0
