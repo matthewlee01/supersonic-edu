@@ -5,8 +5,8 @@
    [sonic.events :as events]))
 
 (defn getShipColour
-  [type]
-  (:colour @(rf/subscribe [type])))
+  [shipType]
+  (:colour @(rf/subscribe [shipType])))
 
 (defn actionDisabled?
   [text requiredSystem]
@@ -31,11 +31,11 @@
                     text]))
 
 (defn systemButton
-  [system type text]
+  [system shipType text]
   (let [firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         upgradingSystems? @(rf/subscribe [:upgradingSystems?])
-        ship @(rf/subscribe [type])
+        ship @(rf/subscribe [shipType])
         ammo (:ammo ship)
         systemVec (-> ship
                       (:systems)
@@ -43,24 +43,24 @@
         systemRank (get systemVec 1)
         systemHP (get systemVec 0)
         shieldedStatus (if (> (:shields ship) 0)
-                         (if (events/shieldsSupercharged? @(rf/subscribe [type]))
+                         (if (events/shieldsSupercharged? ship)
                            "violet"
                            "lightblue")
                          "orange")]
     [:button.system
-     (if (= type :playerShip)
+     (if (= shipType :playerShip)
        (if repairing?
-         {:on-click (events/repairDispatch system type)
+         {:on-click (events/repairDispatch system shipType)
           :style {:background-color shieldedStatus}}
          (if firing?
            {:disabled (or firing?
-                          (events/systemDisabled? system type))}
+                          (events/systemDisabled? system shipType))}
            (if upgradingSystems?
-             {:on-click (events/upgradeSystemsDispatch system type)
+             {:on-click (events/upgradeSystemsDispatch system shipType)
               :style {:background-color "lightgreen"}}
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click (events/damageDispatch system type @(rf/subscribe [:firingType]))
+         {:on-click (events/damageDispatch system shipType @(rf/subscribe [:firingType]))
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
@@ -89,7 +89,6 @@
         phaseName (if (= phase 0)
                    @(rf/subscribe [:playerName])
                    "Enemy")
-
         firing? @(rf/subscribe [:firing?])
         repairing? @(rf/subscribe [:repairing?])
         gameOver? @(rf/subscribe [:gameOver?])]
