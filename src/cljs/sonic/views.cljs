@@ -14,6 +14,10 @@
     @(rf/subscribe [:playerName])
     "Enemy"))
 
+(defn calcBattlesWon
+  [HP HPGain baseHP]
+  (/ (- HP baseHP) HPGain))
+
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?])
@@ -80,6 +84,18 @@
   [:textarea.vitalityDisplay {:value (str text ": " value)
                               :readOnly true}])
 
+(defn genTurnsMsg
+  []
+  (str "Your previous battle lasted " @(rf/subscribe [:turn]) " turns! "))
+
+(defn genEnemyReportMsg
+  []
+  (str "You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
+
+(defn genBattlesWonMsg
+  [HP HPGain baseHP]
+  (str "Battles completed: " (calcBattlesWon HP HPGain baseHP) " "))
+  
 (defn management-screen
   []
   (let [playerShip @(rf/subscribe [:playerShip])]
@@ -105,12 +121,13 @@
        [:div.utility 
         [:div.sitrep
          [:textarea.sitrepText
-          {:value (str "Your previous battle lasted " @(rf/subscribe [:turn]) " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")
+          {:value (str (genTurnsMsg)
+                       (genEnemyReportMsg))
            :readOnly true}]]
         [:div.stats 
          [:textarea.statsText
           ;this is a crude way to check battle # but it works right now and can be changed in the future
-          {:value (str "Battles completed: " (/ (- (:maxHP playerShip) 50) 50))
+          {:value (str (genBattlesWonMsg (:maxHP playerShip) events/HP_GAIN events/BASE_HP))
            :readOnly true}]]
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
