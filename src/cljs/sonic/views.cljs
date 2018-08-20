@@ -114,10 +114,14 @@
           "Upgrade Ship"]]]
        [:div.utility 
         [:div.sitrep
-         (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
+         [:textarea.sitrepText
+          {:value (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")
+           :readOnly true}]]
         [:div.stats 
-         ;this is a crude way to check battle # but it works right now and can be changed in the future
-         (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
+         [:textarea.statsText
+          ;this is a crude way to check battle # but it works right now and can be changed in the future
+          {:value (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))
+           :readOnly true}]]
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
