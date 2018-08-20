@@ -13,7 +13,7 @@
     (:enemyShip db)))
 
 (rf/reg-sub
-  :turn 
+  :turn
   (fn [db _]
     (:turn db)))
 
@@ -61,49 +61,27 @@
   (fn [db _]
     (:upgradingSystems? db)))
 
-(rf/reg-sub 
+(rf/reg-sub
   :upgradingShip?
   (fn [db _]
     (:upgradingShip? db)))
-  
+
 (rf/reg-sub
   :battleScore
   (fn [db _]
     (:battleScore db)))
 
-(rf/reg-sub 
+(rf/reg-sub
   :totalScore
   (fn [db _]
     (:totalScore db)))
 
-(rf/reg-sub 
+(rf/reg-sub
+  :gameStats
+  (fn [db _]
+    (:gameStats db)))
+
+(rf/reg-sub
   :money
   (fn [db _]
     (:money db)))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
