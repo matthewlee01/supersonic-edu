@@ -119,7 +119,7 @@
         [:div.stats
          ;this is a crude way to check battle # but it works right now and can be changed in the future
          (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))
-         (str "\n battleScore" (:HPLost @(rf/subscribe [:gameStats])))]
+         (str "damage taken" (:damageTaken @(rf/subscribe [:gameStats])) "damage dealt" (:damageDealt @(rf/subscribe [:gameStats])))]
 
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))

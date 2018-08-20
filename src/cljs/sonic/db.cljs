@@ -37,8 +37,8 @@
    :gameStats {
                :missilesFired 0
                :lasersFired 0
-               :amountShielded 0
-               :shieldsRecharged 0
+               :damageDealt 0
+               :damageTaken 0
                :HPLost 0
                :amountRepaired 0}
 

@@ -643,12 +643,13 @@
         [newDefender newAttacker] (-> [defender attacker system damage firingType]
                                       newShieldsAndAmmo
                                       newSystemHP
-                                      newHP)]
+                                      newHP)
+        newStatNames (if (= type :playerShip) [:damageTaken] [:damageDealt])]
     (devLog devMsg)
     {:db (assoc (:db cofx)
             type newDefender
             attackerType newAttacker
-            :gameStats (getUpdatedStats [:HPLost] [100]))
+            :gameStats (getUpdatedStats newStatNames [damage]))
      :dispatch [:changePhase]}))
 
 (rf/reg-event-fx
