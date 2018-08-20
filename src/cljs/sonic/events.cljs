@@ -195,6 +195,7 @@
   :gameEnd
   (fn [db [_ loser gameOver?]]
     (devLog "end of battle")
+    (rf/dispatch [:updateStats [:totalScore] [@(rf/subscribe [:battleScore])]])
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
@@ -483,16 +484,15 @@
                          (shipReset HP_GAIN)
                          randShipColour)
         scoreEarned (-> cofx :db :battleScore)]
-   {:db (assoc (:db cofx)
-               :playerShip newPlayerShip
-               :enemyShip newEnemyShip
-               :gameOver? false
-               :turn 0
-               :history []
-               :phase 0
-               :money (+ scoreEarned (-> cofx :db :money))
-               :totalScore (+ scoreEarned (-> cofx :db :totalScore))
-               :battleScore (calcScore newEnemyShip))
+    {:db (assoc (:db cofx)
+                :playerShip newPlayerShip
+                :enemyShip newEnemyShip
+                :gameOver? false
+                :turn 0
+                :history []
+                :phase 0
+                :money (+ scoreEarned (-> cofx :db :money))
+                :battleScore (calcScore newEnemyShip))
      :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx
@@ -644,9 +644,13 @@
                                       newShieldsAndAmmo
                                       newSystemHP
                                       newHP)
-        newStatNames (if (= type :playerShip) [:damageTaken] [:damageDealt])]
+        [newStatNames statChanges] (if (= type :playerShip)
+                                     [[:damageTaken] [damage]]
+                                     (if (= firingType :missiles)
+                                       [[:damageDealt :missilesFired] [damage 1]]
+                                       [[:damageDealt :lasersFired] [damage 1]]))]
     (devLog devMsg)
-    (if (false? simulation?) (rf/dispatch [:updateStats newStatNames [damage]]))
+    (if (false? simulation?) (rf/dispatch [:updateStats newStatNames statChanges]))
     {:db (assoc (:db cofx)
             type newDefender
             attackerType newAttacker)
@@ -656,15 +660,15 @@
   :damageShip
   damageShip)
 
-(defn getUpdatedStats
-  [statNames changes]
-  (merge-with + @(rf/subscribe [:gameStats]) (zipmap statNames changes)))
+(defn updateStats
+  "takes a list of stats and corresponding changes to those stats, then updates :gameStats accordingly"
+  [db [_ statNames changes]]
+  (assoc db :gameStats (merge-with + @(rf/subscribe [:gameStats]) (zipmap statNames changes))))
 
 (rf/reg-event-db
   :updateStats
-  (fn [db [_ statNames changes]]
-    (println "wheeps")
-    (assoc db :gameStats (getUpdatedStats statNames changes))))
+  updateStats)
+
 
 (defn calcRepairStrength
   [repairRank diceRoll]
