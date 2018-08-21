@@ -10,15 +10,28 @@
   [shipType]
   (:colour @(rf/subscribe [shipType])))
 
-(defn screenActive?
-  [screen]
-  (= screen @(rf/subscribe [:activeScreen])))
-
 (defn getZ
+  "returns 1 as z-value if inputed screen is the current screen,
+  otherwise returns 0"
   [screen]
-  (if (screenActive? screen)
+  (if (= screen @(rf/subscribe [:activeScreen]))
     1
     -1))
+
+(defn getStatText
+  "generates the text for a stat"
+  [label statName]
+  (str label ": " (statName @(rf/subscribe [:gameStats]))))
+
+(defn statElement
+  "generates the element for a stat"
+  [[label statName]]
+  [:p.statsText (getStatText label statName)])
+
+(defn statsBlock
+  "strings multiple stat elements together"
+  [& statInfoVectors]
+  (vec (conj (map statElement statInfoVectors) :div)))
 
 (defn getPhaseName
   [phase]
@@ -156,14 +169,12 @@
         [:div.sitrep
          (str (genEnemyReportMsg)
               (genTurnsMsg))]
-        [:div.stats
+        [:div.statsBox
+         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
+                   :style {:font-size "35px"
+                           :padding "5px 10px"}} "Stats"]]
          ;this is a crude way to check battle # but it works right now and can be changed in the future
-         [:p (str "Battles completed: " (calcBattlesWon (:HP playerShip) events/HP_GAIN events/BASE_HP))]
-         [:p (str "Damage taken: " (:damageTaken @(rf/subscribe [:gameStats])))]
-         [:p (str "Damage dealt: " (:damageDealt @(rf/subscribe [:gameStats])))]
-         [:p (str "Missiles fired: " (:missilesFired @(rf/subscribe [:gameStats])))]
-         [:p (str "Lasers fired: " (:lasersFired @(rf/subscribe [:gameStats])))]
-         [:p (str "Score: " (:totalScore @(rf/subscribe [:gameStats])))]]
+
 
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
@@ -172,6 +183,23 @@
          [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Restart Game"]]]]))
+
+(defn stats-screen
+  []
+  [:div.stats {:style {:z-index (getZ :stats-screen)}}
+
+    ;[:p (str "Battles completed: " (calcBattlesWon (:HP playerShip) events/HP_GAIN events/BASE_HP))]
+    (statsBlock ["Damage taken" :damageTaken]
+                ["Damage dealt" :damageDealt]
+                ["Missiles fired" :missilesFired]
+                ["Lasers fired" :lasersFired]
+                ["Score" :totalScore])
+
+    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
+              :style {:font-size "35px"
+                      :width "250px"
+                      :height "100px"
+                      :padding "5px 10px"}} "Whoops go back"]])
 
 (defn battle-screen
   []
@@ -238,4 +266,5 @@
   [:div.mainPanel
    (pregame-screen)
    (management-screen)
-   (battle-screen)])
+   (battle-screen)
+   (stats-screen)])

@@ -127,6 +127,7 @@
   buySystemUpgrade)
 
 (defn changeScreen
+  "changes :activeScreen to a new screen"
   [db [_ newScreen]]
   (assoc db :activeScreen newScreen))
 
