@@ -171,12 +171,14 @@
                                   :readOnly true}]]]
        [:div.utility
         [:div.sitrep
-         (str (genEnemyReportMsg)
-              (genTurnsMsg))]
+         [:div.sitrepText
+          [:h1 "Battle Report"]
+          [:p (genEnemyReportMsg)]
+          [:p (genTurnsMsg)]]]
         [:div.statsBox
          [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
                    :style {:font-size "35px"
-                           :padding "5px 10px"}} "Stats"]]
+                           :padding "5px 10px"}} "View Statistics"]]
          ;this is a crude way to check battle # but it works right now and can be changed in the future
 
 
@@ -192,8 +194,8 @@
 (defn stats-screen
   []
   [:div.stats {:style {:z-index (getZ :stats-screen)}}
-
-    ;[:p (str "Battles completed: " (calcBattlesWon (:HP playerShip) events/HP_GAIN events/BASE_HP))]
+   [:div.statsDiv
+    [:h1 "Your Statistics"]
     (statsBlock ["Damage taken" :damageTaken]
                 ["Damage dealt" :damageDealt]
                 ["Missiles fired" :missilesFired]
@@ -204,7 +206,7 @@
               :style {:font-size "35px"
                       :width "250px"
                       :height "100px"
-                      :padding "5px 10px"}} "Whoops go back"]])
+                      :padding "5px 10px"}} "Return to Menu"]]])
 
 (defn battle-screen
   []
