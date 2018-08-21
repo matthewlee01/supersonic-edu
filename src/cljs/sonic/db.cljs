@@ -39,5 +39,11 @@
                :damageDealt 0
                :damageTaken 0
                :missilesFired 0
-               :lasersFired 0}
+               :lasersFired 0
+               :timesRepaired 0
+               :enemiesDefeated 0
+               :battleTime 0
+               :moneyGained 0
+               :moneySpent 0}
+   :startTime nil
    :money 0})
