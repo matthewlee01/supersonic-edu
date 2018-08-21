@@ -131,7 +131,7 @@
   (assoc db :activeScreen newScreen))
 
 (rf/reg-event-db
-  :changeScreen
+  ::changeScreen
   changeScreen)
 
 ;increases the rank of a system and returns a
@@ -199,7 +199,7 @@
   ::gameStart
   (fn [cofx effects]
     (devLog "start of game")
-    (rf/dispatch [:changeScreen :battle-screen])
+    (rf/dispatch [::changeScreen :battle-screen])
     {:db (-> (assoc (:db cofx) :gameOver? false)
              (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
                                   existingName
@@ -224,7 +224,7 @@
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
-          (rf/dispatch [:changeScreen :management-screen])
+          (rf/dispatch [::changeScreen :management-screen])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
@@ -690,7 +690,6 @@
   :updateStats
   updateStats)
 
-
 (defn calcRepairStrength
   [repairRank diceRoll]
   (-> repairRank
@@ -772,7 +771,6 @@
 (rf/reg-event-db
   ::setSystemRank
   setSystemRank)
-
 
 ;test handler for trying new things and placeholding
 (rf/reg-event-db

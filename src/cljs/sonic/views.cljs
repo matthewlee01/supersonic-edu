@@ -118,6 +118,20 @@
   []
   (str "You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
 
+(defn pregame-screen
+  []
+  [:div.pregame {:style {:z-index (getZ :pregame-screen)}}
+   [:img {:src "spacethefinalfronthere.jpg"
+          :style {:width "1000px"
+                  :height "900px"}}]
+   [:button.pregameButton {:on-click (fn [] 
+                                       (rf/dispatch [::events/initialize-db])
+                                       (rf/dispatch [::events/gameStart]))}
+    "Game Start"]
+   [:button.pregameButton {:on-click (fn [] (js/alert "lol ur bad"))}
+    "Help"]])
+                         
+
 (defn management-screen
   []
   (let [playerShip @(rf/subscribe [:playerShip])]
@@ -155,9 +169,7 @@
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Next Battle"]
-         [:button {:on-click (fn []
-                               (rf/dispatch [::events/initialize-db])
-                               (rf/dispatch [::events/gameStart]))
+         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Restart Game"]]]]))
 
@@ -224,5 +236,6 @@
 (defn main-panel
   []
   [:div.mainPanel
+   (pregame-screen)
    (management-screen)
    (battle-screen)])
