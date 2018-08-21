@@ -4,6 +4,8 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+(def UPGRADE_COST_FACTOR 500)
+
 (defn getShipColour
   [shipType]
   (:colour @(rf/subscribe [shipType])))
@@ -40,6 +42,16 @@
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
 
+(defn calcUpgradeCost
+  [systemRank]
+  (* UPGRADE_COST_FACTOR systemRank))
+  
+(defn canAffordUpgrade?
+  [systemRank money]
+  (if (>= money (calcUpgradeCost systemRank))
+    true
+    false))
+
 (defn systemButton
   [system shipType text]
   (let [firing? @(rf/subscribe [:firing?])
@@ -66,8 +78,10 @@
            {:disabled (or firing?
                           (events/systemDisabled? system shipType))}
            (if upgradingSystems?
-             {:on-click (events/upgradeSystemsDispatch system shipType)
-              :style {:background-color "lightgreen"}}
+             (if (canAffordUpgrade? systemRank @(rf/subscribe [:money]))
+              {:on-click (events/upgradeSystemsDispatch system type (calcUpgradeCost systemRank))
+               :style {:background-color "lightgreen"}}
+              {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
          {:on-click (events/damageDispatch system shipType @(rf/subscribe [:firingType]))
@@ -75,9 +89,11 @@
          (if repairing?
            {:disabled true}
            {:style {:background-color shieldedStatus}})))
-     (if (= system :missiles)
-        (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
-        (str "Rank " systemRank " " text " (" systemHP " HP)"))]))
+     (if @(rf/subscribe [:gameOver?])
+      (str "Rank " systemRank " " text " (Upgrade: $" (calcUpgradeCost systemRank)")")
+      (if (= system :missiles)
+       (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
+       (str "Rank " systemRank " " text " (" systemHP " HP)")))]))
 
 (defn shipVitalityDisplay
   [value text]
@@ -116,9 +132,9 @@
         [:div.upgradeUI
          [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))}
           "Upgrade Systems"]
-         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingShip?]))}
-          "Upgrade Ship"]]]
-       [:div.utility
+         [:textarea.moneyDisplay {:value (str "$" @(rf/subscribe [:money]))
+                                  :readOnly true}]]]
+       [:div.utility 
         [:div.sitrep
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
         [:div.stats

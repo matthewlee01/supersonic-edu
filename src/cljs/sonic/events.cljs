@@ -113,8 +113,18 @@
 ;dispatches an upgradeSystem event when the button is pressed
 ;used in .views file
 (defn upgradeSystemsDispatch
-  [system ship]
-  (fn [] (rf/dispatch [:upgradeSystem system ship])))
+  [system ship cost]
+  (fn [] (rf/dispatch [:buySystemUpgrade system ship cost])))
+
+(defn buySystemUpgrade 
+  [cofx [_ system ship cost]]
+  (let [db (:db cofx)]
+   {:db (assoc db :money (- (:money db) cost))
+    :dispatch [:upgradeSystem system ship]}))
+
+(rf/reg-event-fx
+  :buySystemUpgrade
+  buySystemUpgrade)
 
 ;increases the rank of a system and returns a
 ;new sysvec with rank and corresponding HP (rank +1)
@@ -485,15 +495,17 @@
                          (shipReset HP_GAIN)
                          randShipColour)
         scoreEarned (-> cofx :db :battleScore)]
-    {:db (assoc (:db cofx)
-                :playerShip newPlayerShip
-                :enemyShip newEnemyShip
-                :gameOver? false
-                :turn 0
-                :history []
-                :phase 0
-                :money (+ scoreEarned (-> cofx :db :money))
-                :battleScore (calcScore newEnemyShip))
+<<<<<<< src/cljs/sonic/events.cljs
+   {:db (assoc (:db cofx) 
+               :playerShip newPlayerShip 
+               :enemyShip newEnemyShip 
+               :gameOver? false 
+               :turn 0 
+               :history [] 
+               :phase 0
+               :money (+ scoreEarned (-> cofx :db :money))
+               :battleScore (calcScore newEnemyShip)
+               :upgradingSystems? false)
      :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx
