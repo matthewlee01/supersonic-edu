@@ -42,6 +42,11 @@
     (:gameOver? db)))
 
 (rf/reg-sub
+  :playerDefeated?
+  (fn [db _]
+    (:playerDefeated? db)))
+
+(rf/reg-sub
   :history
   (fn [db _]
     (:history db)))
