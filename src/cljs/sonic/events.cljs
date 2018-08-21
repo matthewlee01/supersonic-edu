@@ -116,7 +116,7 @@
   [system ship cost]
   (fn [] (rf/dispatch [:buySystemUpgrade system ship cost])))
 
-(defn buySystemUpgrade 
+(defn buySystemUpgrade
   [cofx [_ system ship cost]]
   (let [db (:db cofx)]
    {:db (assoc db :money (- (:money db) cost))
@@ -125,6 +125,14 @@
 (rf/reg-event-fx
   :buySystemUpgrade
   buySystemUpgrade)
+
+(defn changeScreen
+  [db [_ newScreen]]
+  (assoc db :activeScreen newScreen))
+
+(rf/reg-event-db
+  :changeScreen
+  changeScreen)
 
 ;increases the rank of a system and returns a
 ;new sysvec with rank and corresponding HP (rank +1)
@@ -191,6 +199,7 @@
   ::gameStart
   (fn [cofx effects]
     (devLog "start of game")
+    (rf/dispatch [:changeScreen :battle-screen])
     {:db (-> (assoc (:db cofx) :gameOver? false)
              (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
                                   existingName
@@ -215,7 +224,8 @@
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
-          (assoc db 
+          (rf/dispatch [:changeScreen :management-screen])
+          (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
                 :money (+ (:battleScore db) (:money db)))))))
@@ -495,12 +505,12 @@
                          :enemyShip
                          (shipReset HP_GAIN)
                          randShipColour)]
-   {:db (assoc (:db cofx) 
-               :playerShip newPlayerShip 
-               :enemyShip newEnemyShip 
-               :gameOver? false 
-               :turn 0 
-               :history [] 
+   {:db (assoc (:db cofx)
+               :playerShip newPlayerShip
+               :enemyShip newEnemyShip
+               :gameOver? false
+               :turn 0
+               :history []
                :phase 0
                :battleScore (calcScore newEnemyShip)
                :upgradingSystems? false)

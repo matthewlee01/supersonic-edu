@@ -10,6 +10,16 @@
   [shipType]
   (:colour @(rf/subscribe [shipType])))
 
+(defn screenActive?
+  [screen]
+  (= screen @(rf/subscribe [:activeScreen])))
+
+(defn getZ
+  [screen]
+  (if (screenActive? screen)
+    1
+    -1))
+
 (defn getPhaseName
   [phase]
   (if (= phase 0)
@@ -45,7 +55,7 @@
 (defn calcUpgradeCost
   [systemRank]
   (* UPGRADE_COST_FACTOR systemRank))
-  
+
 (defn canAffordUpgrade?
   [systemRank money]
   (if (>= money (calcUpgradeCost systemRank))
@@ -107,13 +117,11 @@
 (defn genEnemyReportMsg
   []
   (str "You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
-  
+
 (defn management-screen
   []
   (let [playerShip @(rf/subscribe [:playerShip])]
-    [:div.management {:style {:z-index (if @(rf/subscribe [:gameOver?])
-                                          1
-                                          -1)}}
+    [:div.management {:style {:z-index (getZ :management-screen)}}
        [:div.manageShip
         [:div.shipDisplay
          [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
@@ -130,7 +138,7 @@
           "Upgrade Systems"]
          [:textarea.moneyDisplay {:value (str "$" @(rf/subscribe [:money]))
                                   :readOnly true}]]]
-       [:div.utility 
+       [:div.utility
         [:div.sitrep
          (str (genEnemyReportMsg)
               (genTurnsMsg))]
@@ -160,8 +168,8 @@
         repairing? @(rf/subscribe [:repairing?])
         firing? @(rf/subscribe [:firing?])
         playerShip @(rf/subscribe [:playerShip])
-        enemyShip @(rf/subscribe [:enemyShip])] 
-    [:div.battle
+        enemyShip @(rf/subscribe [:enemyShip])]
+    [:div.battle {:style {:z-index (getZ :battle-screen)}}
      [:fieldset {:disabled gameOver?
                  :style {:position "absolute"}}
       [:div.flexContainer
@@ -218,5 +226,3 @@
   [:div.mainPanel
    (management-screen)
    (battle-screen)])
-
-     
