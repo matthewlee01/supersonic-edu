@@ -125,7 +125,9 @@
 
 (defn genEnemyReportMsg
   []
-  (str "You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
+  (str "You " (if @(rf/subscribe [:playerDefeated?])
+                "were defeated by"
+                "defeated")" an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
 
 (defn pregame-screen
   []
@@ -143,7 +145,8 @@
 
 (defn management-screen
   []
-  (let [playerShip @(rf/subscribe [:playerShip])]
+  (let [playerShip @(rf/subscribe [:playerShip])
+        playerDefeated? @(rf/subscribe [:playerDefeated?])]
     [:div.management {:style {:z-index (getZ :management-screen)}}
        [:div.manageShip
         [:div.shipDisplay
@@ -157,7 +160,8 @@
             [systemButton :repairBay :playerShip "Repair Bay"]
             [systemButton :engines :playerShip "Engines"]]]
         [:div.upgradeUI
-         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))}
+         [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))
+                               :disabled playerDefeated?}
           "Upgrade Systems"]
          [:textarea.moneyDisplay {:value (str "$" @(rf/subscribe [:money]))
                                   :readOnly true}]]]
@@ -172,6 +176,7 @@
 
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+                   :disabled playerDefeated?
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Next Battle"]
          [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))

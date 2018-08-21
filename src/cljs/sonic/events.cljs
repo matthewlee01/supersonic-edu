@@ -226,7 +226,6 @@
   :gameEnd
   (fn [db [_ loser gameOver?]]
     (devLog "end of battle")
-    (devLog (calcTimeDiff (getCurrentTime) (:startTime db)))
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
@@ -237,12 +236,19 @@
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
-          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))]])
+          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] (if (= loser :playerShip)
+                                                                                               [0 0 0 (calcTimeDiff (getCurrentTime) (:startTime db))]
+                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))]])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
-                :money (+ battleScore (:money db))
-                :startTime nil)))))
+                :startTime nil
+                :money (if (= loser :enemyShip)
+                         (+ battleScore (:money db))
+                         (:money db))
+                :playerDefeated? (if (= loser :playerShip)
+                                   true
+                                   false)))))))
 
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
