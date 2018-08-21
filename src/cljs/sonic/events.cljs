@@ -238,7 +238,7 @@
           (rf/dispatch [::changeScreen :management-screen])
           (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] (if (= loser :playerShip)
                                                                                                [0 0 0 (calcTimeDiff (getCurrentTime) (:startTime db))]
-                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))]])
+                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))])])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
@@ -248,7 +248,7 @@
                          (:money db))
                 :playerDefeated? (if (= loser :playerShip)
                                    true
-                                   false)))))))
+                                   false))))))
 
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
