@@ -35,10 +35,12 @@
 }
 
 .vitalityDisplay {
+
     text-align: center;
     width: 190px;
     height: 30px;
     font-size: 20px;
+    resize: none;
 }
 .playerShip {
     display: flex;
@@ -94,6 +96,7 @@
     text-align: center;
     padding: 12px 12px;
     margin: 10px 50px;
+    resize: none;
 }
 
 .manageShip {
@@ -149,19 +152,37 @@
 }
 
 .sitrep {
+    display: flex;
     width: 420px;
     height: 420px;
     background-color: darkorange;
-    text-align: center;
-    font-size: 30px;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.sitrepText {
+    text-align: left;
+    font-size: 20px;
+    width: 410px;
+    height: 410px;
+    resize: none;
 }
 
 .stats {
+    display: flex;
     width: 420px;
     height: 270px;
     background-color: yellow;
-    text-align: center;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.statsText {
     font-size: 20px;
+    width: 410px;
+    height: 260px;
+    resize: none;
+    text-align: center;
 }
 
 .menuButtons {

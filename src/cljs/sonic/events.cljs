@@ -48,6 +48,8 @@
 
 (def MISSILE_DAMAGE_MULTIPLIER 5) ;multiplier for missile attack
 
+(def BASE_HP 50) ;used to calculated battles won and other things
+
 (def HP_GAIN 50) ;amount of max hp increased per stage
 
 (def SUPERCHARGED_MULTIPLIER 1.5) ;damage multiplier for supercharged shield effect
