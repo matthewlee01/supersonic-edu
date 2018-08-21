@@ -35,6 +35,5 @@
 (defn ^:export init
   []
   (rf/dispatch-sync [::events/initialize-db])
-  (rf/dispatch [::events/gameStart])
   (dev-setup)
   (mount-root))

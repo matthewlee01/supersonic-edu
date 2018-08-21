@@ -33,7 +33,7 @@
    :upgradingSystems? false
    :upgradingShip? false
    :battleScore 0
-   :activeScreen :battle-screen
+   :activeScreen :pregame-screen
    :gameStats {:totalScore 0
                :damageDealt 0
                :damageTaken 0
