@@ -168,7 +168,11 @@
     [:p (str "Damage dealt: " (:damageDealt @(rf/subscribe [:gameStats])))]
     [:p (str "Missiles fired: " (:missilesFired @(rf/subscribe [:gameStats])))]
     [:p (str "Lasers fired: " (:lasersFired @(rf/subscribe [:gameStats])))]
-    [:p (str "Score: " (:totalScore @(rf/subscribe [:gameStats])))]])
+    [:p (str "Score: " (:totalScore @(rf/subscribe [:gameStats])))]
+
+    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
+              :style {:font-size "35px"
+                      :padding "5px 10px"}} "Whoops go back"]])
 
 (defn battle-screen
   []
