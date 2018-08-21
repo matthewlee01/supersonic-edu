@@ -40,6 +40,14 @@
   []
   (+ 1 (rand-int 6)))
 
+(defn getCurrentTime
+  []
+  (js.Date.))
+
+(defn calcTimeDiff
+  [time1 time2]
+  (int (/ (- time1 time2) 1000)))
+
 ;creates a data structure to be used by the AI
 ;takes the form of [[action] score correspondingFunction prereqSystem]
 (defn createOutcomesList
@@ -119,8 +127,9 @@
 (defn buySystemUpgrade
   [cofx [_ system ship cost]]
   (let [db (:db cofx)]
-   {:db (assoc db :money (- (:money db) cost))
-    :dispatch [:upgradeSystem system ship]}))
+    (rf/dispatch [:updateStats [:moneySpent] [cost]])
+    {:db (assoc db :money (- (:money db) cost))
+     :dispatch [:upgradeSystem system ship]}))
 
 (rf/reg-event-fx
   :buySystemUpgrade
@@ -201,14 +210,15 @@
   (fn [cofx effects]
     (devLog "start of game")
     (rf/dispatch [::changeScreen :battle-screen])
-    {:db (-> (assoc (:db cofx) :gameOver? false)
-             (assoc :playerName (if-let [existingName (:playerName (:db cofx))]
-                                  existingName
-                                  (if-let [playerName (js/prompt "Enter your name:")]
-                                   (if (= playerName "")
-                                     "Player"
-                                     playerName)
-                                   "Player"))))
+    {:db (assoc (:db cofx) :gameOver? false
+                           :playerName (if-let [existingName (:playerName (:db cofx))]
+                                         existingName
+                                         (if-let [playerName (js/prompt "Enter your name:")]
+                                           (if (= playerName "")
+                                             "Player"
+                                             playerName)
+                                           "Player"))
+                           :startTime (or (-> cofx :db :startTime) (getCurrentTime)))
      :dispatch [:reset-db]}))
 
 ;sends an alert and disables main view
@@ -216,20 +226,23 @@
   :gameEnd
   (fn [db [_ loser gameOver?]]
     (devLog "end of battle")
-    (rf/dispatch [:updateStats [:totalScore] [(:battleScore db)]])
+    (devLog (calcTimeDiff (getCurrentTime) (:startTime db)))
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
           gameOverMessage (str "Game Over! " loserName "'s ship was destroyed!")
-          fleeMessage (str loserName " fled the battle!")]
+          fleeMessage (str loserName " fled the battle!")
+          battleScore (:battleScore db)]
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
+          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))]])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
-                :money (+ (:battleScore db) (:money db)))))))
+                :money (+ battleScore (:money db))
+                :startTime nil)))))
 
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
@@ -730,7 +743,8 @@
 (defn repairShip
   [cofx [_ system type]]
   (if (= type :playerShip)
-    (rf/dispatch [::toggleVal :repairing?]))
+    (do (rf/dispatch [::toggleVal :repairing?])
+        (rf/dispatch [:updateStats [:timesRepaired] [1]])))
   (devLog "repairing ship")
   (let [ship (type (:db cofx))
         repairedShip (-> [system ship]
