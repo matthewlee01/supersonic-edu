@@ -20,13 +20,13 @@
 
 (defn getStatText
   "generates the text for a stat"
-  [label statName]
-  (str label ": " (statName @(rf/subscribe [:gameStats]))))
+  ([label statName] (str label ": " (statName @(rf/subscribe [:gameStats]))))
+  ([label statName endLabel] (str label ": " (statName @(rf/subscribe [:gameStats])) endLabel)))
 
 (defn statElement
   "generates the element for a stat"
-  [[label statName]]
-  [:p.statsText (getStatText label statName)])
+  [statInfoVector]
+  [:p.statsText (apply getStatText statInfoVector)])
 
 (defn statsBlock
   "strings multiple stat elements together"
@@ -38,10 +38,6 @@
   (if (= phase 0)
     @(rf/subscribe [:playerName])
     "Enemy"))
-
-(defn calcBattlesWon
-  [HP HPGain baseHP]
-  (/ (- HP baseHP) HPGain))
 
 (defn actionDisabled?
   [text requiredSystem]
@@ -139,13 +135,13 @@
    [:img {:src "spacethefinalfronthere.jpg"
           :style {:width "1000px"
                   :height "900px"}}]
-   [:button.pregameButton {:on-click (fn [] 
+   [:button.pregameButton {:on-click (fn []
                                        (rf/dispatch [::events/initialize-db])
                                        (rf/dispatch [::events/gameStart]))}
     "Game Start"]
    [:button.pregameButton {:on-click (fn [] (js/alert "lol ur bad"))}
     "Help"]])
-                         
+
 
 (defn management-screen
   []
@@ -179,9 +175,6 @@
          [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "View Statistics"]]
-         ;this is a crude way to check battle # but it works right now and can be changed in the future
-
-
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :disabled playerDefeated?
@@ -196,12 +189,17 @@
   [:div.stats {:style {:z-index (getZ :stats-screen)}}
    [:div.statsDiv
     [:h1 "Your Statistics"]
-    (statsBlock ["Damage taken" :damageTaken]
-                ["Damage dealt" :damageDealt]
-                ["Missiles fired" :missilesFired]
-                ["Lasers fired" :lasersFired]
-                ["Score" :totalScore])
-
+    (statsBlock
+      ["Enemies defeated" :enemiesDefeated]
+      ["Damage taken" :damageTaken]
+      ["Damage dealt" :damageDealt]
+      ["Missiles fired" :missilesFired]
+      ["Lasers fired" :lasersFired]
+      ["Score" :totalScore]
+      ["Times repaired" :timesRepaired]
+      ["Time spent in battle" :battleTime "s"]
+      ["Money earned" :moneyGained]
+      ["Money spent" :moneySpent])
     [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
               :style {:font-size "35px"
                       :width "250px"
