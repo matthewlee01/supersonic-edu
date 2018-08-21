@@ -27,6 +27,7 @@
    :repairing? false
    :playerName nil
    :gameOver? false
+   :playerDefeated? false
    :phase 0
    :history []
    :devMode true
