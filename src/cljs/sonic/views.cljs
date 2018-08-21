@@ -113,17 +113,23 @@
           "Upgrade Systems"]
          [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingShip?]))}
           "Upgrade Ship"]]]
-       [:div.utility 
+       [:div.utility
         [:div.sitrep
          (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
-        [:div.stats 
+        [:div.stats
          ;this is a crude way to check battle # but it works right now and can be changed in the future
-         (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
+         [:p (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
+         [:p (str "Damage taken: " (:damageTaken @(rf/subscribe [:gameStats])))]
+         [:p (str "Damage dealt: " (:damageDealt @(rf/subscribe [:gameStats])))]
+         [:p (str "Missiles fired: " (:missilesFired @(rf/subscribe [:gameStats])))]
+         [:p (str "Lasers fired: " (:lasersFired @(rf/subscribe [:gameStats])))]
+         [:p (str "Score: " (:totalScore @(rf/subscribe [:gameStats])))]]
+
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "Next Battle"]
-         [:button {:on-click (fn [] 
+         [:button {:on-click (fn []
                                (rf/dispatch [::events/initialize-db])
                                (rf/dispatch [::events/gameStart]))
                    :style {:font-size "35px"
