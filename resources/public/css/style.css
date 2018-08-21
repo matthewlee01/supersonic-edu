@@ -169,6 +169,13 @@
 }
 
 .stats {
+    width: 1075px;
+    height: 900px;
+    position: absolute;
+    background-color: orange;
+}
+
+.statsBox {
     display: flex;
     width: 420px;
     height: 270px;
