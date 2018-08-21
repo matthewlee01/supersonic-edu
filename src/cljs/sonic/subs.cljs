@@ -82,6 +82,11 @@
     (:gameStats db)))
 
 (rf/reg-sub
+  :activeScreen
+  (fn [db _]
+    (:activeScreen db)))
+
+(rf/reg-sub
   :money
   (fn [db _]
     (:money db)))
