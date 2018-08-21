@@ -167,13 +167,14 @@
                                   :readOnly true}]]]
        [:div.utility
         [:div.sitrep
-         (str (genEnemyReportMsg)
-              (genTurnsMsg))]
+         [:div.sitrepText
+          [:h1 "Battle Report"]
+          [:p (genEnemyReportMsg)]
+          [:p (genTurnsMsg)]]]
         [:div.statsBox
          [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
                    :style {:font-size "35px"
-                           :padding "5px 10px"}} "Stats"]]
-
+                           :padding "5px 10px"}} "View Statistics"]]
         [:div.menuButtons
          [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
                    :disabled playerDefeated?
@@ -186,7 +187,8 @@
 (defn stats-screen
   []
   [:div.stats {:style {:z-index (getZ :stats-screen)}}
-
+   [:div.statsDiv
+    [:h1 "Your Statistics"]
     (statsBlock
       ["Enemies defeated" :enemiesDefeated]
       ["Damage taken" :damageTaken]
@@ -198,13 +200,11 @@
       ["Time spent in battle" :battleTime "s"]
       ["Money earned" :moneyGained]
       ["Money spent" :moneySpent])
-
-
     [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
               :style {:font-size "35px"
                       :width "250px"
                       :height "100px"
-                      :padding "5px 10px"}} "Whoops go back"]])
+                      :padding "5px 10px"}} "Return to Menu"]]])
 
 (defn battle-screen
   []
