@@ -137,12 +137,11 @@
 ;the target system 1 rank higher.
 (defn upgradeSystem
   [cofx [_ system ship]]
-  (devLog (str "upgrading " system))
+  (devLog (str "upgrading " ship system))
   (let [systemsMap (get-in cofx [:db ship :systems])
         newSystemsMap (->> (incSystemRank (system systemsMap))
-                          (assoc systemsMap system))]
-    {:db (->> (assoc (get-in cofx [:db ship]) :systems newSystemsMap)
-              (assoc (:db cofx) ship))
+                           (assoc systemsMap system))]
+    {:db (assoc-in (:db cofx) [ship :systems] newSystemsMap)
      :dispatch [::toggleVal :upgradingSystems?]}))
 
 (rf/reg-event-fx
@@ -207,7 +206,7 @@
   :gameEnd
   (fn [db [_ loser gameOver?]]
     (devLog "end of battle")
-    (rf/dispatch [:updateStats [:totalScore] [@(rf/subscribe [:battleScore])]])
+    (rf/dispatch [:updateStats [:totalScore] [(:battleScore db)]])
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
@@ -216,8 +215,10 @@
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
-          (-> (assoc db :playerShip (shipReset (:playerShip db) 0))
-              (assoc :gameOver? true))))))
+          (assoc db 
+                :playerShip (shipReset (:playerShip db) 0)
+                :gameOver? true
+                :money (+ (:battleScore db) (:money db)))))))
 
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
@@ -493,9 +494,7 @@
                          :db
                          :enemyShip
                          (shipReset HP_GAIN)
-                         randShipColour)
-        scoreEarned (-> cofx :db :battleScore)]
-<<<<<<< src/cljs/sonic/events.cljs
+                         randShipColour)]
    {:db (assoc (:db cofx) 
                :playerShip newPlayerShip 
                :enemyShip newEnemyShip 
@@ -503,7 +502,6 @@
                :turn 0 
                :history [] 
                :phase 0
-               :money (+ scoreEarned (-> cofx :db :money))
                :battleScore (calcScore newEnemyShip)
                :upgradingSystems? false)
      :dispatch [:playerPhase]}))
