@@ -152,7 +152,7 @@
     height: 270px;
     background-color: yellow;
     text-align: center;
-    font-size: 30px;
+    font-size: 20px;
 }
 
 .menuButtons {
@@ -161,7 +161,6 @@
     justify-content: space-around;
     align-items: center;
     width: 420px;
-    height: 150px; 
+    height: 150px;
     background-color: olive;
 }
-

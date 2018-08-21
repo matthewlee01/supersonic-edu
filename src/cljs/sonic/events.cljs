@@ -23,8 +23,8 @@
 ;provides a skeleton of actions for the enemy to choose from.
 ;:targetSystem gets updated to current values when this is used
 (def ENEMY_ACTION_LIST
-  [[:damageShip :targetSystem :playerShip :missiles MEAN_DICEROLL]
-   [:damageShip :targetSystem :playerShip :lasers MEAN_DICEROLL]
+  [[:damageShip :targetSystem :playerShip :missiles MEAN_DICEROLL true]
+   [:damageShip :targetSystem :playerShip :lasers MEAN_DICEROLL true]
    [:repairShip :targetSystem :enemyShip]
    [:enemyChargeShields MEAN_DICEROLL]])
 
@@ -89,7 +89,7 @@
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
   [system type firingType]
-  (fn [] (rf/dispatch [:damageShip system type firingType (diceRoll)])))
+  (fn [] (rf/dispatch [:damageShip system type firingType (diceRoll) false])))
 
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
@@ -195,6 +195,7 @@
   :gameEnd
   (fn [db [_ loser gameOver?]]
     (devLog "end of battle")
+    (rf/dispatch [:updateStats [:totalScore] [@(rf/subscribe [:battleScore])]])
     (let [loserName (if (= loser :playerShip)
                       (:playerName db)
                       "Enemy")
@@ -376,7 +377,7 @@
     (case actionType
       :enemyChargeShields action
       :repairShip (assoc action 1 (getTargetSystem :repair))
-      :damageShip (assoc action 1 (getTargetSystem :target)))))
+      :damageShip (assoc action 1 (getTargetSystem :target)) true)))
 
 ;updates the default actionList value to current values
 (defn getCurrentActionList
@@ -460,7 +461,7 @@
         ;chooses the best outcome of the possible actions the enemy can take
         chosenOutcome (chooseBestOutcome db (remove outcomeDisabled? outcomes))]
     (case (get chosenOutcome 0)
-      :damageShip (assoc chosenOutcome 4 (diceRoll))
+      :damageShip (assoc chosenOutcome 4 (diceRoll) 5 false)
       :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
       chosenOutcome)))
 
@@ -482,16 +483,15 @@
                          (shipReset HP_GAIN)
                          randShipColour)
         scoreEarned (-> cofx :db :battleScore)]
-   {:db (assoc (:db cofx)
-               :playerShip newPlayerShip
-               :enemyShip newEnemyShip
-               :gameOver? false
-               :turn 0
-               :history []
-               :phase 0
-               :money (+ scoreEarned (-> cofx :db :money))
-               :totalScore (+ scoreEarned (-> cofx :db :totalScore))
-               :battleScore (calcScore newEnemyShip))
+    {:db (assoc (:db cofx)
+                :playerShip newPlayerShip
+                :enemyShip newEnemyShip
+                :gameOver? false
+                :turn 0
+                :history []
+                :phase 0
+                :money (+ scoreEarned (-> cofx :db :money))
+                :battleScore (calcScore newEnemyShip))
      :dispatch [:playerPhase]}))
 
 (rf/reg-event-fx
@@ -627,35 +627,47 @@
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
-  [cofx [_ system type firingType diceRoll]]
+  [cofx [_ system type firingType diceRoll simulation?]]
   (if (= type :enemyShip)
     (rf/dispatch [::toggleVal :firing?]))
-  (let [defender (-> cofx :db type)
-        attackerType (if (= type :playerShip)
+  (let [attackerType (if (= type :playerShip)
                        :enemyShip
                        :playerShip)
-        attacker (-> cofx :db attackerType)
-        attackRank (get-in attacker [:systems firingType 1])
+        {{defender type {{[_ attackRank] firingType} :systems :as attacker} attackerType} :db} cofx
         damage (calcAttackDamage attackRank firingType diceRoll (shieldsSupercharged? attacker))
         devMsg (str (if (= type :playerShip) "player " "enemy ")
                     "took "
                     damage
-                    " damage")]
-       (devLog devMsg)
-       (let [newShips (-> [defender attacker system damage firingType]
-                          (newShieldsAndAmmo)
-                          (newSystemHP)
-                          (newHP))
-             newDefender (first newShips)
-             newAttacker (second newShips)]
-            {:db (assoc (:db cofx)
-                    type newDefender
-                    attackerType newAttacker)
-             :dispatch [:changePhase]})))
+                    " damage")
+        [newDefender newAttacker] (-> [defender attacker system damage firingType]
+                                      newShieldsAndAmmo
+                                      newSystemHP
+                                      newHP)
+        [newStatNames statChanges] (if (= type :playerShip)
+                                     [[:damageTaken] [damage]]
+                                     (if (= firingType :missiles)
+                                       [[:damageDealt :missilesFired] [damage 1]]
+                                       [[:damageDealt :lasersFired] [damage 1]]))]
+    (devLog devMsg)
+    (if (false? simulation?) (rf/dispatch [:updateStats newStatNames statChanges]))
+    {:db (assoc (:db cofx)
+            type newDefender
+            attackerType newAttacker)
+     :dispatch [:changePhase]}))
 
 (rf/reg-event-fx
   :damageShip
   damageShip)
+
+(defn updateStats
+  "takes a list of stats and corresponding changes to those stats, then updates :gameStats accordingly"
+  [db [_ statNames changes]]
+  (assoc db :gameStats (merge-with + @(rf/subscribe [:gameStats]) (zipmap statNames changes))))
+
+(rf/reg-event-db
+  :updateStats
+  updateStats)
+
 
 (defn calcRepairStrength
   [repairRank diceRoll]
