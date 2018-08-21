@@ -79,7 +79,7 @@
                           (events/systemDisabled? system shipType))}
            (if upgradingSystems?
              (if (canAffordUpgrade? systemRank @(rf/subscribe [:money]))
-              {:on-click (events/upgradeSystemsDispatch system type (calcUpgradeCost systemRank))
+              {:on-click (events/upgradeSystemsDispatch system shipType (calcUpgradeCost systemRank))
                :style {:background-color "lightgreen"}}
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
@@ -107,10 +107,6 @@
 (defn genEnemyReportMsg
   []
   (str "You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
-
-(defn genBattlesWonMsg
-  [HP HPGain baseHP]
-  (str "Battles completed: " (calcBattlesWon HP HPGain baseHP) " "))
   
 (defn management-screen
   []
@@ -136,10 +132,11 @@
                                   :readOnly true}]]]
        [:div.utility 
         [:div.sitrep
-         (str "Your previous battle lasted " turn " turns! You defeated an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP!")]
+         (str (genEnemyReportMsg)
+              (genTurnsMsg))]
         [:div.stats
          ;this is a crude way to check battle # but it works right now and can be changed in the future
-         [:p (str "Battles completed: " (/ (- (:maxHP @(rf/subscribe [:playerShip])) 50) 50))]
+         [:p (str "Battles completed: " (calcBattlesWon (:HP playerShip) events/HP_GAIN events/BASE_HP))]
          [:p (str "Damage taken: " (:damageTaken @(rf/subscribe [:gameStats])))]
          [:p (str "Damage dealt: " (:damageDealt @(rf/subscribe [:gameStats])))]
          [:p (str "Missiles fired: " (:missilesFired @(rf/subscribe [:gameStats])))]
