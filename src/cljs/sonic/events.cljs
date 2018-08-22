@@ -110,14 +110,12 @@
 ;checks if system on ship is disabled (0HP, or 0 Ammo for missiles)
 (defn systemDisabled?
   [system shipType]
-  (if (or (>= 0 (-> @(rf/subscribe [shipType])
-                    :systems
-                    system
-                    first))
-          (and (= 0 (:ammo  @(rf/subscribe [shipType])))
-               (= system :missiles)))
-    true
-    false))
+  (let [{{[systemHP _] system} :systems ammo :ammo} @(rf/subscribe [shipType])]
+    (if (or (>= 0 systemHP)
+            (and (= 0 ammo)
+                 (= system :missiles)))
+      true
+      false)))
 
 ;dispatches an upgradeSystem event when the button is pressed
 ;used in .views file
@@ -148,19 +146,17 @@
 ;increases the rank of a system and returns a
 ;new sysvec with rank and corresponding HP (rank +1)
 (defn incSystemRank
-  [systemVector]
-  (let [newRank (inc (second systemVector))]
+  [[_ systemRank]]
+  (let [newRank (inc systemRank)]
     [(inc newRank) newRank]))
 
 ;takes a target system and target ship, update target ship with
 ;the target system 1 rank higher.
 (defn upgradeSystem
-  [cofx [_ system ship]]
-  (devLog (str "upgrading " ship system))
-  (let [systemsMap (get-in cofx [:db ship :systems])
-        newSystemsMap (->> (incSystemRank (system systemsMap))
-                           (assoc systemsMap system))]
-    {:db (assoc-in (:db cofx) [ship :systems] newSystemsMap)
+  [cofx [_ systemType shipType]]
+  (devLog (str "upgrading " shipType " " systemType))
+  (let [system (-> cofx :db shipType :systems systemType)]
+    {:db (assoc-in (:db cofx) [shipType :systems systemType] (incSystemRank system))
      :dispatch [::toggleVal :upgradingSystems?]}))
 
 (rf/reg-event-fx
@@ -190,9 +186,9 @@
     db/default-db))
 
 (defn systemReset
-  "resets a system's HP based on its level"
-  [systemStats]
-  (vector (inc (get systemStats 1)) (get systemStats 1)))
+  "resets a system's HP based on its rank"
+  [[_ systemRank]]
+  [(inc systemRank) systemRank])
 
 (defn shipReset
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
