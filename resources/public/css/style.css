@@ -46,7 +46,7 @@
     align-items: center;
     height: 600px;
     width: 1050px;
-    background: black;
+    background: url("space.png");
     margin: 10px 0px;
 }
 
@@ -57,7 +57,6 @@
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    
 }
 
 .vitalityDisplay {
@@ -75,7 +74,7 @@
     align-items: center;
     width: 420px;
     height: 330px;
-    background: blue;
+    background-image: url("spaceship.png")
 }
 
 .enemyShip {
@@ -105,8 +104,11 @@
 }
 
 .action {
-    font-size: 25px;
+    font-size: 20px;
     padding: 20px 12px;
+    background-image: url("actionbutton.png");
+    width: 195px;
+    height: 80px;
 }
 
 .infoDisplayArea {

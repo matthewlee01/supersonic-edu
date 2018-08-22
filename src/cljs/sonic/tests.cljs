@@ -62,10 +62,10 @@
                                (events/newShieldsAndAmmo)
                                (events/newSystemHP)
                                (events/newHP))
-        EXPECTED_HP_LASER 100
+        EXPECTED_HP_LASER 50
         EXPECTED_SHIELDS_LASER 60
         EXPECTED_SYSTEM_LASER [2 1]
-        EXPECTED_HP_MISSILE 60
+        EXPECTED_HP_MISSILE 10
         EXPECTED_SHIELDS_MISSILE 100
         EXPECTED_SYSTEM_MISSILE [1 1]]
     ;--------laser attack calculations--------
