@@ -44,6 +44,7 @@
   []
   (js.Date.))
 
+;calculates the difference, in seconds, between two times
 (defn calcTimeDiff
   [time1 time2]
   (int (/ (- time1 time2) 1000)))
@@ -98,22 +99,22 @@
 
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
-  [system type firingType]
-  (fn [] (rf/dispatch [:damageShip system type firingType (diceRoll) false])))
+  [system shipType firingType]
+  (fn [] (rf/dispatch [:damageShip system shipType firingType (diceRoll) false])))
 
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
-  [system type]
-  (fn [] (rf/dispatch [:repairShip system type])))
+  [system shipType]
+  (fn [] (rf/dispatch [:repairShip system shipType])))
 
-;checks if system on ship is disabled (0HP)
+;checks if system on ship is disabled (0HP, or 0 Ammo for missiles)
 (defn systemDisabled?
-  [system type]
-  (if (or (>= 0 (-> @(rf/subscribe [type])
-                    (:systems)
-                    (system)
-                    (get 0)))
-          (and (= 0 (:ammo  @(rf/subscribe [type])))
+  [system shipType]
+  (if (or (>= 0 (-> @(rf/subscribe [shipType])
+                    :systems
+                    system
+                    first))
+          (and (= 0 (:ammo  @(rf/subscribe [shipType])))
                (= system :missiles)))
     true
     false))
@@ -669,15 +670,15 @@
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
-  [cofx [_ system type firingType diceRoll simulation?]]
-  (if (= type :enemyShip)
+  [cofx [_ system shipType firingType diceRoll simulation?]]
+  (if (= shipType :enemyShip)
     (rf/dispatch [::toggleVal :firing?]))
-  (let [attackerType (if (= type :playerShip)
+  (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
-        {{defender type {{[_ attackRank] firingType} :systems :as attacker} attackerType} :db} cofx
+        {{defender shipType {{[_ attackRank] firingType} :systems :as attacker} attackerType} :db} cofx
         damage (calcAttackDamage attackRank firingType diceRoll (shieldsSupercharged? attacker))
-        devMsg (str (if (= type :playerShip) "player " "enemy ")
+        devMsg (str (if (= shipType :playerShip) "player " "enemy ")
                     "took "
                     damage
                     " damage")
@@ -685,7 +686,7 @@
                                       newShieldsAndAmmo
                                       newSystemHP
                                       newHP)
-        [newStatNames statChanges] (if (= type :playerShip)
+        [newStatNames statChanges] (if (= shipType :playerShip)
                                      [[:damageTaken] [damage]]
                                      (if (= firingType :missiles)
                                        [[:damageDealt :missilesFired] [damage 1]]
@@ -693,7 +694,7 @@
     (devLog devMsg)
     (if (false? simulation?) (rf/dispatch [:updateStats newStatNames statChanges]))
     {:db (assoc (:db cofx)
-            type newDefender
+            shipType newDefender
             attackerType newAttacker)
      :dispatch [:changePhase]}))
 
@@ -747,17 +748,17 @@
     [system newShip]))
 
 (defn repairShip
-  [cofx [_ system type]]
-  (if (= type :playerShip)
+  [cofx [_ system shipType]]
+  (if (= shipType :playerShip)
     (do (rf/dispatch [::toggleVal :repairing?])
         (rf/dispatch [:updateStats [:timesRepaired] [1]])))
   (devLog "repairing ship")
-  (let [ship (type (:db cofx))
+  (let [ship (shipType (:db cofx))
         repairedShip (-> [system ship]
                          (restoreHP)
                          (restoreSystem)
                          (get 1))]
-    {:db (assoc (:db cofx) type repairedShip)
+    {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
 
 (def ENEMY_FUNCTION_LIST
