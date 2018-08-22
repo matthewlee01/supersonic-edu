@@ -284,27 +284,6 @@
                                                       SUPERCHARGED_MULTIPLIER
                                                       1)))
 
-
-
-;determines whether or not an attack of the specified type
-;can potentially kill the target
-;takes in attacker, defender, and firingType (:lasers or :missiles)
-;returns true if target can be killed
-(defn killRange?
-  [attacker defender firingType]
-  (let [vitality (if (= firingType :lasers)
-                   (+ (:HP defender) (:shields defender))
-                   (:HP defender))
-        dmgFactor 6
-        potentialDamage (-> attacker
-                            (:systems)
-                            (firingType)
-                            (get 1)
-                            (calcAttackDamage firingType dmgFactor (shieldsSupercharged? attacker)))]
-    (if (>= potentialDamage vitality)
-      true
-      false)))
-
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
   (let [{{[_ shieldsSystemRank] :shields} :systems shieldsCurrentValue :shields} ship
@@ -493,12 +472,12 @@
   [db actionList functionList prereqList]
   (let [;outcomes are data structures that contain all the necessary data
         ;to evaluate and return an outcome score
-        outcomes (createOutcomesList
-                   (getCurrentActionList actionList)
-                   functionList
-                   prereqList)
+        possibleOutcomes (remove outcomeDisabled? (createOutcomesList
+                                                    (getCurrentActionList actionList)
+                                                    functionList
+                                                    prereqList))
         ;chooses the best outcome of the possible actions the enemy can take
-        chosenOutcome (chooseBestOutcome db (remove outcomeDisabled? outcomes))]
+        chosenOutcome (chooseBestOutcome db possibleOutcomes)]
     (case (get chosenOutcome 0)
       :damageShip (assoc chosenOutcome 4 (diceRoll) 5 false)
       :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
@@ -772,7 +751,8 @@
 (rf/reg-event-fx
   :repairShip
   repairShip)
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;obsolete functions
 (defn setSystemRank
   [db [_ ship system systemVec]]
   (let [targetShip (ship db)
@@ -785,6 +765,26 @@
   ::setSystemRank
   setSystemRank)
 
+;determines whether or not an attack of the specified type
+;can potentially kill the target
+;takes in attacker, defender, and firingType (:lasers or :missiles)
+;returns true if target can be killed
+(defn killRange?
+  [attacker defender firingType]
+  (let [vitality (if (= firingType :lasers)
+                   (+ (:HP defender) (:shields defender))
+                   (:HP defender))
+        dmgFactor 6
+        potentialDamage (-> attacker
+                            (:systems)
+                            (firingType)
+                            (get 1)
+                            (calcAttackDamage firingType dmgFactor (shieldsSupercharged? attacker)))]
+    (if (>= potentialDamage vitality)
+      true
+      false)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;test handler for trying new things and placeholding
 (rf/reg-event-db
   :doNothing
