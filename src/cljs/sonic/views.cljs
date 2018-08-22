@@ -71,6 +71,18 @@
     true
     false))
 
+(defn statusBar
+  [currentVal maxVal colour]
+  (let [percentVal (-> currentVal
+                       (/ maxVal)
+                       (* 100))]
+   [:div {:style {:width "100px"
+                  :height "10px"
+                  :background-color "white"}}
+    [:div {:style {:width (str percentVal "%")
+                   :height "100%"
+                   :background-color colour}}]]))
+  
 (defn systemButton
   [system shipType text]
   (let [firing? @(rf/subscribe [:firing?])
@@ -133,15 +145,14 @@
   []
   [:div.pregame {:style {:z-index (getZ :pregame-screen)}}
    [:img {:src "spacethefinalfronthere.jpg"
-          :style {:width "1000px"
-                  :height "900px"}}]
+          :style {:width "1025px"
+                  :height "600px"}}]
    [:button.pregameButton {:on-click (fn []
                                        (rf/dispatch [::events/initialize-db])
                                        (rf/dispatch [::events/gameStart]))}
     "Game Start"]
    [:button.pregameButton {:on-click (fn [] (js/alert "lol ur bad"))}
     "Help"]])
-
 
 (defn management-screen
   []
@@ -242,6 +253,9 @@
                                                    "black"))}}]
        [:div.ships
         [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
+         [:div.vitalityStatusBars
+          (statusBar (:shields playerShip) (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) "teal")
+          (statusBar (:HP playerShip) (:maxHP playerShip) "green")]
          [:div.vitalityDisplayArea
           [shipVitalityDisplay (:shields playerShip) "Shields"]
           [shipVitalityDisplay (:HP playerShip) "HP"]]
@@ -251,6 +265,9 @@
          [systemButton :repairBay :playerShip "Repair Bay"]
          [systemButton :engines :playerShip "Engines"]]
         [:div.enemyShip {:style {:background-color (getShipColour :enemyShip)}}
+         [:div.vitalityStatusBars
+          (statusBar (:shields enemyShip) (events/calcShieldsMax (get-in enemyShip [:systems :shields 1])) "teal")
+          (statusBar (:HP enemyShip) (:maxHP enemyShip) "green")]
          [:div.vitalityDisplayArea
           [shipVitalityDisplay (:shields enemyShip) "Shields"]
           [shipVitalityDisplay (:HP enemyShip) "HP"]]
