@@ -337,7 +337,7 @@
 (defn actionChargeShields
   [cofx events]
   (devLog "player charging shields")
-  {:db (assoc (:db cofx) :playerShip (chargeShields @(rf/subscribe [:playerShip]) (diceRoll)))
+  {:db (assoc (:db cofx) :playerShip (chargeShields (-> cofx :db :playerShip) (diceRoll)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -376,10 +376,9 @@
 ;used with map to create a vector of all damaged systems.
 (defn enemySystemsDamaged?
   [systemType]
-  (let [ship @(rf/subscribe [:enemyShip])
-        system (systemType (:systems ship))]
-    (if (-> (get system 0)
-            (< (+ (get system 1) 1)))
+  (let [enemyShip @(rf/subscribe [:enemyShip])
+        [systemHP systemRank] (-> enemyShip :systems systemType)]
+    (if (<= systemHP systemRank)
       systemType
       false)))
 
@@ -403,13 +402,12 @@
 ;by filtering through priority list
 (defn getTargetSystem
   [filterType]
-  (if-let [target (->> (filterType enemyPriorityList)
-                       (map (if (= filterType :repair)
-                              enemySystemsDamaged?
-                              playerSystemsActive?))
-                       (remove false?)
-                       (first))]
-    target
+  (or (->> (filterType enemyPriorityList)
+           (map (if (= filterType :repair)
+                  enemySystemsDamaged?
+                  playerSystemsActive?))
+           (remove false?)
+           first)
     REPAIR_DEFAULT))
 
 ;updates the default action with current values to replace placeholders
