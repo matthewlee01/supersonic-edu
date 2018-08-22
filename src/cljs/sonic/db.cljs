@@ -6,7 +6,7 @@
                           :shields [2 1]
                           :repairBay [2 1]
                           :engines [2 1]}
-                :HP 100
+                :HP 50
                 :maxHP 50
                 :shields 100
                 :ammo 2
@@ -16,7 +16,7 @@
                          :shields [2 1]
                          :repairBay [2 1]
                          :engines [2 1]}
-               :HP 100
+               :HP 50
                :maxHP 50
                :shields 100
                :ammo 2

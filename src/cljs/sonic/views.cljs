@@ -6,6 +6,9 @@
 
 (def UPGRADE_COST_FACTOR 500)
 
+(def VITALITY_BAR_WIDTH "185px")
+
+(def VITALITY_BAR_HEIGHT "15px")
 (defn getShipColour
   [shipType]
   (:colour @(rf/subscribe [shipType])))
@@ -72,12 +75,12 @@
     false))
 
 (defn statusBar
-  [currentVal maxVal colour]
+  [currentVal maxVal colour width height]
   (let [percentVal (-> currentVal
                        (/ maxVal)
                        (* 100))]
-   [:div {:style {:width "100px"
-                  :height "10px"
+   [:div {:style {:width width
+                  :height height
                   :background-color "white"}}
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
@@ -162,14 +165,28 @@
        [:div.manageShip
         [:div.shipDisplay
          [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
-            [:div.vitalityDisplayArea
-             [shipVitalityDisplay (:shields playerShip) "Shields"]
-             [shipVitalityDisplay (:HP playerShip) "HP"]]
-            [systemButton :lasers :playerShip "Lasers"]
-            [systemButton :missiles :playerShip "Missiles"]
-            [systemButton :shields :playerShip "Shields"]
-            [systemButton :repairBay :playerShip "Repair Bay"]
-            [systemButton :engines :playerShip "Engines"]]]
+          [:div.vitalityStatusBars
+            (statusBar 
+              (:shields playerShip) 
+              (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) 
+              "teal"
+              VITALITY_BAR_WIDTH
+              VITALITY_BAR_HEIGHT)
+            (statusBar 
+              (:HP playerShip) 
+              (:maxHP playerShip) 
+              "green"
+              VITALITY_BAR_WIDTH
+              VITALITY_BAR_HEIGHT)]
+
+          [:div.vitalityDisplayArea
+           [shipVitalityDisplay (:shields playerShip) "Shields"]
+           [shipVitalityDisplay (:HP playerShip) "HP"]]
+          [systemButton :lasers :playerShip "Lasers"]
+          [systemButton :missiles :playerShip "Missiles"]
+          [systemButton :shields :playerShip "Shields"]
+          [systemButton :repairBay :playerShip "Repair Bay"]
+          [systemButton :engines :playerShip "Engines"]]]
         [:div.upgradeUI
          [:button.upgradeShip {:on-click (fn [] (rf/dispatch [::events/toggleVal :upgradingSystems?]))
                                :disabled playerDefeated?}
@@ -254,8 +271,18 @@
        [:div.ships
         [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
          [:div.vitalityStatusBars
-          (statusBar (:shields playerShip) (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) "teal")
-          (statusBar (:HP playerShip) (:maxHP playerShip) "green")]
+          (statusBar 
+            (:shields playerShip) 
+            (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) 
+            "teal"
+            VITALITY_BAR_WIDTH
+            VITALITY_BAR_HEIGHT)
+          (statusBar 
+            (:HP playerShip) 
+            (:maxHP playerShip) 
+            "green"
+            VITALITY_BAR_WIDTH
+            VITALITY_BAR_HEIGHT)]
          [:div.vitalityDisplayArea
           [shipVitalityDisplay (:shields playerShip) "Shields"]
           [shipVitalityDisplay (:HP playerShip) "HP"]]
@@ -266,8 +293,18 @@
          [systemButton :engines :playerShip "Engines"]]
         [:div.enemyShip {:style {:background-color (getShipColour :enemyShip)}}
          [:div.vitalityStatusBars
-          (statusBar (:shields enemyShip) (events/calcShieldsMax (get-in enemyShip [:systems :shields 1])) "teal")
-          (statusBar (:HP enemyShip) (:maxHP enemyShip) "green")]
+          (statusBar 
+            (:shields enemyShip) 
+            (events/calcShieldsMax (get-in enemyShip [:systems :shields 1])) 
+            "teal"
+            VITALITY_BAR_WIDTH
+            VITALITY_BAR_HEIGHT)
+          (statusBar 
+            (:HP enemyShip) 
+            (:maxHP enemyShip) 
+            "green"
+            VITALITY_BAR_WIDTH 
+            VITALITY_BAR_HEIGHT)]
          [:div.vitalityDisplayArea
           [shipVitalityDisplay (:shields enemyShip) "Shields"]
           [shipVitalityDisplay (:HP enemyShip) "HP"]]
