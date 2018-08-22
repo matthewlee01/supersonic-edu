@@ -193,14 +193,22 @@
 (defn fullSystemsReset
   "resets all of the systems, returns a new systems map"
   [oldSystemsMap]
-  (zipmap (keys oldSystemsMap) (->> oldSystemsMap vals (map systemReset))))
+  (zipmap (keys oldSystemsMap)
+          (->> oldSystemsMap
+               (vals)
+               (map systemReset))))
 
 (defn shipReset
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
   [ship HPgain]
-  (let [newSystems (-> ship :systems fullSystemsReset)
+  (let [newSystems (-> ship
+                       :systems
+                       (fullSystemsReset))
         newMaxHP (+ (:maxHP ship) HPgain)
-        newShields (-> newSystems :shields second calcShieldsMax)]
+        newShields (-> newSystems
+                       :shields
+                       (second)
+                       (calcShieldsMax))]
     (assoc ship :systems newSystems
                 :maxHP newMaxHP
                 :HP newMaxHP
@@ -260,7 +268,11 @@
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
-  (let [maxShields (-> ship :systems :shields second calcShieldsMax)
+  (let [maxShields (-> ship
+                       :systems
+                       :shields
+                       (second)
+                       (calcShieldsMax))
         shipShields (:shields ship)
         threshold (- maxShields SUPERCHARGE_THRESHOLD)] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
@@ -365,7 +377,10 @@
 (defn enemyChargeShields
   [cofx [_ diceRoll]]
   (devLog "enemy charging shields")
-  {:db (assoc (:db cofx) :enemyShip (-> cofx :db :enemyShip (chargeShields diceRoll)))
+  {:db (assoc (:db cofx) :enemyShip (-> cofx
+                                        :db
+                                        :enemyShip
+                                        (chargeShields diceRoll)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -386,7 +401,7 @@
                   enemySystemsDamaged?
                   playerSystemsActive?))
            (remove false?)
-           first)
+           (first))
       REPAIR_DEFAULT))
 
 ;updates the default action with current values to replace placeholders
@@ -441,7 +456,7 @@
   [db [action score function]]
   [action (-> db
               (function action)
-              (:db)
+              :db
               (calcOutcomeScore)) function])
 
 ;takes the list of outcomes, generates and checks their scores against each other,
@@ -499,7 +514,7 @@
                          :db
                          :enemyShip
                          (shipReset HP_GAIN)
-                         randShipColour)]
+                         (randShipColour))]
    {:db (assoc (:db cofx)
                :playerShip newPlayerShip
                :enemyShip newEnemyShip
@@ -653,9 +668,9 @@
                     damage
                     " damage")
         [newDefender newAttacker] (-> [defender attacker system damage firingType]
-                                      newShieldsAndAmmo
-                                      newSystemHP
-                                      newHP)
+                                      (newShieldsAndAmmo)
+                                      (newSystemHP)
+                                      (newHP))
         [newStatNames statChanges] (if (= shipType :playerShip)
                                      [[:damageTaken] [damage]]
                                      (if (= firingType :missiles)
@@ -713,8 +728,8 @@
   (devLog "repairing ship")
   (let [ship (-> cofx :db shipType)
         [_ repairedShip] (-> [system ship]
-                             restoreHP
-                             restoreSystem)]
+                             (restoreHP)
+                             (restoreSystem))]
     {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
 
