@@ -190,32 +190,38 @@
   [[_ systemRank]]
   [(inc systemRank) systemRank])
 
+(defn fullSystemsReset
+  "resets all of the systems, returns a new systems map"
+  [oldSystemsMap]
+  (zipmap (keys oldSystemsMap) (->> oldSystemsMap vals (map systemReset))))
+
 (defn shipReset
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
   [ship HPgain]
-  (let [systemNames (keys (:systems ship))
-        oldSystemStats (vals (:systems ship))
-        newSystemStats (map systemReset oldSystemStats)
-        newSystems (zipmap systemNames newSystemStats)
+  (let [newSystems (-> ship :systems fullSystemsReset)
         newMaxHP (+ (:maxHP ship) HPgain)
         newShields (-> newSystems :shields second calcShieldsMax)]
     (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
 
 ;prompts player for playerName value
+(defn namePrompt
+  "prompts user for a name, returns nil if none is given or prompt is canceled"
+  []
+  (let [playerName (js/prompt "Enter your name:")]
+    (if (and (not= playerName "") (not= playerName nil))
+      playerName)))
+
 (rf/reg-event-fx
   ::gameStart
   (fn [cofx effects]
     (devLog "start of game")
     (rf/dispatch [::changeScreen :battle-screen])
     {:db (assoc (:db cofx) :gameOver? false
-                           :playerName (if-let [existingName (:playerName (:db cofx))]
-                                         existingName
-                                         (if-let [playerName (js/prompt "Enter your name:")]
-                                           (if (= playerName "")
-                                             "Player"
-                                             playerName)
-                                           "Player"))
-                           :startTime (or (-> cofx :db :startTime) (getCurrentTime)))
+                           :playerName (or (-> cofx :db :playerName)
+                                           (namePrompt)
+                                           "Player")
+                           :startTime (or (-> cofx :db :startTime)
+                                          (getCurrentTime)))
      :dispatch [:reset-db]}))
 
 ;sends an alert and disables main view
