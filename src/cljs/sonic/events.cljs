@@ -683,39 +683,27 @@
 
 (defn calcRepairStrength
   [repairRank diceRoll]
-  (-> repairRank
-      (* diceRoll)
-      (* REPAIR_STRENGTH_MULTIPLIER)))
+  (* repairRank diceRoll REPAIR_STRENGTH_MULTIPLIER))
 
 (defn createRepairedSystem
   [systemRank]
-  [(+ systemRank 1) systemRank])
+  [(inc systemRank) systemRank])
 
 (defn restoreHP
   [[system ship]]
-  (let [repairRank (-> ship
-                       (:systems)
-                       (:repairBay)
-                       (get 1))
-        maxHP (:maxHP ship)
+  (let [{{[_ repairRank] :repairBay} :systems :keys [maxHP HP]} ship
         repairStrength (calcRepairStrength repairRank (diceRoll))
-        currentHP (:HP ship)
-        newHP (if (>= (+ currentHP repairStrength) maxHP)
+        newHP (if (>= (+ HP repairStrength) maxHP)
                 maxHP
-                (+ currentHP repairStrength))
+                (+ HP repairStrength))
         newShip (assoc ship :HP newHP)]
     [system newShip]))
 
 (defn restoreSystem
-  [[system ship]]
-  (let [systemRank (-> ship
-                       (:systems)
-                       (system)
-                       (get 1))
-        newSystem (createRepairedSystem systemRank)
-        newSystemsMap (assoc (:systems ship) system newSystem)
-        newShip (assoc ship :systems newSystemsMap)]
-    [system newShip]))
+  [[systemType ship]]
+  (let [[_ systemRank] (-> ship :systems systemType)
+        newSystem (createRepairedSystem systemRank)]
+    [systemType (assoc-in ship [:systems systemType] newSystem)]))
 
 (defn repairShip
   [cofx [_ system shipType]]
@@ -723,11 +711,10 @@
     (do (rf/dispatch [::toggleVal :repairing?])
         (rf/dispatch [:updateStats [:timesRepaired] [1]])))
   (devLog "repairing ship")
-  (let [ship (shipType (:db cofx))
-        repairedShip (-> [system ship]
-                         (restoreHP)
-                         (restoreSystem)
-                         (get 1))]
+  (let [ship (-> cofx :db shipType)
+        [_ repairedShip] (-> [system ship]
+                             restoreHP
+                             restoreSystem)]
     {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
 
