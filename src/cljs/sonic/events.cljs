@@ -366,8 +366,8 @@
 (defn playerSystemsActive?
   [systemType]
   (let [ship @(rf/subscribe [:playerShip])
-        system (systemType (:systems ship))]
-    (if (> (get system 0) 0)
+        [systemHP] (-> ship :systems systemType)]
+    (if (pos? systemHP)
       systemType
       false)))
 
@@ -386,7 +386,7 @@
 (defn enemyChargeShields
   [cofx [_ diceRoll]]
   (devLog "enemy charging shields")
-  {:db (assoc (:db cofx) :enemyShip (-> cofx :db :enemyShip chargeShields) diceRoll)
+  {:db (assoc (:db cofx) :enemyShip (-> cofx :db :enemyShip (chargeShields diceRoll)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -452,7 +452,7 @@
 (defn calcOutcomeScore
   [db]
   (let [{:keys [playerShip enemyShip]} db
-        score (- (calcShipStrength playerShip) (calcShipStrength enemyShip))]
+        score (- (calcShipStrength enemyShip) (calcShipStrength playerShip))]
     (devLog (str "outcome score: " score))
     score))
 
@@ -608,7 +608,7 @@
 
 (defn toggleVal
  [db [_ value]]
- (assoc db value (not value)))
+ (assoc db value (not (value db))))
 
 (rf/reg-event-db
   ::toggleVal
