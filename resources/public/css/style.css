@@ -10,8 +10,18 @@
 }
 
 .pregameButton {
-    padding: 15px 15px;
-    font-size: 35px;
+    padding: 10px 15px;
+    font-size: 25px;
+}
+
+.options {
+    display: flex;
+    width: 1075px;
+    height: 900px;
+    position: absolute;
+    background-color: olive;
+    align-items: center;
+    justify-content: space-around;
 }
 
 .flexContainer {
