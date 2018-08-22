@@ -260,7 +260,7 @@
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
-  (let [maxShields (calcShieldsMax (get-in ship [:systems :shields 1]))
+  (let [maxShields (-> ship :systems :shields second calcShieldsMax)
         shipShields (:shields ship)
         threshold (- maxShields SUPERCHARGE_THRESHOLD)] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
@@ -307,8 +307,7 @@
 
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
-  (let [shieldsSystemRank (-> ship :systems :shields second)
-        shieldsCurrentValue (:shields ship)
+  (let [{{[_ shieldsSystemRank] :shields} :systems shieldsCurrentValue :shields} ship
         shieldsMax (calcShieldsMax shieldsSystemRank)
         chargedShields (+ shieldsCurrentValue (calcShieldsStrength shieldsSystemRank amount))
         newShields (if (<= chargedShields shieldsMax)
