@@ -201,7 +201,11 @@
   (let [newSystems (-> ship :systems fullSystemsReset)
         newMaxHP (+ (:maxHP ship) HPgain)
         newShields (-> newSystems :shields second calcShieldsMax)]
-    (assoc ship :systems newSystems :maxHP newMaxHP :HP newMaxHP :shields newShields :ammo 2)))
+    (assoc ship :systems newSystems
+                :maxHP newMaxHP
+                :HP newMaxHP
+                :shields newShields
+                :ammo 2)))
 
 ;prompts player for playerName value
 (defn namePrompt
@@ -234,14 +238,14 @@
                       "Enemy")
           gameOverMessage (str "Game Over! " loserName "'s ship was destroyed!")
           fleeMessage (str loserName " fled the battle!")
-          battleScore (:battleScore db)]
+          {:keys [battleScore startTime]} db]
       (do (js/alert (if gameOver?
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
           (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] (if (= loser :playerShip)
-                                                                                               [0 0 0 (calcTimeDiff (getCurrentTime) (:startTime db))]
-                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) (:startTime db))])])
+                                                                                               [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
+                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
@@ -256,11 +260,7 @@
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
-  (let [maxShields (-> ship
-                     (:systems)
-                     (:shields)
-                     (get 1)
-                     (calcShieldsMax))
+  (let [maxShields (calcShieldsMax (get-in ship [:systems :shields 1]))
         shipShields (:shields ship)
         threshold (- maxShields SUPERCHARGE_THRESHOLD)] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
@@ -307,19 +307,16 @@
 
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
-  (let [shieldsSystem (-> ship
-                        (:systems)
-                        (:shields))
+  (let [shieldsSystemRank (-> ship :systems :shields second)
         shieldsCurrentValue (:shields ship)
-        shieldsSystemRank (get shieldsSystem 1)
         shieldsMax (calcShieldsMax shieldsSystemRank)
-        shieldsStrength (calcShieldsStrength shieldsSystemRank amount)
-        newShields (+ shieldsCurrentValue shieldsStrength)]
+        chargedShields (+ shieldsCurrentValue (calcShieldsStrength shieldsSystemRank amount))
+        newShields (if (<= chargedShields shieldsMax)
+                     chargedShields
+                     shieldsMax)]
     (if @(rf/subscribe [:devMode])
       (devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
-    (assoc ship :shields (if (> newShields shieldsMax)
-                           shieldsMax
-                           newShields))))
+    (assoc ship :shields newShields)))
 
 ;toggles firing mode for player to select target
 (rf/reg-event-fx
