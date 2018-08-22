@@ -386,7 +386,7 @@
 (defn enemyChargeShields
   [cofx [_ diceRoll]]
   (devLog "enemy charging shields")
-  {:db (assoc (:db cofx) :enemyShip (chargeShields (:enemyShip (:db cofx)) diceRoll))
+  {:db (assoc (:db cofx) :enemyShip (-> cofx :db :enemyShip chargeShields) diceRoll)
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -408,7 +408,7 @@
                   playerSystemsActive?))
            (remove false?)
            first)
-    REPAIR_DEFAULT))
+      REPAIR_DEFAULT))
 
 ;updates the default action with current values to replace placeholders
 (defn updateAction
@@ -452,8 +452,7 @@
 (defn calcOutcomeScore
   [db]
   (let [{:keys [playerShip enemyShip]} db
-        score (-> (calcShipStrength enemyShip)
-                  (- (calcShipStrength playerShip)))]
+        score (- (calcShipStrength playerShip) (calcShipStrength enemyShip))]
     (devLog (str "outcome score: " score))
     score))
 
@@ -577,10 +576,9 @@
 ;refills ammo for player and enemy
 (defn playerPhase
   [cofx effects]
-  (let [newTurn (inc (:turn (:db cofx)))
-        playerShip (:playerShip (:db cofx))
+  (let [{:keys [playerShip enemyShip turn]} (:db cofx)
+        newTurn (inc turn)
         newPlayerShip (refillAmmo playerShip newTurn)
-        enemyShip (:enemyShip (:db cofx))
         newEnemyShip (refillAmmo enemyShip newTurn)]
     (devLog "start of player phase")
     {:db (assoc (:db cofx) :turn newTurn :playerShip newPlayerShip :enemyShip newEnemyShip)
@@ -610,9 +608,7 @@
 
 (defn toggleVal
  [db [_ value]]
- (assoc db value (if (value db)
-                   false
-                   true)))
+ (assoc db value (not value)))
 
 (rf/reg-event-db
   ::toggleVal
@@ -624,8 +620,7 @@
 (defn consumeAmmo
   "reduces ship's ammo by 1; returns new ship"
   [ship]
-  (let [oldAmmo (:ammo ship)]
-    (assoc ship :ammo (- oldAmmo 1))))
+  (assoc ship :ammo (dec (:ammo ship))))
 
 (defn newShieldsAndAmmo
   "calculates new shields for defender if laser type attack,
@@ -672,7 +667,7 @@
   (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
-        {{defender shipType {{[_ attackRank] firingType} :systems :as attacker} attackerType} :db} cofx
+        {defender shipType {{[_ attackRank] firingType} :systems :as attacker} attackerType} (:db cofx)
         damage (calcAttackDamage attackRank firingType diceRoll (shieldsSupercharged? attacker))
         devMsg (str (if (= shipType :playerShip) "player " "enemy ")
                     "took "
