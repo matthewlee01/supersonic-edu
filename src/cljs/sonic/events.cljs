@@ -287,8 +287,7 @@
       (* SHIELD_RECHARGE_MULTIPLIER)))
 
 (defn calcAttackDamage
-  "calculates the damage of an attack given the rank of the attacking system,
-  the type of the attack, whether or not the attacker is supercharged, and a base multiplier"
+  "calculates the damage of an attack given the attacking ship and the type of attack"
   [attacker attackType amount]
   (let [{[_ attackRank] attackType} (:systems attacker)]
     (* attackRank amount (if (= attackType :lasers)
