@@ -143,25 +143,6 @@
   ::changeScreen
   changeScreen)
 
-;increases the rank of a system and returns a
-;new sysvec with rank and corresponding HP (rank +1)
-(defn incSystemRank
-  [[_ systemRank]]
-  (let [newRank (inc systemRank)]
-    [(inc newRank) newRank]))
-
-;takes a target system and target ship, update target ship with
-;the target system 1 rank higher.
-(defn upgradeSystem
-  [cofx [_ systemType shipType]]
-  (devLog (str "upgrading " shipType " " systemType))
-  (let [system (-> cofx :db shipType :systems systemType)]
-    {:db (assoc-in (:db cofx) [shipType :systems systemType] (incSystemRank system))
-     :dispatch [::toggleVal :upgradingSystems?]}))
-
-(rf/reg-event-fx
-  :upgradeSystem
-  upgradeSystem)
 
 ;calculates the maximum shields the ship can have
 (defn calcShieldsMax
@@ -297,7 +278,8 @@
                                                         1))))
 
 ;returns ship with increased shields
-(defn chargeShields [ship amount]
+(defn chargeShields
+  [ship amount]
   (let [{{[_ shieldsSystemRank] :shields} :systems shieldsCurrentValue :shields} ship
         shieldsMax (calcShieldsMax shieldsSystemRank)
         chargedShields (+ shieldsCurrentValue (calcShieldsStrength shieldsSystemRank amount))
@@ -307,6 +289,28 @@
     (if @(rf/subscribe [:devMode])
       (devLog (str "shields boosted by " (- newShields shieldsCurrentValue))))
     (assoc ship :shields newShields)))
+
+;increases the rank of a system and returns a
+;new sysvec with rank and corresponding HP (rank +1)
+(defn incSystemRank
+  [[_ systemRank]]
+  (let [newRank (inc systemRank)]
+    [(inc newRank) newRank]))
+
+;takes a target system and target ship, update target ship with
+;the target system 1 rank higher. Charges shields if necessary
+(defn upgradeSystem
+  [cofx [_ systemType shipType]]
+  (devLog (str "upgrading " shipType " " systemType))
+  (let [newShip (update-in (-> cofx :db shipType) [:systems systemType] incSystemRank)]
+    {:db (assoc (:db cofx) shipType (if (= systemType :shields)
+                                      (chargeShields newShip SHIELD_UPGRADE_MULIPLIER)
+                                      newShip))
+     :dispatch [::toggleVal :upgradingSystems?]}))
+
+(rf/reg-event-fx
+  :upgradeSystem
+  upgradeSystem)
 
 ;toggles firing mode for player to select target
 (rf/reg-event-fx
