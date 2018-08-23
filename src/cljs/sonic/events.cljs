@@ -92,6 +92,20 @@
   (if @(rf/subscribe [:devMode])
     (println string)))
 
+;prompts the player with a question and returns true or false
+(defn passedQuestion?
+  [[query answer]]
+  (= (js/prompt query) answer))
+
+;asks the player a question and dispatches the requested event if they answer correctly
+(rf/reg-event-fx
+  ::questionPrompt
+  (fn [cofx [_ question requestedEvent]]
+    {:db (:db cofx)
+     :dispatch [(if (passedQuestion? question)
+                   requestedEvent
+                   :changePhase)]})) 
+
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
   [event]
