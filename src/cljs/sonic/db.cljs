@@ -28,7 +28,6 @@
    :playerName nil
    :gameOver? false
    :playerDefeated? false
-   :dodgeChance? false
    :phase 0
    :history []
    :devMode true
@@ -36,6 +35,7 @@
    :upgradingShip? false
    :battleScore 0
    :activeScreen :pregame-screen
+   :gameOptions {:dodgeOn? false}
    :gameStats {:totalScore 0
                :damageDealt 0
                :damageTaken 0

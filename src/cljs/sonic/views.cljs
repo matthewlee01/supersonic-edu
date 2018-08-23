@@ -171,8 +171,8 @@
   []
   [:div.options {:style {:z-index (getZ :options-screen)}}
    "there are currently no options to change"
-   [:button {:on-click (fn [] (rf/dispatch [::events/toggleVal :dodgeChance?]))}
-    (str "dodge:" @(rf/subscribe [:dodgeChance?]))]
+   [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :dodgeOn?]))}
+    (str "dodge:" (events/getOptionVal :dodgeOn?))]
    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
