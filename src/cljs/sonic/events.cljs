@@ -71,6 +71,8 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
+(def DODGE_DENOM 20) ;one engine level increases dodge chance by 1/DODGE_DENOM
+
 (def ENEMY_COLOUR_LIST ["red"
                         "orange"
                         "green"
@@ -104,7 +106,7 @@
     {:db (:db cofx)
      :dispatch [(if (passedQuestion? question)
                    requestedEvent
-                   :changePhase)]})) 
+                   :changePhase)]}))
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
@@ -176,9 +178,10 @@
 ;initializes default db
 (rf/reg-event-db
   ::initialize-db
-  (fn [_ _]
-    (devLog "initializing")
-    db/default-db))
+  (fn [deebee _]
+    (let [dodgeChance? (:dodgeChance? deebee)]
+     (devLog "initializing")
+     (assoc db/default-db :dodgeChance? dodgeChance?))))
 
 (defn systemReset
   "resets a system's HP based on its rank"
@@ -281,15 +284,26 @@
       (* shieldsSystemRank)
       (* SHIELD_RECHARGE_MULTIPLIER)))
 
+(defn attackDodged?
+  [ship]
+  (let [[_ enginesRank] (-> ship :systems :engines)]
+    (if (and @(rf/subscribe [:dodgeChance?])
+             (< (rand-int DODGE_DENOM) enginesRank))
+      true
+      false)))
+
 (defn calcAttackDamage
   "calculates the damage of an attack given the attacking ship and the type of attack"
-  [attacker attackType amount]
+  [defender attacker attackType amount simulation?]
   (let [{[_ attackRank] attackType} (:systems attacker)]
     (* attackRank amount (if (= attackType :lasers)
                            LASER_DAMAGE_MULIPLIER
                            MISSILE_DAMAGE_MULTIPLIER) (if (shieldsSupercharged? attacker)
                                                         SUPERCHARGED_MULTIPLIER
-                                                        1))))
+                                                        1) (if (and (false? simulation?)
+                                                                    (attackDodged? defender))
+                                                              (do (devLog "dodged!") 0)
+                                                              1))))
 
 ;returns ship with increased shields
 (defn chargeShields
@@ -684,7 +698,7 @@
                        :enemyShip
                        :playerShip)
         {defender shipType attacker attackerType} (:db cofx)
-        damage (calcAttackDamage attacker firingType diceRoll)
+        damage (calcAttackDamage defender attacker firingType diceRoll simulation?)
         devMsg (str (if (= shipType :playerShip) "player " "enemy ")
                     "took "
                     damage
