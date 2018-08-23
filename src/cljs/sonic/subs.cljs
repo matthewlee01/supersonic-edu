@@ -73,10 +73,9 @@
     (:upgradingShip? db)))
 
 (rf/reg-sub
-  :dodgeChance?
+  :gameOptions
   (fn [db _]
-    (or (:dodgeChance? db)
-        false)))
+    (:gameOptions db)))
 
 (rf/reg-sub
   :battleScore

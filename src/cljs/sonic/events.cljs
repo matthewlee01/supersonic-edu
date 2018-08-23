@@ -71,7 +71,7 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
-(def DODGE_DENOM 20) ;one engine level increases dodge chance by 1/DODGE_DENOM
+(def DODGE_DENOM 2) ;one engine level increases dodge chance by 1/DODGE_DENOM
 
 (def ENEMY_COLOUR_LIST ["red"
                         "orange"
@@ -133,6 +133,11 @@
       true
       false)))
 
+(defn getOptionVal
+  "gets value from :gameOptions"
+  [optionName]
+  (optionName @(rf/subscribe [:gameOptions])))
+
 ;dispatches an upgradeSystem event when the button is pressed
 ;used in .views file
 (defn upgradeSystemsDispatch
@@ -178,10 +183,11 @@
 ;initializes default db
 (rf/reg-event-db
   ::initialize-db
-  (fn [deebee _]
-    (let [dodgeChance? (:dodgeChance? deebee)]
-     (devLog "initializing")
-     (assoc db/default-db :dodgeChance? dodgeChance?))))
+  (fn [db _]
+    (devLog (str "initializing"))
+    (if-let [gameOptions (:gameOptions db)]
+     (assoc db/default-db :gameOptions gameOptions)
+     db/default-db)))
 
 (defn systemReset
   "resets a system's HP based on its rank"
@@ -285,9 +291,10 @@
       (* SHIELD_RECHARGE_MULTIPLIER)))
 
 (defn attackDodged?
+  "given a ship, calculates whether or not it dodges an attack based on its engines rank"
   [ship]
   (let [[_ enginesRank] (-> ship :systems :engines)]
-    (if (and @(rf/subscribe [:dodgeChance?])
+    (if (and (getOptionVal :dodgeOn?)
              (< (rand-int DODGE_DENOM) enginesRank))
       true
       false)))
@@ -634,11 +641,19 @@
 
 (defn toggleVal
  [db [_ value]]
- (assoc db value (not (value db))))
+ (update db value not))
+
+(defn toggleOptionVal
+ [db [_ option]]
+ (update-in db [:gameOptions option] not))
 
 (rf/reg-event-db
   ::toggleVal
   toggleVal)
+
+(rf/reg-event-db
+  ::toggleOptionVal
+  toggleOptionVal)
 
 ;calculates new HP after taking damage,
 ;triggers game over if necessary
