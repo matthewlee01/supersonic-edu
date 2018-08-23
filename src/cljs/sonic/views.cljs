@@ -23,18 +23,24 @@
 
 (defn getStatText
   "generates the text for a stat"
-  ([label statName] (str label ": " (statName @(rf/subscribe [:gameStats]))))
-  ([label statName endLabel] (str label ": " (statName @(rf/subscribe [:gameStats])) endLabel)))
+  [[label statName & endLabel]]
+  (str label
+       ": "
+       (statName @(rf/subscribe [:gameStats]))
+       (apply str endLabel)))
 
 (defn statElement
   "generates the element for a stat"
   [statInfoVector]
-  [:p.statsText (apply getStatText statInfoVector)])
+  [:p.statsText (getStatText statInfoVector)])
 
 (defn statsBlock
   "strings multiple stat elements together"
   [& statInfoVectors]
-  (vec (conj (map statElement statInfoVectors) :div)))
+  (->> statInfoVectors
+       (map statElement)
+       (cons :div)
+       (vec)))
 
 (defn getPhaseName
   [phase]
