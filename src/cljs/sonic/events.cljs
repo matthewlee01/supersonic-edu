@@ -558,7 +558,10 @@
   (if (false? (:gameOver? (:db cofx)))
     (do (devLog "changing phase")
         (if (zero? (:phase (:db cofx)))
-          {:db (assoc (:db cofx) :phase 1)
+          {:db (assoc (:db cofx) 
+                      :phase 1
+                      :firing? false
+                      :repairing? false)
            :dispatch [:enemyPhase]}
           {:db (assoc (:db cofx) :phase 0)
            :dispatch [:playerPhase]}))))
@@ -682,8 +685,6 @@
 ;(and systems if necessary)
 (defn damageShip
   [cofx [_ system shipType firingType diceRoll simulation?]]
-  (if (= shipType :enemyShip)
-    (rf/dispatch [::toggleVal :firing?]))
   (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
@@ -750,8 +751,7 @@
 (defn repairShip
   [cofx [_ system shipType]]
   (if (= shipType :playerShip)
-    (do (rf/dispatch [::toggleVal :repairing?])
-        (rf/dispatch [:updateStats [:timesRepaired] [1]])))
+    (rf/dispatch [:updateStats [:timesRepaired] [1]]))
   (devLog "repairing ship")
   (let [ship (-> cofx :db shipType)
         [_ repairedShip] (-> [system ship]
@@ -759,9 +759,6 @@
                              (restoreSystem))]
     {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
-
-
-
 
 (def ENEMY_FUNCTION_LIST
  [damageShip

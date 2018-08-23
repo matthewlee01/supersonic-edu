@@ -130,7 +130,14 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click (events/damageDispatch system shipType @(rf/subscribe [:firingType]))
+         {:on-click (events/questionDispatch 
+                      SAMPLE_QUESTION
+                      [:damageShip 
+                       system 
+                       shipType 
+                       @(rf/subscribe [:firingType]) 
+                       (events/diceRoll) 
+                       false])
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
@@ -179,7 +186,6 @@
    "there are currently no options to change"
    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
-
 
 (defn management-screen
   []
