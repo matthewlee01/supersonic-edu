@@ -71,7 +71,7 @@
 
 (def REPAIR_STRENGTH_MULTIPLIER 4) ;multiplier for repairing ship
 
-(def DODGE_DENOM 2) ;one engine level increases dodge chance by 1/DODGE_DENOM
+(def DODGE_DENOM 20) ;one engine level increases dodge chance by 1/DODGE_DENOM
 
 (def ENEMY_COLOUR_LIST ["red"
                         "orange"
