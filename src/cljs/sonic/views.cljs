@@ -161,9 +161,19 @@
                                        (rf/dispatch [::events/gameStart]))}
     "Game Start"]
    [:a.helpButton {:href "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                      :target "_blank"
-                      :on-click (fn [] (js/alert "lol ur bad"))}
-    "Help"]])
+                   :target "_blank"
+                   :on-click (fn [] (js/alert "lol ur bad"))}
+    "Help"]
+   [:button.pregameButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :options-screen]))}
+    "Options"]])
+
+(defn options-screen
+  []
+  [:div.options {:style {:z-index (getZ :options-screen)}}
+   "there are currently no options to change"
+   [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
+    "Return to Menu"]])
+
 
 (defn management-screen
   []
@@ -332,6 +342,7 @@
   []
   [:div.mainPanel
    (pregame-screen)
+   (options-screen)
    (management-screen)
    (battle-screen)
    (stats-screen)])
