@@ -102,9 +102,13 @@
   ::questionPrompt
   (fn [cofx [_ question requestedEvent]]
     {:db (:db cofx)
-     :dispatch [(if (passedQuestion? question)
-                   requestedEvent
-                   :changePhase)]})) 
+     :dispatch (if (passedQuestion? question)
+                  requestedEvent
+                  [:changePhase])})) 
+
+(defn questionDispatch
+  [question event]
+  (fn [] (rf/dispatch [::questionPrompt question event])))
 
 ;dispatches an action based on which action button was pressed
 (defn actionDispatch
