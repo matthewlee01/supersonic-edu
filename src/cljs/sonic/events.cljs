@@ -714,6 +714,8 @@
 ;(and systems if necessary)
 (defn damageShip
   [cofx [_ system shipType firingType diceRoll simulation?]]
+  (if (= shipType :enemyShip)
+    (rf/dispatch [::toggleVal :firing?]))
   (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
@@ -780,7 +782,8 @@
 (defn repairShip
   [cofx [_ system shipType]]
   (if (= shipType :playerShip)
-    (rf/dispatch [:updateStats [:timesRepaired] [1]]))
+    (do (rf/dispatch [::toggleVal :repairing?])
+        (rf/dispatch [:updateStats [:timesRepaired] [1]])))
   (devLog "repairing ship")
   (let [ship (-> cofx :db shipType)
         [_ repairedShip] (-> [system ship]
