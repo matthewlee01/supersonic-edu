@@ -91,7 +91,7 @@
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
                    :background-color colour}}]]))
-  
+
 (defn systemButton
   [system shipType text]
   (let [firing? @(rf/subscribe [:firing?])
@@ -160,7 +160,9 @@
                                        (rf/dispatch [::events/initialize-db])
                                        (rf/dispatch [::events/gameStart]))}
     "Game Start"]
-   [:button.pregameButton {:on-click (fn [] (js/alert "lol ur bad"))}
+   [:a.helpButton {:href "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                   :target "_blank"
+                   :on-click (fn [] (js/alert "lol ur bad"))}
     "Help"]
    [:button.pregameButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :options-screen]))}
     "Options"]])
@@ -172,6 +174,7 @@
    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
+
 (defn management-screen
   []
   (let [playerShip @(rf/subscribe [:playerShip])
@@ -181,15 +184,15 @@
         [:div.shipDisplay
          [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
           [:div.vitalityStatusBars
-            (statusBar 
-              (:shields playerShip) 
-              (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) 
+            (statusBar
+              (:shields playerShip)
+              (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
               "teal"
               VITALITY_BAR_WIDTH
               VITALITY_BAR_HEIGHT)
-            (statusBar 
-              (:HP playerShip) 
-              (:maxHP playerShip) 
+            (statusBar
+              (:HP playerShip)
+              (:maxHP playerShip)
               "green"
               VITALITY_BAR_WIDTH
               VITALITY_BAR_HEIGHT)]
@@ -286,15 +289,15 @@
        [:div.ships
         [:div.playerShip {:style {:background-color (getShipColour :playerShip)}}
          [:div.vitalityStatusBars
-          (statusBar 
-            (:shields playerShip) 
-            (events/calcShieldsMax (get-in playerShip [:systems :shields 1])) 
+          (statusBar
+            (:shields playerShip)
+            (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
             "teal"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)
-          (statusBar 
-            (:HP playerShip) 
-            (:maxHP playerShip) 
+          (statusBar
+            (:HP playerShip)
+            (:maxHP playerShip)
             "green"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)]
@@ -308,17 +311,17 @@
          [systemButton :engines :playerShip "Engines"]]
         [:div.enemyShip {:style {:background-color (getShipColour :enemyShip)}}
          [:div.vitalityStatusBars
-          (statusBar 
-            (:shields enemyShip) 
-            (events/calcShieldsMax (get-in enemyShip [:systems :shields 1])) 
+          (statusBar
+            (:shields enemyShip)
+            (events/calcShieldsMax (get-in enemyShip [:systems :shields 1]))
             "teal"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)
-          (statusBar 
-            (:HP enemyShip) 
-            (:maxHP enemyShip) 
+          (statusBar
+            (:HP enemyShip)
+            (:maxHP enemyShip)
             "green"
-            VITALITY_BAR_WIDTH 
+            VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)]
          [:div.vitalityDisplayArea
           [shipVitalityDisplay (:shields enemyShip) "Shields"]
