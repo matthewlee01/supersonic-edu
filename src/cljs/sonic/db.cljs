@@ -35,7 +35,8 @@
    :upgradingShip? false
    :battleScore 0
    :activeScreen :pregame-screen
-   :gameOptions {:dodgeOn? false}
+   :gameOptions {:dodgeOn? false
+                 :questions? false}
    :gameStats {:totalScore 0
                :damageDealt 0
                :damageTaken 0

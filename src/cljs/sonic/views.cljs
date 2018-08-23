@@ -69,8 +69,9 @@
 (defn actionButton
   [requiredSystem event text]
   (fn []
-    [:button.action {:on-click (if (or (= text "Charge Shields")
-                                       (= text "Flee"))
+    [:button.action {:on-click (if (and (events/getOptionVal :questions?)
+                                        (or (= text "Charge Shields")
+                                            (= text "Flee")))
                                  (events/questionDispatch SAMPLE_QUESTION [event])
                                  (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
@@ -110,6 +111,7 @@
                       (system))
         systemRank (get systemVec 1)
         systemHP (get systemVec 0)
+        questions? (events/getOptionVal :questions?)
         shieldedStatus (if (> (:shields ship) 0)
                          (if (events/shieldsSupercharged? ship)
                            "violet"
@@ -118,7 +120,9 @@
     [:button.system
      (if (= shipType :playerShip)
        (if repairing?
-         {:on-click (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+         {:on-click (if questions?
+                      (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+                      (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
          (if firing?
            {:disabled (or firing?
@@ -130,14 +134,20 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click (events/questionDispatch 
-                      SAMPLE_QUESTION
-                      [:damageShip 
-                       system 
-                       shipType 
-                       @(rf/subscribe [:firingType]) 
-                       (events/diceRoll) 
-                       false])
+         {:on-click 
+          (if questions?
+            (events/questionDispatch 
+              SAMPLE_QUESTION
+              [:damageShip 
+               system 
+               shipType 
+               @(rf/subscribe [:firingType]) 
+               (events/diceRoll) 
+               false])
+            (events/damageDispatch
+              system
+              shipType
+              @(rf/subscribe [:firingType])))
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
@@ -185,7 +195,9 @@
   [:div.options {:style {:z-index (getZ :options-screen)}}
    "there are currently no options to change"
    [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :dodgeOn?]))}
-    (str "dodge:" (events/getOptionVal :dodgeOn?))]
+    (str "dodge: " (events/getOptionVal :dodgeOn?))]
+   [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :questions?]))}
+    (str "questions: " (events/getOptionVal :questions?))]
    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
