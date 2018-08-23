@@ -31,6 +31,7 @@
   :repairing?
   (fn [db _]
     (:repairing? db)))
+
 (rf/reg-sub
   :playerName
   (fn [db _]
@@ -70,6 +71,12 @@
   :upgradingShip?
   (fn [db _]
     (:upgradingShip? db)))
+
+(rf/reg-sub
+  :dodgeChance?
+  (fn [db _]
+    (or (:dodgeChance? db)
+        false)))
 
 (rf/reg-sub
   :battleScore
