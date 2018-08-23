@@ -193,14 +193,22 @@
 (defn fullSystemsReset
   "resets all of the systems, returns a new systems map"
   [oldSystemsMap]
-  (zipmap (keys oldSystemsMap) (->> oldSystemsMap vals (map systemReset))))
+  (zipmap (keys oldSystemsMap)
+          (->> oldSystemsMap
+               (vals)
+               (map systemReset))))
 
 (defn shipReset
   "resets a ship's HP, shields, ammo, systemHP's, and increases maxHP"
   [ship HPgain]
-  (let [newSystems (-> ship :systems fullSystemsReset)
+  (let [newSystems (-> ship
+                       :systems
+                       (fullSystemsReset))
         newMaxHP (+ (:maxHP ship) HPgain)
-        newShields (-> newSystems :shields second calcShieldsMax)]
+        newShields (-> newSystems
+                       :shields
+                       (second)
+                       (calcShieldsMax))]
     (assoc ship :systems newSystems
                 :maxHP newMaxHP
                 :HP newMaxHP
@@ -260,7 +268,11 @@
 (defn shieldsSupercharged?
   "checks if a ship's current shields are above a threshold to activate the supercharged effect (2x damage multiplier)"
   [ship]
-  (let [maxShields (-> ship :systems :shields second calcShieldsMax)
+  (let [maxShields (-> ship
+                       :systems
+                       :shields
+                       (second)
+                       (calcShieldsMax))
         shipShields (:shields ship)
         threshold (- maxShields SUPERCHARGE_THRESHOLD)] ;threshold can be changed in future to balance power of supercharged effect
     (if (>= shipShields threshold)
@@ -275,14 +287,14 @@
       (* SHIELD_RECHARGE_MULTIPLIER)))
 
 (defn calcAttackDamage
-  "calculates the damage of an attack given the rank of the attacking system,
-  the type of the attack, whether or not the attacker is supercharged, and a base multiplier"
-  [attackRank attackType amount supercharged?]
-  (* attackRank amount (if (= attackType :lasers)
-                         LASER_DAMAGE_MULIPLIER
-                         MISSILE_DAMAGE_MULTIPLIER) (if supercharged?
-                                                      SUPERCHARGED_MULTIPLIER
-                                                      1)))
+  "calculates the damage of an attack given the attacking ship and the type of attack"
+  [attacker attackType amount]
+  (let [{[_ attackRank] attackType} (:systems attacker)]
+    (* attackRank amount (if (= attackType :lasers)
+                           LASER_DAMAGE_MULIPLIER
+                           MISSILE_DAMAGE_MULTIPLIER) (if (shieldsSupercharged? attacker)
+                                                        SUPERCHARGED_MULTIPLIER
+                                                        1))))
 
 ;returns ship with increased shields
 (defn chargeShields [ship amount]
@@ -365,7 +377,10 @@
 (defn enemyChargeShields
   [cofx [_ diceRoll]]
   (devLog "enemy charging shields")
-  {:db (assoc (:db cofx) :enemyShip (-> cofx :db :enemyShip (chargeShields diceRoll)))
+  {:db (assoc (:db cofx) :enemyShip (-> cofx
+                                        :db
+                                        :enemyShip
+                                        (chargeShields diceRoll)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -386,7 +401,7 @@
                   enemySystemsDamaged?
                   playerSystemsActive?))
            (remove false?)
-           first)
+           (first))
       REPAIR_DEFAULT))
 
 ;updates the default action with current values to replace placeholders
@@ -441,7 +456,7 @@
   [db [action score function]]
   [action (-> db
               (function action)
-              (:db)
+              :db
               (calcOutcomeScore)) function])
 
 ;takes the list of outcomes, generates and checks their scores against each other,
@@ -499,7 +514,7 @@
                          :db
                          :enemyShip
                          (shipReset HP_GAIN)
-                         randShipColour)]
+                         (randShipColour))]
    {:db (assoc (:db cofx)
                :playerShip newPlayerShip
                :enemyShip newEnemyShip
@@ -631,11 +646,15 @@
   dispatches :gameEnd if HP <= 0"
   [[defender attacker damage]]
   (let [newDefenderHP (- (:HP defender) damage)]
-    (if (false? (pos? newDefenderHP))
-      (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
-                                :playerShip
-                                :enemyShip) true]))
     [(assoc defender :HP newDefenderHP) attacker]))
+
+(defn applyDamage
+  [attackInfoVec]
+  (-> attackInfoVec
+      (newShieldsAndAmmo)
+      (newSystemHP)
+      (newHP)))
+
 
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
@@ -646,16 +665,13 @@
   (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
-        {defender shipType {{[_ attackRank] firingType} :systems :as attacker} attackerType} (:db cofx)
-        damage (calcAttackDamage attackRank firingType diceRoll (shieldsSupercharged? attacker))
+        {defender shipType attacker attackerType} (:db cofx)
+        damage (calcAttackDamage attacker firingType diceRoll)
         devMsg (str (if (= shipType :playerShip) "player " "enemy ")
                     "took "
                     damage
                     " damage")
-        [newDefender newAttacker] (-> [defender attacker system damage firingType]
-                                      newShieldsAndAmmo
-                                      newSystemHP
-                                      newHP)
+        [newDefender newAttacker] (applyDamage [defender attacker system damage firingType])
         [newStatNames statChanges] (if (= shipType :playerShip)
                                      [[:damageTaken] [damage]]
                                      (if (= firingType :missiles)
@@ -663,6 +679,10 @@
                                        [[:damageDealt :lasersFired] [damage 1]]))]
     (devLog devMsg)
     (if (false? simulation?) (rf/dispatch [:updateStats newStatNames statChanges]))
+    (if (and (false? (pos? (:HP newDefender)))
+             (false? simulation?)) (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
+                                                           :playerShip
+                                                           :enemyShip) true]))
     {:db (assoc (:db cofx)
             shipType newDefender
             attackerType newAttacker)
@@ -683,39 +703,27 @@
 
 (defn calcRepairStrength
   [repairRank diceRoll]
-  (-> repairRank
-      (* diceRoll)
-      (* REPAIR_STRENGTH_MULTIPLIER)))
+  (* repairRank diceRoll REPAIR_STRENGTH_MULTIPLIER))
 
 (defn createRepairedSystem
   [systemRank]
-  [(+ systemRank 1) systemRank])
+  [(inc systemRank) systemRank])
 
 (defn restoreHP
   [[system ship]]
-  (let [repairRank (-> ship
-                       (:systems)
-                       (:repairBay)
-                       (get 1))
-        maxHP (:maxHP ship)
+  (let [{{[_ repairRank] :repairBay} :systems :keys [maxHP HP]} ship
         repairStrength (calcRepairStrength repairRank (diceRoll))
-        currentHP (:HP ship)
-        newHP (if (>= (+ currentHP repairStrength) maxHP)
+        newHP (if (>= (+ HP repairStrength) maxHP)
                 maxHP
-                (+ currentHP repairStrength))
+                (+ HP repairStrength))
         newShip (assoc ship :HP newHP)]
     [system newShip]))
 
 (defn restoreSystem
-  [[system ship]]
-  (let [systemRank (-> ship
-                       (:systems)
-                       (system)
-                       (get 1))
-        newSystem (createRepairedSystem systemRank)
-        newSystemsMap (assoc (:systems ship) system newSystem)
-        newShip (assoc ship :systems newSystemsMap)]
-    [system newShip]))
+  [[systemType ship]]
+  (let [[_ systemRank] (-> ship :systems systemType)
+        newSystem (createRepairedSystem systemRank)]
+    [systemType (assoc-in ship [:systems systemType] newSystem)]))
 
 (defn repairShip
   [cofx [_ system shipType]]
@@ -723,13 +731,15 @@
     (do (rf/dispatch [::toggleVal :repairing?])
         (rf/dispatch [:updateStats [:timesRepaired] [1]])))
   (devLog "repairing ship")
-  (let [ship (shipType (:db cofx))
-        repairedShip (-> [system ship]
-                         (restoreHP)
-                         (restoreSystem)
-                         (get 1))]
+  (let [ship (-> cofx :db shipType)
+        [_ repairedShip] (-> [system ship]
+                             (restoreHP)
+                             (restoreSystem))]
     {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
+
+
+
 
 (def ENEMY_FUNCTION_LIST
  [damageShip
@@ -753,36 +763,36 @@
   repairShip)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;obsolete functions
-(defn setSystemRank
-  [db [_ ship system systemVec]]
-  (let [targetShip (ship db)
-        shipSystems (:systems targetShip)
-        newSystemsMap (assoc shipSystems system systemVec)
-        newShip (assoc targetShip :systems newSystemsMap)]
-    (assoc db ship newShip)))
-
-(rf/reg-event-db
-  ::setSystemRank
-  setSystemRank)
+;(defn setSystemRank
+;  [db [_ ship system systemVec]]
+;  (let [targetShip (ship db)
+;        shipSystems (:systems targetShip)
+;        newSystemsMap (assoc shipSystems system systemVec)
+;        newShip (assoc targetShip :systems newSystemsMap)]
+;    (assoc db ship newShip)))
+;
+;(rf/reg-event-db
+;  ;::setSystemRank
+;  setSystemRank)
 
 ;determines whether or not an attack of the specified type
 ;can potentially kill the target
 ;takes in attacker, defender, and firingType (:lasers or :missiles)
 ;returns true if target can be killed
-(defn killRange?
-  [attacker defender firingType]
-  (let [vitality (if (= firingType :lasers)
-                   (+ (:HP defender) (:shields defender))
-                   (:HP defender))
-        dmgFactor 6
-        potentialDamage (-> attacker
-                            (:systems)
-                            (firingType)
-                            (get 1)
-                            (calcAttackDamage firingType dmgFactor (shieldsSupercharged? attacker)))]
-    (if (>= potentialDamage vitality)
-      true
-      false)))
+;(defn killRange?
+;  [attacker defender firingType]
+;  (let [vitality (if (= firingType :lasers)
+;                   (+ (:HP defender) (:shields defender))
+;                   (:HP defender))
+;        dmgFactor 6
+;        potentialDamage (-> attacker
+;                            (:systems)
+;                            (firingType)
+;                            (get 1)
+;                            (calcAttackDamage firingType dmgFactor (shieldsSupercharged? attacker)))]
+;    (if (>= potentialDamage vitality)
+;      true
+;      false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;test handler for trying new things and placeholding
