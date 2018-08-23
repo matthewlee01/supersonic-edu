@@ -28,6 +28,7 @@
    :playerName nil
    :gameOver? false
    :playerDefeated? false
+   :dodgeChance? false
    :phase 0
    :history []
    :devMode true
