@@ -9,6 +9,9 @@
 (def VITALITY_BAR_WIDTH "185px")
 
 (def VITALITY_BAR_HEIGHT "15px")
+
+(def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
+
 (defn getShipColour
   [shipType]
   (:colour @(rf/subscribe [shipType])))
@@ -66,7 +69,10 @@
 (defn actionButton
   [requiredSystem event text]
   (fn []
-    [:button.action {:on-click (events/actionDispatch event)
+    [:button.action {:on-click (if (or (= text "Charge Shields")
+                                       (= text "Flee"))
+                                 (events/questionDispatch SAMPLE_QUESTION [event])
+                                 (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
 
@@ -112,7 +118,7 @@
     [:button.system
      (if (= shipType :playerShip)
        (if repairing?
-         {:on-click (events/repairDispatch system shipType)
+         {:on-click (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
           :style {:background-color shieldedStatus}}
          (if firing?
            {:disabled (or firing?
@@ -124,7 +130,14 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click (events/damageDispatch system shipType @(rf/subscribe [:firingType]))
+         {:on-click (events/questionDispatch 
+                      SAMPLE_QUESTION
+                      [:damageShip 
+                       system 
+                       shipType 
+                       @(rf/subscribe [:firingType]) 
+                       (events/diceRoll) 
+                       false])
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
@@ -175,7 +188,6 @@
     (str "dodge:" (events/getOptionVal :dodgeOn?))]
    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
-
 
 (defn management-screen
   []
