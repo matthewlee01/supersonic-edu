@@ -38,12 +38,12 @@
 ;data required to build enemyShip
 ; :system [rank upgradeChance]
 (def SAMPLE_ENEMY_SHIP_TEMPLATE
-  {:lasers [0 95]
-   :missiles [0 80]
-   :repairBay [0 10]
+  {:lasers [90 0]
+   :missiles [50 0]
+   :repairBay [20 0]
    :shields [0 0]
-   :engines [0 10]
-   :maxHP [0 20]})
+   :engines [25 0]
+   :HPfactor [95 1]})
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -76,6 +76,8 @@
 (def SUPERCHARGE_THRESHOLD 0) ;threshold for supercharged shield effect
 
 (def MAX_AMMO 10) ;ammo capacity for ship
+
+(def BASE_AMMO 2) ;starting ammo for ship
 
 (def AMMO_RECHARGE_RATE 2) ;number of turns per ammo refill
 
@@ -231,7 +233,7 @@
                 :maxHP newMaxHP
                 :HP newMaxHP
                 :shields newShields
-                :ammo 2)))
+                :ammo BASE_AMMO)))
 
 ;prompts player for playerName value
 (defn namePrompt
@@ -556,6 +558,45 @@
   (-> (calcShipStrength ship)
       (/ SCORE_REDUCTION_FACTOR)))
 
+;if the random roll is lower than the chance value of the stat
+;its rank gets increased
+(defn upgradeEnemySystem
+  [randInt [statKey [statChance statRank]]]
+  [statKey [statChance (if (> statChance randInt)
+                         (inc statRank)
+                         statRank)]])
+
+;applies upgrades to a ship template recursively
+;using upgradeEnemySystem
+(defn updateShipTemplate
+  [randInt recursions shipTemplate]
+  (if (pos? recursions)
+    (->> shipTemplate
+         (map #(upgradeEnemySystem %1 %2) (repeat randInt))
+         (into {})
+         (updateShipTemplate (rand-int 100) (dec recursions)))
+    shipTemplate))
+
+;uses a shipTemplate to construct a ship data structure
+(defn buildEnemyShip
+  [shipTemplate]
+  (let [{:keys [shields HPfactor]} shipTemplate
+        newHP (* HP_GAIN (second HPfactor))]
+    {:systems (fullSystemsReset (dissoc shipTemplate :HPfactor))
+     :HP newHP
+     :maxHP newHP
+     :shields (calcShieldsMax (second shields))
+     :ammo BASE_AMMO}))
+
+;takes a random roll (0-99), a number of recursions, and a ship template
+;returns a completed enemy ship, ready to be assoc'd into the db
+(defn generateEnemyShip
+  [randInt recursions shipTemplate]
+  (->> shipTemplate
+       (updateShipTemplate randInt recursions)
+       (buildEnemyShip)))
+
+
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
   [cofx _]
@@ -563,11 +604,9 @@
                           :db
                           :playerShip
                           (shipReset HP_GAIN))
-        newEnemyShip (-> cofx
-                         :db
-                         :enemyShip
-                         (shipReset HP_GAIN)
-                         (randShipColour))]
+        newEnemyShip (->> SAMPLE_ENEMY_SHIP_TEMPLATE 
+                          (generateEnemyShip (rand-int 100) (-> cofx :db :gameStats :enemiesDefeated))
+                          (randShipColour))]
    {:db (assoc (:db cofx)
                :playerShip newPlayerShip
                :enemyShip newEnemyShip
@@ -582,23 +621,6 @@
 (rf/reg-event-fx
   :reset-db
   reset-db)
-
-(defn upgradeEnemySystem
-  [randInt [statKey [statRank statChance]]]
-  [statKey [(if (> statChance randInt)
-              (inc statRank)
-              statRank) statChance]])
-
-(defn generateEnemyShip
-  [randInt recursions shipTemplate]
-  (if (pos? recursions)
-    (->> shipTemplate
-         (map #(upgradeEnemySystem %1 %2) (repeat randInt))
-         (into {})
-         (generateEnemyShip (rand-int 100) (dec recursions)))
-    shipTemplate))
-    ;(generateEnemyShip (into {} (map #(upgradeEnemySystem %1 %2) shipTemplate (repeat randInt))) (rand-int 100) (dec recursions))))
-
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
@@ -617,7 +639,6 @@
 (rf/reg-event-fx
   :changePhase
   changePhase)
-
 
 (defn refillAmmo
   "takes a ship and a turn number, adds 1 to ship's ammo if turn is divisible by two; returns new ship"
