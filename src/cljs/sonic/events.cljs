@@ -26,7 +26,7 @@
   [[:damageShip :targetSystem :playerShip :missiles MEAN_DICEROLL true]
    [:damageShip :targetSystem :playerShip :lasers MEAN_DICEROLL true]
    [:repairShip :targetSystem :enemyShip]
-   [:enemyChargeShields MEAN_DICEROLL]])
+   [:chargeShields :enemyShip MEAN_DICEROLL]])
 
 ;required system for each corresponding action
 (def ENEMY_ACTION_PREREQ_LIST
@@ -106,7 +106,7 @@
     {:db (:db cofx)
      :dispatch (if (passedQuestion? question)
                   requestedEvent
-                  [:changePhase])})) 
+                  [:changePhase])}))
 
 (defn questionDispatch
   [question event]
@@ -317,7 +317,7 @@
                                                               1))))
 
 ;returns ship with increased shields
-(defn chargeShields
+(defn increaseShields
   [ship amount]
   (let [{{[_ shieldsSystemRank] :shields} :systems shieldsCurrentValue :shields} ship
         shieldsMax (calcShieldsMax shieldsSystemRank)
@@ -343,7 +343,7 @@
   (devLog (str "upgrading " shipType " " systemType))
   (let [newShip (update-in (-> cofx :db shipType) [:systems systemType] incSystemRank)]
     {:db (assoc (:db cofx) shipType (if (= systemType :shields)
-                                      (chargeShields newShip SHIELD_UPGRADE_MULIPLIER)
+                                      (increaseShields newShip SHIELD_UPGRADE_MULIPLIER)
                                       newShip))
      :dispatch [::toggleVal :upgradingSystems?]}))
 
@@ -366,17 +366,8 @@
     {:db (:db cofx)
      :dispatch [:setFiringType :missiles]}))
 
-;calls chargeShields on playerShip when corresponding button is pressed,
-;then ends player phase
-(defn actionChargeShields
-  [cofx events]
-  (devLog "player charging shields")
-  {:db (assoc (:db cofx) :playerShip (chargeShields (-> cofx :db :playerShip) (diceRoll)))
-   :dispatch [:changePhase]})
 
-(rf/reg-event-fx
-  :actionChargeShields
-  actionChargeShields)
+
 
 (defn actionRepairShip
   [cofx effects]
@@ -416,19 +407,30 @@
       systemType
       false)))
 
+;calls chargeShields on playerShip when corresponding button is pressed,
+;then ends player phase
+
+
+(rf/reg-event-fx
+  :actionChargeShields
+  (fn [cofx event]
+    (devLog "player toggling launch mode")
+    {:db (:db cofx)
+     :dispatch [:chargeShields :playerShip (diceRoll)]}))
+
 ;calls chargeShields on enemyShip and updates value
-(defn enemyChargeShields
-  [cofx [_ diceRoll]]
-  (devLog "enemy charging shields")
-  {:db (assoc (:db cofx) :enemyShip (-> cofx
-                                        :db
-                                        :enemyShip
-                                        (chargeShields diceRoll)))
+(defn chargeShields
+  [cofx [_ shipType diceRoll]]
+  (devLog (str shipType "charging shields"))
+  {:db (assoc (:db cofx) shipType (-> cofx
+                                      :db
+                                      shipType
+                                      (increaseShields diceRoll)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
-  :enemyChargeShields
-  enemyChargeShields)
+  :chargeShields
+  chargeShields)
 
 ;holds priority list for enemy attacks and repairs
 (def enemyPriorityList
@@ -452,7 +454,7 @@
   [action]
   (let [[actionType] action]
     (case actionType
-      :enemyChargeShields action
+      :chargeShields action
       :repairShip (assoc action 1 (getTargetSystem :repair))
       :damageShip (assoc action 1 (getTargetSystem :target)) true)))
 
@@ -538,7 +540,7 @@
         chosenOutcome (chooseBestOutcome db possibleOutcomes)]
     (case (get chosenOutcome 0)
       :damageShip (assoc chosenOutcome 4 (diceRoll) 5 false)
-      :enemyChargeShields (assoc chosenOutcome 1 (diceRoll))
+      :chargeShields (assoc chosenOutcome 2 (diceRoll))
       chosenOutcome)))
 
 (defn calcScore
@@ -579,7 +581,7 @@
   (if (false? (:gameOver? (:db cofx)))
     (do (devLog "changing phase")
         (if (zero? (:phase (:db cofx)))
-          {:db (assoc (:db cofx) 
+          {:db (assoc (:db cofx)
                       :phase 1
                       :firing? false
                       :repairing? false)
@@ -702,14 +704,6 @@
   (let [newDefenderHP (- (:HP defender) damage)]
     [(assoc defender :HP newDefenderHP) attacker]))
 
-(defn applyDamage
-  [attackInfoVec]
-  (-> attackInfoVec
-      (newShieldsAndAmmo)
-      (newSystemHP)
-      (newHP)))
-
-
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
@@ -725,18 +719,22 @@
                     "took "
                     damage
                     " damage")
-        [newDefender newAttacker] (applyDamage [defender attacker system damage firingType])
+        [newDefender newAttacker] (-> [defender attacker system damage firingType]
+                                      (newShieldsAndAmmo)
+                                      (newSystemHP)
+                                      (newHP))
         [newStatNames statChanges] (if (= shipType :playerShip)
                                      [[:damageTaken] [damage]]
                                      (if (= firingType :missiles)
                                        [[:damageDealt :missilesFired] [damage 1]]
                                        [[:damageDealt :lasersFired] [damage 1]]))]
-    (devLog devMsg)
-    (if (false? simulation?) (rf/dispatch [:updateStats newStatNames statChanges]))
-    (if (and (false? (pos? (:HP newDefender)))
-             (false? simulation?)) (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
-                                                           :playerShip
-                                                           :enemyShip) true]))
+    (if (false? simulation?)
+      (do (devLog devMsg)
+          (rf/dispatch [:updateStats newStatNames statChanges])
+          (if (false? (pos? (:HP newDefender)))
+            (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
+                                       :playerShip
+                                       :enemyShip) true]))))
     {:db (assoc (:db cofx)
             shipType newDefender
             attackerType newAttacker)
@@ -796,7 +794,7 @@
  [damageShip
   damageShip
   repairShip
-  enemyChargeShields])
+  chargeShields])
 
 ;initiates enemy AI
 (rf/reg-event-fx
