@@ -35,6 +35,16 @@
    :repairBay
    :shields])
 
+;data required to build enemyShip
+; :system [rank upgradeChance]
+(def SAMPLE_ENEMY_SHIP_TEMPLATE
+  {:lasers [0 95]
+   :missiles [0 80]
+   :repairBay [0 10]
+   :shields [0 0]
+   :engines [0 10]
+   :maxHP [0 20]})
+
 ;selects a random number from 1-6
 (defn diceRoll
   []
@@ -572,6 +582,23 @@
 (rf/reg-event-fx
   :reset-db
   reset-db)
+
+(defn upgradeEnemySystem
+  [randInt [statKey [statRank statChance]]]
+  [statKey [(if (> statChance randInt)
+              (inc statRank)
+              statRank) statChance]])
+
+(defn generateEnemyShip
+  [randInt recursions shipTemplate]
+  (if (pos? recursions)
+    (->> shipTemplate
+         (map #(upgradeEnemySystem %1 %2) (repeat randInt))
+         (into {})
+         (generateEnemyShip (rand-int 100) (dec recursions)))
+    shipTemplate))
+    ;(generateEnemyShip (into {} (map #(upgradeEnemySystem %1 %2) shipTemplate (repeat randInt))) (rand-int 100) (dec recursions))))
+
 
 ;toggles phase between player and enemy after each action
 (defn changePhase
