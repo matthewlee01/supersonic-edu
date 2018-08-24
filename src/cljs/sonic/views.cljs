@@ -173,6 +173,11 @@
                 "were defeated by"
                 "defeated")" an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
 
+(defn optionButton
+  [text option]
+  [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))}
+   (str text ": " (events/getOptionVal option))])
+
 (defn pregame-screen
   []
   [:div.pregame {:style {:z-index (getZ :pregame-screen)}}
@@ -193,12 +198,12 @@
 (defn options-screen
   []
   [:div.options {:style {:z-index (getZ :options-screen)}}
-   "there are currently no options to change"
-   [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :dodgeOn?]))}
-    (str "dodge: " (events/getOptionVal :dodgeOn?))]
-   [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :questions?]))}
-    (str "questions: " (events/getOptionVal :questions?))]
-   [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
+   [:h1 {:style {:background-color "green"
+                 :padding "30px 30px"}} "Options"]
+   [:div.optionsButtonBox
+    (optionButton "Dodging" :dodgeOn?)
+    (optionButton "Questions" :questions?)]
+   [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
 (defn management-screen
@@ -248,13 +253,13 @@
                    :style {:font-size "35px"
                            :padding "5px 10px"}} "View Statistics"]]
         [:div.menuButtons
-         [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-                   :disabled playerDefeated?
-                   :style {:font-size "35px"
-                           :padding "5px 10px"}} "Next Battle"]
-         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))
-                   :style {:font-size "35px"
-                           :padding "5px 10px"}} "Restart Game"]]]]))
+         [:button.menuButton 
+          {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+           :disabled playerDefeated?} 
+          "Next Battle"]
+         [:button.menuButton 
+          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))} 
+          "Restart Game"]]]]))
 
 (defn stats-screen
   []
