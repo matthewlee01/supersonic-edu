@@ -257,10 +257,10 @@
                   :maxHP 200
                   :shields 10
                   :ammo 5}
-        newShip (-> [:engines testShip]
+        newShip (-> [testShip :engines]
                     (events/restoreHP)
                     (events/restoreSystem)
-                    (get 1)
+                    (first)
                     (events/increaseShields randomAmount))
         newHP (:HP newShip)
         newAmmo (:ammo newShip)
