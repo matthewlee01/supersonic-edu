@@ -127,7 +127,6 @@
 .system {
     font-size: 18px;
     padding: 12px 12px;
-    background-image: url("actionbutton.png");
     background-size: 100% 100%;
 }
 
@@ -196,8 +195,10 @@
 }
 
 .upgradeShip {
-    font-size: 40px;
-    padding: 12px 12px;
+    font-size: 35px;
+    padding: 15px 15px;
+    background-image: url("actionbutton.png");
+    background-size: 100% 100%;
 }
 
 .moneyDisplay {
