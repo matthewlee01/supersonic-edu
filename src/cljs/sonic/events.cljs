@@ -36,14 +36,26 @@
    :shields])
 
 ;data required to build enemyShip
-; :system [rank upgradeChance]
-(def SAMPLE_ENEMY_SHIP_TEMPLATE
-  {:lasers [90 0]
-   :missiles [50 0]
-   :repairBay [20 0]
-   :shields [0 0]
-   :engines [25 0]
-   :HPfactor [95 1]})
+; :system [upgradeChance rank]
+(def ENEMY_SHIP_TEMPLATES
+  [{:lasers [90 1]
+    :missiles [50 0]
+    :repairBay [20 0]
+    :shields [80 1]
+    :engines [20 1]
+    :HPfactor [60 2]}
+   {:lasers [0 0]
+    :missiles [95 1]
+    :repairBay [40 0]
+    :shields [20 0]
+    :engines [50 1]
+    :HPfactor [60 1]}
+   {:lasers [20 1]
+    :missiles [20 0]
+    :repairBay [60 0]
+    :shields [80 0]
+    :engines [50 0]
+    :HPfactor [70 2]}])
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -271,9 +283,10 @@
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
-          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] (if (= loser :playerShip)
-                                                                                               [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
-                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
+          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] 
+                        (if (= loser :playerShip)
+                          [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
+                          [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
@@ -604,7 +617,8 @@
                           :db
                           :playerShip
                           (shipReset HP_GAIN))
-        newEnemyShip (->> SAMPLE_ENEMY_SHIP_TEMPLATE 
+        newEnemyShip (->> ENEMY_SHIP_TEMPLATES
+                          (rand-nth)
                           (generateEnemyShip (rand-int 100) (-> cofx :db :gameStats :enemiesDefeated))
                           (randShipColour))]
    {:db (assoc (:db cofx)
