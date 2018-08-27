@@ -249,11 +249,8 @@
           [:p (genEnemyReportMsg)]
           [:p (genTurnsMsg)]]]
         [:div.statsBox
-         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
-                   :style {:font-size "35px"
-                           :padding "5px 10px"
-                           :background-image "url('css/actionbutton.png')"
-                           :background-size "100% 100%"}} "View Statistics"]]
+         [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))}
+          "View Statistics"]]
         [:div.menuButtons
          [:button.menuButton 
           {:on-click (fn [] (rf/dispatch [::events/gameStart]))
@@ -279,11 +276,7 @@
       ["Time spent in battle" :battleTime "s"]
       ["Money earned" :moneyGained]
       ["Money spent" :moneySpent])
-    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
-              :style {:font-size "35px"
-                      :width "250px"
-                      :height "100px"
-                      :padding "5px 10px"}} "Return to Menu"]]])
+    [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))} "Return to Menu"]]])
 
 (defn battle-screen
   []
