@@ -4,6 +4,10 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+(def HP_YELLOW_THRESHOLD 50)
+
+(def HP_RED_THRESHOLD 25)
+
 (def UPGRADE_COST_FACTOR 500)
 
 (def VITALITY_BAR_WIDTH "185px")
@@ -12,6 +16,7 @@
 
 (def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
 
+;returns the :colour of the specified ship
 (defn getShipColour
   [shipType]
   (:colour @(rf/subscribe [shipType])))
@@ -45,12 +50,15 @@
        (cons :div)
        (vec)))
 
+;returns a name for the turn display based on the current phase
 (defn getPhaseName
   [phase]
   (if (= phase 0)
     @(rf/subscribe [:playerName])
     "Enemy"))
 
+;checks to see if there are any factors which would prevent an action from being executed
+;returns true or false
 (defn actionDisabled?
   [text requiredSystem]
   (if (or (and @(rf/subscribe [:firing?])
@@ -66,26 +74,40 @@
       true
       false))
 
+;constructs an action button to be placed on the action bar
 (defn actionButton
   [requiredSystem event text]
   (fn []
-    [:button.action {:on-click (if (or (= text "Charge Shields")
-                                       (= text "Flee"))
+    [:button.action {:on-click (if (and (events/getOptionVal :questions?)
+                                        (or (= text "Charge Shields")
+                                            (= text "Flee")))
                                  (events/questionDispatch SAMPLE_QUESTION [event])
                                  (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
 
+;calculates the cost to upgrade a system
 (defn calcUpgradeCost
   [systemRank]
   (* UPGRADE_COST_FACTOR systemRank))
 
+;determines whether or not the player can afford an upgrade
 (defn canAffordUpgrade?
   [systemRank money]
   (if (>= money (calcUpgradeCost systemRank))
     true
     false))
 
+;determines the colour of an HP status bar 
+(defn getHPBarColour 
+  [percentVal]
+  (if (> percentVal HP_YELLOW_THRESHOLD)
+    "green"
+    (if (> percentVal HP_RED_THRESHOLD)
+      "yellow"
+      "red")))
+      
+;a progress bar to display the status of a % value
 (defn statusBar
   [currentVal maxVal colour width height]
   (let [percentVal (-> currentVal
@@ -96,8 +118,11 @@
                   :background-color "white"}}
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
-                   :background-color colour}}]]))
+                   :background-color (if (= colour "hp-gradient")
+                                       (getHPBarColour percentVal)
+                                       colour)}}]]))
 
+;contains the system buttons for the ships and all corresponding logic
 (defn systemButton
   [system shipType text]
   (let [firing? @(rf/subscribe [:firing?])
@@ -110,6 +135,7 @@
                       (system))
         systemRank (get systemVec 1)
         systemHP (get systemVec 0)
+        questions? (events/getOptionVal :questions?)
         shieldedStatus (if (> (:shields ship) 0)
                          (if (events/shieldsSupercharged? ship)
                            "violet"
@@ -118,7 +144,9 @@
     [:button.system
      (if (= shipType :playerShip)
        (if repairing?
-         {:on-click (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+         {:on-click (if questions?
+                      (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+                      (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
          (if firing?
            {:disabled (or firing?
@@ -130,14 +158,20 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click (events/questionDispatch 
-                      SAMPLE_QUESTION
-                      [:damageShip 
-                       system 
-                       shipType 
-                       @(rf/subscribe [:firingType]) 
-                       (events/diceRoll) 
-                       false])
+         {:on-click 
+          (if questions?
+            (events/questionDispatch 
+              SAMPLE_QUESTION
+              [:damageShip 
+               system 
+               shipType 
+               @(rf/subscribe [:firingType]) 
+               (events/diceRoll) 
+               false])
+            (events/damageDispatch
+              system
+              shipType
+              @(rf/subscribe [:firingType])))
           :style {:background-color shieldedStatus}}
          (if repairing?
            {:disabled true}
@@ -148,21 +182,36 @@
        (str "Rank " systemRank " " text " (" systemHP " HP " ammo " Ammo)")
        (str "Rank " systemRank " " text " (" systemHP " HP)")))]))
 
+;a textarea to display HP or shields
 (defn shipVitalityDisplay
   [value text]
   [:textarea.vitalityDisplay {:value (str text ": " value)
                               :readOnly true}])
 
+;generates a "turns lasted" msg for battle report
 (defn genTurnsMsg
   []
   (str "Your previous battle lasted " @(rf/subscribe [:turn]) " turns! "))
 
+;generates a message detailing how strong the previous enemy was
 (defn genEnemyReportMsg
   []
   (str "You " (if @(rf/subscribe [:playerDefeated?])
                 "were defeated by"
                 "defeated")" an enemy with " (:maxHP @(rf/subscribe [:enemyShip])) " HP! "))
 
+;a button to toggle and option in the option-screen
+(defn optionButton
+  [text option]
+  (let [optionVal (events/getOptionVal option)]
+    [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))
+                           :style {:border "5px solid grey"
+                                   :background-color (if optionVal
+                                                       "lime"
+                                                       "red")}}
+     (str text ": " optionVal)]))
+
+;screen that displays before the first battle
 (defn pregame-screen
   []
   [:div.pregame {:style {:z-index (getZ :pregame-screen)}}
@@ -174,21 +223,24 @@
                                        (rf/dispatch [::events/gameStart]))}
     "Game Start"]
    [:a.helpButton {:href "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                   :target "_blank"
-                   :on-click (fn [] (js/alert "lol ur bad"))}
+                   :target "_blank"}
     "Help"]
    [:button.pregameButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :options-screen]))}
     "Options"]])
 
+;screen that displays when the options button is clicked from pregame
 (defn options-screen
   []
   [:div.options {:style {:z-index (getZ :options-screen)}}
-   "there are currently no options to change"
-   [:button {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal :dodgeOn?]))}
-    (str "dodge:" (events/getOptionVal :dodgeOn?))]
-   [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
+   [:h1 {:style {:background-color "green"
+                 :padding "30px 30px"}} "Options"]
+   [:div.optionsButtonBox
+    (optionButton "Dodging" :dodgeOn?)
+    (optionButton "Questions" :questions?)]
+   [:button.optionsExitButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
+;screen that displays after each battle
 (defn management-screen
   []
   (let [playerShip @(rf/subscribe [:playerShip])
@@ -232,18 +284,18 @@
           [:p (genEnemyReportMsg)]
           [:p (genTurnsMsg)]]]
         [:div.statsBox
-         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
-                   :style {:font-size "35px"
-                           :padding "5px 10px"}} "View Statistics"]]
+         [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))}
+          "View Statistics"]]
         [:div.menuButtons
-         [:button {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-                   :disabled playerDefeated?
-                   :style {:font-size "35px"
-                           :padding "5px 10px"}} "Next Battle"]
-         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))
-                   :style {:font-size "35px"
-                           :padding "5px 10px"}} "Restart Game"]]]]))
+         [:button.menuButton 
+          {:on-click (fn [] (rf/dispatch [::events/gameStart]))
+           :disabled playerDefeated?} 
+          "Next Battle"]
+         [:button.menuButton 
+          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))} 
+          "Restart Game"]]]]))
 
+;screen that displays when stats button is clicked from management
 (defn stats-screen
   []
   [:div.stats {:style {:z-index (getZ :stats-screen)}}
@@ -260,12 +312,9 @@
       ["Time spent in battle" :battleTime "s"]
       ["Money earned" :moneyGained]
       ["Money spent" :moneySpent])
-    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
-              :style {:font-size "35px"
-                      :width "250px"
-                      :height "100px"
-                      :padding "5px 10px"}} "Return to Menu"]]])
+    [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))} "Return to Menu"]]])
 
+;screen where battles take place between ships
 (defn battle-screen
   []
   (let [gameOver? @(rf/subscribe [:gameOver?])
@@ -312,7 +361,7 @@
           (statusBar
             (:HP playerShip)
             (:maxHP playerShip)
-            "green"
+            "hp-gradient"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)]
          [:div.vitalityDisplayArea
@@ -334,7 +383,7 @@
           (statusBar
             (:HP enemyShip)
             (:maxHP enemyShip)
-            "green"
+            "hp-gradient"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT)]
          [:div.vitalityDisplayArea
@@ -352,6 +401,7 @@
         [actionButton :repairBay :actionRepairShip "Repair Ship"]
         [actionButton :engines :actionFlee "Flee"]]]]]))
 
+;combines all the screens to and is rendered in core.cljs
 (defn main-panel
   []
   [:div.mainPanel

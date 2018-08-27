@@ -30,6 +30,28 @@
    :shields
    :engines])
 
+;data required to build enemyShip
+; :system [upgradeChance rank]
+(def ENEMY_SHIP_TEMPLATES
+  [{:lasers [90 1]
+    :missiles [50 0]
+    :repairBay [20 0]
+    :shields [80 1]
+    :engines [20 1]
+    :HPfactor [60 2]}
+   {:lasers [0 0]
+    :missiles [95 1]
+    :repairBay [40 0]
+    :shields [20 0]
+    :engines [50 1]
+    :HPfactor [60 1]}
+   {:lasers [20 1]
+    :missiles [20 0]
+    :repairBay [60 0]
+    :shields [80 0]
+    :engines [50 0]
+    :HPfactor [70 2]}])
+
 ;selects a random number from 1-6
 (defn diceRoll
   []
@@ -55,6 +77,8 @@
 (def SUPERCHARGE_THRESHOLD 0) ;threshold for supercharged shield effect
 
 (def MAX_AMMO 10) ;ammo capacity for ship
+
+(def BASE_AMMO 2) ;starting ammo for ship
 
 (def AMMO_RECHARGE_RATE 2) ;number of turns per ammo refill
 
@@ -83,19 +107,22 @@
   (if @(rf/subscribe [:devMode])
     (println string)))
 
-;prompts the player with a question and returns true or false
+;prompts the player with a question and returns true or false or nil
 (defn passedQuestion?
   [[query answer]]
-  (= (js/prompt query) answer))
-
+  (if-let [response (js/prompt query)]
+    (= response answer)
+    nil))
+    
 ;asks the player a question and dispatches the requested event if they answer correctly
 (rf/reg-event-fx
   ::questionPrompt
   (fn [cofx [_ question requestedEvent]]
     {:db (:db cofx)
-     :dispatch (if (passedQuestion? question)
-                  requestedEvent
-                  [:changePhase])}))
+     :dispatch (case (passedQuestion? question)
+                 true requestedEvent
+                 false [:changePhase]
+                 nil [:doNothing])})) 
 
 (defn questionDispatch
   [question event]
@@ -201,7 +228,7 @@
                 :maxHP newMaxHP
                 :HP newMaxHP
                 :shields newShields
-                :ammo 2)))
+                :ammo BASE_AMMO)))
 
 ;prompts player for playerName value
 (defn namePrompt
@@ -239,9 +266,10 @@
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
-          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] (if (= loser :playerShip)
-                                                                                               [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
-                                                                                               [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
+          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] 
+                        (if (= loser :playerShip)
+                          [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
+                          [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
           (assoc db
                 :playerShip (shipReset (:playerShip db) 0)
                 :gameOver? true
@@ -464,6 +492,45 @@
   (-> (calcShipStrength ship)
       (/ SCORE_REDUCTION_FACTOR)))
 
+;if the random roll is lower than the chance value of the stat
+;its rank gets increased
+(defn upgradeEnemySystem
+  [randInt [statKey [statChance statRank]]]
+  [statKey [statChance (if (> statChance randInt)
+                         (inc statRank)
+                         statRank)]])
+
+;applies upgrades to a ship template recursively
+;using upgradeEnemySystem
+(defn updateShipTemplate
+  [randInt recursions shipTemplate]
+  (if (pos? recursions)
+    (->> shipTemplate
+         (map #(upgradeEnemySystem %1 %2) (repeat randInt))
+         (into {})
+         (updateShipTemplate (rand-int 100) (dec recursions)))
+    shipTemplate))
+
+;uses a shipTemplate to construct a ship data structure
+(defn buildEnemyShip
+  [shipTemplate]
+  (let [{:keys [shields HPfactor]} shipTemplate
+        newHP (* HP_GAIN (second HPfactor))]
+    {:systems (fullSystemsReset (dissoc shipTemplate :HPfactor))
+     :HP newHP
+     :maxHP newHP
+     :shields (calcShieldsMax (second shields))
+     :ammo BASE_AMMO}))
+
+;takes a random roll (0-99), a number of recursions, and a ship template
+;returns a completed enemy ship, ready to be assoc'd into the db
+(defn generateEnemyShip
+  [randInt recursions shipTemplate]
+  (->> shipTemplate
+       (updateShipTemplate randInt recursions)
+       (buildEnemyShip)))
+
+
 (defn reset-db
   "resets game state and applies HP buff using shipReset"
   [cofx _]
@@ -471,11 +538,10 @@
                           :db
                           :playerShip
                           (shipReset HP_GAIN))
-        newEnemyShip (-> cofx
-                         :db
-                         :enemyShip
-                         (shipReset HP_GAIN)
-                         (randShipColour))]
+        newEnemyShip (->> ENEMY_SHIP_TEMPLATES
+                          (rand-nth)
+                          (generateEnemyShip (rand-int 100) (-> cofx :db :gameStats :enemiesDefeated))
+                          (randShipColour))]
    {:db (assoc (:db cofx)
                :playerShip newPlayerShip
                :enemyShip newEnemyShip
@@ -508,7 +574,6 @@
 (rf/reg-event-fx
   :changePhase
   changePhase)
-
 
 (defn refillAmmo
   "takes a ship and a turn number, adds 1 to ship's ammo if turn is divisible by two; returns new ship"
@@ -937,3 +1002,4 @@
   (fn [db _]
     (devLog "doing nothing")
     db))
+
