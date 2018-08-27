@@ -175,8 +175,13 @@
 
 (defn optionButton
   [text option]
-  [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))}
-   (str text ": " (events/getOptionVal option))])
+  (let [optionVal (events/getOptionVal option)]
+    [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))
+                           :style {:border "5px solid grey"
+                                   :background-color (if optionVal
+                                                       "lime"
+                                                       "red")}}
+     (str text ": " optionVal)]))
 
 (defn pregame-screen
   []
@@ -203,7 +208,7 @@
    [:div.optionsButtonBox
     (optionButton "Dodging" :dodgeOn?)
     (optionButton "Questions" :questions?)]
-   [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
+   [:button.optionsExitButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
 (defn management-screen
@@ -249,11 +254,8 @@
           [:p (genEnemyReportMsg)]
           [:p (genTurnsMsg)]]]
         [:div.statsBox
-         [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))
-                   :style {:font-size "35px"
-                           :padding "5px 10px"
-                           :background-image "url('css/actionbutton.png')"
-                           :background-size "100% 100%"}} "View Statistics"]]
+         [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))}
+          "View Statistics"]]
         [:div.menuButtons
          [:button.menuButton 
           {:on-click (fn [] (rf/dispatch [::events/gameStart]))
@@ -279,11 +281,7 @@
       ["Time spent in battle" :battleTime "s"]
       ["Money earned" :moneyGained]
       ["Money spent" :moneySpent])
-    [:button {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))
-              :style {:font-size "35px"
-                      :width "250px"
-                      :height "100px"
-                      :padding "5px 10px"}} "Return to Menu"]]])
+    [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :management-screen]))} "Return to Menu"]]])
 
 (defn battle-screen
   []

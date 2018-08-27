@@ -13,10 +13,14 @@
     padding: 15px 15px;
     font-size: 35px;
     background-color: white;
-    border: 5px solid hotpink;
     font-family: "Comic Sans MS";
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.pregameButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .pregameButton:hover {
@@ -47,8 +51,22 @@
 .optionButton {
     font-size: 30px;
     padding: 15px;
+}
+
+.optionButton:hover {
+    cursor: pointer;
+}
+
+.optionsExitButton {
+    font-size: 30px;
+    padding: 15px;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.optionsExitButton:hover {
+    cursor: pointer;
+    background-image: url("buttonhover.png");
 }
 
 .flexContainer {
@@ -130,6 +148,10 @@
     background-size: 100% 100%;
 }
 
+.system:hover {
+    cursor: crosshair;
+}
+
 .actionBar {
     display: flex;
     flex-direction: row;
@@ -147,6 +169,11 @@
     background-image: url("actionbutton.png");
     width: 195px;
     height: 80px;
+}
+
+.action:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .infoDisplayArea {
@@ -199,6 +226,11 @@
     padding: 15px 15px;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.upgradeShip:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .moneyDisplay {
@@ -274,6 +306,18 @@
     height: 850px;
 }
 
+.statsButton {
+    font-size: 35px;
+    padding: 10px 15px;
+    background-image: url("actionbutton.png");
+    background-size: 100% 100%;
+}
+
+.statsButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
+}
+
 .menuButtons {
     display: flex;
     flex-direction: column;
@@ -291,18 +335,24 @@
     background-size: 100% 100%;
 }
 
+.menuButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
+}
+
 .helpButton:link, .helpButton:visited {
     background-color: white;
-    border: 5px solid hotpink;
     font-family: "Comic Sans MS";
     color: black;
     text-align: center;
     text-decoration: none;
     padding: 15px 15px;
     font-size: 35px;
+    background-image: url("actionbutton.png");
+    background-size: 100% 100%;
 }
 
 .helpButton:hover {
-    background-color: orange;
-
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
