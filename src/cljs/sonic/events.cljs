@@ -834,8 +834,9 @@
  [action]
  (case (first action)
   :damageShip (assoc action 4 (diceRoll) 5 false)
-  :chargeshields (assoc action 2 (diceRoll) 3 nil)
-  :repairShip (assoc action 3 nil)))
+  :chargeShields (assoc action 2 (diceRoll) 3 nil)
+  :repairShip (assoc action 3 nil)
+  nil [:changePhase]))
 
 ;uses generateFutures to generate a nested structure of all possible game states after ENEMY_DIFFICULTY_LEVEL + 1 phases
 ;uses chooseActionFromList to pick the most optimal one
