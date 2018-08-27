@@ -118,19 +118,22 @@
   (if @(rf/subscribe [:devMode])
     (println string)))
 
-;prompts the player with a question and returns true or false
+;prompts the player with a question and returns true or false or nil
 (defn passedQuestion?
   [[query answer]]
-  (= (js/prompt query) answer))
-
+  (if-let [response (js/prompt query)]
+    (= response answer)
+    nil))
+    
 ;asks the player a question and dispatches the requested event if they answer correctly
 (rf/reg-event-fx
   ::questionPrompt
   (fn [cofx [_ question requestedEvent]]
     {:db (:db cofx)
-     :dispatch (if (passedQuestion? question)
-                  requestedEvent
-                  [:changePhase])})) 
+     :dispatch (case (passedQuestion? question)
+                 true requestedEvent
+                 false [:changePhase]
+                 nil [:doNothing])})) 
 
 (defn questionDispatch
   [question event]
@@ -914,3 +917,4 @@
   (fn [db _]
     (devLog "doing nothing")
     db))
+
