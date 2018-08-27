@@ -109,7 +109,8 @@
      :dispatch (case (passedQuestion? question)
                  true requestedEvent
                  false [:changePhase]
-                 nil [:doNothing])})) 
+                 nil [:doNothing])}))
+       
 
 (defn questionDispatch
   [question event]
