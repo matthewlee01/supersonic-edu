@@ -367,9 +367,7 @@
 ;checks if system on ship is disabled (0HP, or 0 Ammo for missiles)
 (defn systemDisabled?
   [system shipType]
-  (let [{{[systemHP _] system} :systems ammo :ammo} (if (map? shipType)
-                                                      shipType
-                                                      @(rf/subscribe [shipType]))]
+  (let [{{[systemHP _] system} :systems ammo :ammo} @(rf/subscribe [shipType])]
     (if (or (>= 0 systemHP)
             (and (= 0 ammo)
                  (= system :missiles)))
@@ -460,13 +458,6 @@
                    (* HP))]
     ;(devLog score)
     score))
-
-
-;checks if outcome can be executed based on prereq system on enemy ship
-(defn outcomeDisabled?
-  [outcome]
-  (-> (get outcome 3)
-      (systemDisabled? :enemyShip)))
 
 (defn calcScore
   [ship]
@@ -724,7 +715,10 @@
 (defn genActionVector
   [cofx action]
   (let [function (ACTION->FUNCTION (first action))]
-    [action (changePhase (function cofx action) [nil true]) []]))
+    [action
+     (-> (function cofx action)
+         (changePhase [nil true]))
+     []]))
 
 ;checks if system on ship is disabled (0HP, or 0 Ammo for missiles)
 (defn systemInactive?
@@ -813,20 +807,27 @@
 
 ;accesses nested data structure creasted by generateFutures to select the best action for either :playerShip or :enemyShip
 (defn chooseAction
- [shipType actionVector]
- (let [[action cofx future] actionVector]
-  (if (or (empty? future)
-          (nil? future))
-    [action cofx]
-    [action (second (pickBestAction (map (partial chooseAction (if (= shipType :playerShip) :enemyShip :playerShip)) future) shipType))])))
+ [shipType [action cofx future]]
+ (if (or (empty? future)
+         (nil? future))
+   [action cofx]
+   [action (-> (partial chooseAction (if (= shipType :playerShip)
+                                       :enemyShip
+                                       :playerShip))
+               (map future)
+               (pickBestAction shipType)
+               (second))]))
 
 ;compares the possible actions for a ship, and outputs the best dispatchable vector
 (defn chooseActionFromList
  [shipType actionList]
- (first (pickBestAction (map #(let [choice (chooseAction %1 %2)]
-                                (do (println (first choice))
-                                    (println (calcActionScore choice))
-                                    choice)) (repeat shipType) actionList) shipType)))
+ (-> #(let [choice (chooseAction shipType %)]
+           (do (println (first choice))
+               (println (calcActionScore choice))
+               choice))
+     (map actionList)
+     (pickBestAction shipType)
+     (first)))
 
 ;updates an dispatchable vector so that it can be dispatched by :enemyPhase event
 (defn updateActionForDispatch
@@ -840,7 +841,9 @@
 ;uses chooseActionFromList to pick the most optimal one
 (defn enemyChooseAction
  [cofx]
- (let [choice (chooseActionFromList :enemyShip (last (generateFutures [0 cofx 0] ENEMY_DIFFICULTY_LEVEL)))]
+ (let [choice (->> (generateFutures [0 cofx 0] ENEMY_DIFFICULTY_LEVEL)
+                   (last)
+                   (chooseActionFromList :enemyShip))]
   (println (str "ENEMY ACTION:" choice))
   (updateActionForDispatch choice)))
 
