@@ -13,10 +13,14 @@
     padding: 15px 15px;
     font-size: 35px;
     background-color: white;
-    border: 5px solid hotpink;
     font-family: "Comic Sans MS";
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.pregameButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .pregameButton:hover {
@@ -47,8 +51,22 @@
 .optionButton {
     font-size: 30px;
     padding: 15px;
+}
+
+.optionButton:hover {
+    cursor: pointer;
+}
+
+.optionsExitButton {
+    font-size: 30px;
+    padding: 15px;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.optionsExitButton:hover {
+    cursor: pointer;
+    background-image: url("buttonhover.png");
 }
 
 .flexContainer {
@@ -110,8 +128,9 @@
     justify-content: space-around;
     align-items: center;
     width: 420px;
-    height: 330px;
-    background-image: url("spaceship.png")
+    height: 340px;
+    background-image: url("spaceship.png");
+    background-size: 100% 100%
 }
 
 .enemyShip {
@@ -120,14 +139,20 @@
     justify-content: space-around;
     align-items: center;
     width: 420px;
-    height: 330px;
+    height: 340px;
     background: red;
 }
 
 .system {
-    font-size: 18px;
+    font-size: 17px;
     padding: 12px 12px;
     background-size: 100% 100%;
+    width: 325px;
+    border: 4px solid gray;
+}
+
+.system:hover {
+    cursor: crosshair;
 }
 
 .actionBar {
@@ -135,7 +160,7 @@
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    width: 1000px;
+    width: 1025px;
     height: 100px;
     background: orange;
     margin: 10px 10px;
@@ -147,6 +172,11 @@
     background-image: url("actionbutton.png");
     width: 195px;
     height: 80px;
+}
+
+.action:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .infoDisplayArea {
@@ -181,7 +211,7 @@
     align-items: center;
     width: 620px;
     height: 705px;
-    background-color: black;
+    background: url("space.png");
 }
 
 .upgradeUI {
@@ -199,6 +229,11 @@
     padding: 15px 15px;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.upgradeShip:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
 
 .moneyDisplay {
@@ -274,6 +309,18 @@
     height: 850px;
 }
 
+.statsButton {
+    font-size: 35px;
+    padding: 10px 15px;
+    background-image: url("actionbutton.png");
+    background-size: 100% 100%;
+}
+
+.statsButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
+}
+
 .menuButtons {
     display: flex;
     flex-direction: column;
@@ -291,18 +338,24 @@
     background-size: 100% 100%;
 }
 
+.menuButton:hover {
+    background-image: url("buttonhover.png");
+    cursor: pointer;
+}
+
 .helpButton:link, .helpButton:visited {
     background-color: white;
-    border: 5px solid hotpink;
     font-family: "Comic Sans MS";
     color: black;
     text-align: center;
     text-decoration: none;
     padding: 15px 15px;
     font-size: 35px;
+    background-image: url("actionbutton.png");
+    background-size: 100% 100%;
 }
 
 .helpButton:hover {
-    background-color: orange;
-
+    background-image: url("buttonhover.png");
+    cursor: pointer;
 }
