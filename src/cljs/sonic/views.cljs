@@ -12,7 +12,7 @@
 
 (def VITALITY_BAR_WIDTH "185px")
 
-(def VITALITY_BAR_HEIGHT "15px")
+(def VITALITY_BAR_HEIGHT "25px")
 
 (def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
 
@@ -109,7 +109,7 @@
       
 ;a progress bar to display the status of a % value
 (defn statusBar
-  [currentVal maxVal colour width height]
+  [currentVal maxVal colour width height text]
   (let [percentVal (-> currentVal
                        (/ maxVal)
                        (* 100))]
@@ -118,9 +118,13 @@
                   :background-color "white"}}
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
+                   :border "2px solid black"
                    :background-color (if (= colour "hp-gradient")
                                        (getHPBarColour percentVal)
-                                       colour)}}]]))
+                                       colour)}}
+     [:div {:style {:width width
+                    :height height
+                    :text-align "center"}} (str text " " currentVal "/" maxVal)]]]))
 
 ;contains the system buttons for the ships and all corresponding logic
 (defn systemButton
@@ -255,17 +259,15 @@
               (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
               "teal"
               VITALITY_BAR_WIDTH
-              VITALITY_BAR_HEIGHT)
+              VITALITY_BAR_HEIGHT
+              "Shields:")
             (statusBar
               (:HP playerShip)
               (:maxHP playerShip)
               "green"
               VITALITY_BAR_WIDTH
-              VITALITY_BAR_HEIGHT)]
-
-          [:div.vitalityDisplayArea
-           [shipVitalityDisplay (:shields playerShip) "Shields"]
-           [shipVitalityDisplay (:HP playerShip) "HP"]]
+              VITALITY_BAR_HEIGHT
+              "HP:")]
           [systemButton :lasers :playerShip "Lasers"]
           [systemButton :missiles :playerShip "Missiles"]
           [systemButton :shields :playerShip "Shields"]
@@ -357,16 +359,15 @@
             (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
             "teal"
             VITALITY_BAR_WIDTH
-            VITALITY_BAR_HEIGHT)
+            VITALITY_BAR_HEIGHT
+            "Shields:")
           (statusBar
             (:HP playerShip)
             (:maxHP playerShip)
             "hp-gradient"
             VITALITY_BAR_WIDTH
-            VITALITY_BAR_HEIGHT)]
-         [:div.vitalityDisplayArea
-          [shipVitalityDisplay (:shields playerShip) "Shields"]
-          [shipVitalityDisplay (:HP playerShip) "HP"]]
+            VITALITY_BAR_HEIGHT
+            "HP:")]
          [systemButton :lasers :playerShip "Lasers"]
          [systemButton :missiles :playerShip "Missiles"]
          [systemButton :shields :playerShip "Shields"]
@@ -379,16 +380,15 @@
             (events/calcShieldsMax (get-in enemyShip [:systems :shields 1]))
             "teal"
             VITALITY_BAR_WIDTH
-            VITALITY_BAR_HEIGHT)
+            VITALITY_BAR_HEIGHT
+            "Shields:")
           (statusBar
             (:HP enemyShip)
             (:maxHP enemyShip)
             "hp-gradient"
             VITALITY_BAR_WIDTH
-            VITALITY_BAR_HEIGHT)]
-         [:div.vitalityDisplayArea
-          [shipVitalityDisplay (:shields enemyShip) "Shields"]
-          [shipVitalityDisplay (:HP enemyShip) "HP"]]
+            VITALITY_BAR_HEIGHT
+            "HP:")]
          [systemButton :lasers :enemyShip "Lasers"]
          [systemButton :missiles :enemyShip "Missiles"]
          [systemButton :shields :enemyShip "Shields"]
