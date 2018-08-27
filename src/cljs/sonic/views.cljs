@@ -175,8 +175,13 @@
 
 (defn optionButton
   [text option]
-  [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))}
-   (str text ": " (events/getOptionVal option))])
+  (let [optionVal (events/getOptionVal option)]
+    [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/toggleOptionVal option]))
+                           :style {:border "5px solid grey"
+                                   :background-color (if optionVal
+                                                       "lime"
+                                                       "red")}}
+     (str text ": " optionVal)]))
 
 (defn pregame-screen
   []
@@ -203,7 +208,7 @@
    [:div.optionsButtonBox
     (optionButton "Dodging" :dodgeOn?)
     (optionButton "Questions" :questions?)]
-   [:button.optionButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
+   [:button.optionsExitButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
 (defn management-screen

@@ -51,13 +51,22 @@
 .optionButton {
     font-size: 30px;
     padding: 15px;
+}
+
+.optionButton:hover {
+    cursor: pointer;
+}
+
+.optionsExitButton {
+    font-size: 30px;
+    padding: 15px;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
 }
 
-.optionButton:hover {
-    background-image: url("buttonhover.png");
+.optionsExitButton:hover {
     cursor: pointer;
+    background-image: url("buttonhover.png");
 }
 
 .flexContainer {
