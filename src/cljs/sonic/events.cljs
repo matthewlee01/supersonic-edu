@@ -111,9 +111,8 @@
 ;prompts the player with a question and returns true or false or nil
 (defn passedQuestion?
   [[query answer]]
-  (if-let [response (js/prompt query)]
-    (= response answer)
-    nil))
+  (if-some [response (js/prompt query)]
+    (= response answer)))
 
 ;asks the player a question and dispatches the requested event if they answer correctly
 (rf/reg-event-fx
@@ -158,11 +157,11 @@
   (fn [] (rf/dispatch [:buySystemUpgrade system ship cost])))
 
 (defn buySystemUpgrade
-  [cofx [_ system ship cost]]
-  (let [db (:db cofx)]
+  [cofx [_ system shipType cost]]
+  (let  [{money :money :as db} (:db cofx)]
     (rf/dispatch [:updateStats [:moneySpent] [cost]])
-    {:db (assoc db :money (- (:money db) cost))
-     :dispatch [:upgradeSystem system ship]}))
+    {:db (assoc db :money (- money cost))
+     :dispatch [:upgradeSystem system shipType]}))
 
 (rf/reg-event-fx
   :buySystemUpgrade
@@ -407,8 +406,7 @@
 ;takes in a key, returns the same key or false.
 (defn playerSystemsActive?
   [systemType]
-  (let [ship @(rf/subscribe [:playerShip])
-        [systemHP] (-> ship :systems systemType)]
+  (let [[systemHP] (-> @(rf/subscribe [:playerShip]) :systems systemType)]
     (if (pos? systemHP)
       systemType
       false)))
@@ -418,8 +416,7 @@
 ;used with map to create a vector of all damaged systems.
 (defn enemySystemsDamaged?
   [systemType]
-  (let [enemyShip @(rf/subscribe [:enemyShip])
-        [systemHP systemRank] (-> enemyShip :systems systemType)]
+  (let [[systemHP systemRank] (-> @(rf/subscribe [:enemyShip]) :systems systemType)]
     (if (<= systemHP systemRank)
       systemType
       false)))
@@ -436,34 +433,12 @@
 (defn chargeShields
   [cofx [_ shipType multiplier simulation?]]
   (if (nil? simulation?) (devLog (str shipType "charging shields")))
-  {:db (assoc (:db cofx) shipType (-> cofx
-                                      :db
-                                      shipType
-                                      (increaseShields multiplier true)))
+  {:db (update-in (:db cofx) [shipType] increaseShields multiplier true)
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
   :chargeShields
   chargeShields)
-
-;holds priority list for enemy attacks and repairs
-(def enemyPriorityList
-  {:target [:lasers :missiles :shields :repairBay :engines]
-   :repair [:missiles :lasers :shields :repairBay :engines]})
-
-;selects a system target for enemy AI
-;by filtering through priority list
-(defn getTargetSystem
-  [filterType]
-  (or (->> (filterType enemyPriorityList)
-           (map (if (= filterType :repair)
-                  enemySystemsDamaged?
-                  playerSystemsActive?))
-           (remove false?)
-           (first))
-      REPAIR_DEFAULT))
-
-
 
 ;calculates the general strength of a ship based on several factors,
 ;takes a ship map and returns an integer
@@ -482,8 +457,8 @@
         score (->> [lasers missiles missiles repairBay engines]
                    (map (fn [[hp rank]] (* hp rank AI_SYSTEM_STRENGTH_FACTOR)))
                    (reduce +)
-                   (+ shieldsCapacity)
-                   (* superchargedFactor)
+                   (+ shieldsCapacity 300)
+                   (* superchargedFactor 2)
                    (* HP))]
     ;(devLog score)
     score))
@@ -507,9 +482,9 @@
   [randInt recursions shipTemplate]
   (if (pos? recursions)
     (->> shipTemplate
-         (map #(upgradeEnemySystem %1 %2) (repeat randInt))
+         (map upgradeEnemySystem (repeat randInt))
          (into {})
-         (updateShipTemplate (rand-int 100) (dec recursions)))
+         (recur (rand-int 100) (dec recursions)))
     shipTemplate))
 
 ;uses a shipTemplate to construct a ship data structure
