@@ -57,6 +57,7 @@
   []
   (+ 1 (rand-int 6)))
 
+;gets current time as a javascript Date object
 (defn getCurrentTime
   []
   (js.Date.))
@@ -113,7 +114,7 @@
   (if-let [response (js/prompt query)]
     (= response answer)
     nil))
-    
+
 ;asks the player a question and dispatches the requested event if they answer correctly
 (rf/reg-event-fx
   ::questionPrompt
@@ -122,7 +123,7 @@
      :dispatch (case (passedQuestion? question)
                  true requestedEvent
                  false [:changePhase]
-                 nil [:doNothing])})) 
+                 nil [:doNothing])}))
 
 (defn questionDispatch
   [question event]
@@ -141,7 +142,7 @@
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
   [system shipType]
-  (fn [] (rf/dispatch [:repairShip system shipType])))
+  (fn [] (rf/dispatch [:repairShip system shipType (diceRoll)])))
 
 
 
@@ -266,7 +267,7 @@
                       gameOverMessage
                       fleeMessage))
           (rf/dispatch [::changeScreen :management-screen])
-          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime] 
+          (rf/dispatch [:updateStats [:totalScore :enemiesDefeated :moneyGained :battleTime]
                         (if (= loser :playerShip)
                           [0 0 0 (calcTimeDiff (getCurrentTime) startTime)]
                           [battleScore 1 battleScore (calcTimeDiff (getCurrentTime) startTime)])])
@@ -433,12 +434,12 @@
 
 ;calls chargeShields on a ship and updates value
 (defn chargeShields
-  [cofx [_ shipType diceRoll simulation?]]
+  [cofx [_ shipType multiplier simulation?]]
   (if (nil? simulation?) (devLog (str shipType "charging shields")))
   {:db (assoc (:db cofx) shipType (-> cofx
                                       :db
                                       shipType
-                                      (increaseShields diceRoll true)))
+                                      (increaseShields multiplier true)))
    :dispatch [:changePhase]})
 
 (rf/reg-event-fx
@@ -688,14 +689,14 @@
 ;performs all the steps of damaging the ship
 ;(and systems if necessary)
 (defn damageShip
-  [cofx [_ system shipType firingType diceRoll simulation?]]
+  [cofx [_ system shipType firingType multiplier simulation?]]
   (if (= shipType :enemyShip)
     (rf/dispatch [::toggleVal :firing?]))
   (let [attackerType (if (= shipType :playerShip)
                        :enemyShip
                        :playerShip)
         {defender shipType attacker attackerType} (:db cofx)
-        damage (calcAttackDamage defender attacker firingType diceRoll simulation?)
+        damage (calcAttackDamage defender attacker firingType multiplier simulation?)
         devMsg (str (if (= shipType :playerShip) "player " "enemy ")
                     "took "
                     damage
@@ -735,8 +736,8 @@
   updateStats)
 
 (defn calcRepairStrength
-  [repairRank diceRoll]
-  (* repairRank diceRoll REPAIR_STRENGTH_MULTIPLIER))
+  [repairRank multiplier]
+  (* repairRank multiplier REPAIR_STRENGTH_MULTIPLIER))
 
 (defn createRepairedSystem
   [systemRank]
@@ -758,11 +759,12 @@
     [(assoc-in ship [:systems systemType] newSystem) systemType]))
 
 (defn repairShip
-  [cofx [_ systemType shipType simulation?]]
-  (if (= shipType :playerShip)
+  [cofx [_ systemType shipType multiplier simulation?]]
+  (if (and (= shipType :playerShip)
+           (nil? simulation?))
     (do (rf/dispatch [::toggleVal :repairing?])
         (rf/dispatch [:updateStats [:timesRepaired] [1]])))
-  (if (nil? simulation?) (devLog "repairing ship"))
+  (if (nil? simulation?) (devLog (str shipType " repairing ship")))
   (let [ship (-> cofx :db shipType)
         [repairedShip] (-> [ship systemType]
                            (restoreHP)
@@ -799,7 +801,7 @@
 (def SYSTEM->ACTION
   {:missiles [:damageShip :targetSystem :defenderType :missiles MEAN_DICEROLL true]
    :lasers [:damageShip :targetSystem :defenderType :lasers MEAN_DICEROLL true]
-   :repairBay [:repairShip :targetSystem :shipType true]
+   :repairBay [:repairShip :targetSystem :shipType MEAN_DICEROLL true]
    :shields [:chargeShields :shipType MEAN_DICEROLL true]
    :engines [:doNothing]})
 
@@ -900,7 +902,7 @@
  (case (first action)
   :damageShip (assoc action 4 (diceRoll) 5 false)
   :chargeShields (assoc action 2 (diceRoll) 3 nil)
-  :repairShip (assoc action 3 nil)
+  :repairShip (assoc action 3 (diceRoll) 4 nil)
   nil [:changePhase]))
 
 ;uses generateFutures to generate a nested structure of all possible game states after ENEMY_DIFFICULTY_LEVEL + 1 phases
@@ -1002,4 +1004,3 @@
   (fn [db _]
     (devLog "doing nothing")
     db))
-

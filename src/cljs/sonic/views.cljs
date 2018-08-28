@@ -98,15 +98,15 @@
     true
     false))
 
-;determines the colour of an HP status bar 
-(defn getHPBarColour 
+;determines the colour of an HP status bar
+(defn getHPBarColour
   [percentVal]
   (if (> percentVal HP_YELLOW_THRESHOLD)
     "green"
     (if (> percentVal HP_RED_THRESHOLD)
       "yellow"
       "red")))
-      
+
 ;a progress bar to display the status of a % value
 (defn statusBar
   [currentVal maxVal colour width height]
@@ -145,7 +145,7 @@
      (if (= shipType :playerShip)
        (if repairing?
          {:on-click (if questions?
-                      (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+                      (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType (events/diceRoll)])
                       (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
          (if firing?
@@ -158,15 +158,15 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click 
+         {:on-click
           (if questions?
-            (events/questionDispatch 
+            (events/questionDispatch
               SAMPLE_QUESTION
-              [:damageShip 
-               system 
-               shipType 
-               @(rf/subscribe [:firingType]) 
-               (events/diceRoll) 
+              [:damageShip
+               system
+               shipType
+               @(rf/subscribe [:firingType])
+               (events/diceRoll)
                false])
             (events/damageDispatch
               system
@@ -287,12 +287,12 @@
          [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))}
           "View Statistics"]]
         [:div.menuButtons
-         [:button.menuButton 
+         [:button.menuButton
           {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-           :disabled playerDefeated?} 
+           :disabled playerDefeated?}
           "Next Battle"]
-         [:button.menuButton 
-          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))} 
+         [:button.menuButton
+          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
           "Restart Game"]]]]))
 
 ;screen that displays when stats button is clicked from management
