@@ -4,15 +4,19 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
-(def HP_YELLOW_THRESHOLD 50)
+(def VIT_FULL_THRESHOLD 100)
 
-(def HP_RED_THRESHOLD 25)
+;the % at which the vitality bar should switch to the "low" colour
+(def VIT_LOW_THRESHOLD 50)
+
+;the % at which the vitality bar should switch to the "critical colour"
+(def VIT_CRITICAL_THRESHOLD 25)
 
 (def UPGRADE_COST_FACTOR 500)
 
 (def VITALITY_BAR_WIDTH "185px")
 
-(def VITALITY_BAR_HEIGHT "25px")
+(def VITALITY_BAR_HEIGHT "30px")
 
 (def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
 
@@ -98,14 +102,16 @@
     true
     false))
 
-;determines the colour of an HP status bar 
-(defn getHPBarColour 
-  [percentVal]
-  (if (> percentVal HP_YELLOW_THRESHOLD)
-    "green"
-    (if (> percentVal HP_RED_THRESHOLD)
-      "yellow"
-      "red")))
+;determines the colour of a vitality status bar 
+(defn getVitalityBarColour 
+  [percentVal fullColour highColour lowColour critColour]
+  (if (>= percentVal VIT_FULL_THRESHOLD)
+    fullColour
+    (if (> percentVal VIT_LOW_THRESHOLD)
+      highColour
+      (if (> percentVal VIT_CRITICAL_THRESHOLD)
+        lowColour
+        critColour))))
       
 ;a progress bar to display the status of a % value
 (defn statusBar
@@ -115,16 +121,18 @@
                        (* 100))]
    [:div {:style {:width width
                   :height height
+                  :border "2px solid black"
                   :background-color "white"}}
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
-                   :border "2px solid black"
                    :background-color (if (= colour "hp-gradient")
-                                       (getHPBarColour percentVal)
-                                       colour)}}
-     [:div {:style {:width width
-                    :height height
-                    :text-align "center"}} (str text " " currentVal "/" maxVal)]]]))
+                                       (getVitalityBarColour percentVal "green" "green" "yellow" "red")
+                                       (if (= colour "shields-gradient")
+                                         (getVitalityBarColour percentVal "blueviolet" "teal" "mediumaquamarine" "darkseagreen")
+                                         colour))}}
+     [:div.barText {:style {:width width
+                            :height height}} 
+      (str text " " currentVal "/" maxVal)]]]))
 
 ;contains the system buttons for the ships and all corresponding logic
 (defn systemButton
@@ -257,14 +265,14 @@
             (statusBar
               (:shields playerShip)
               (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
-              "teal"
+              "shields-gradient"
               VITALITY_BAR_WIDTH
               VITALITY_BAR_HEIGHT
               "Shields:")
             (statusBar
               (:HP playerShip)
               (:maxHP playerShip)
-              "green"
+              "hp-gradient"
               VITALITY_BAR_WIDTH
               VITALITY_BAR_HEIGHT
               "HP:")]
@@ -357,7 +365,7 @@
           (statusBar
             (:shields playerShip)
             (events/calcShieldsMax (get-in playerShip [:systems :shields 1]))
-            "teal"
+            "shields-gradient"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT
             "Shields:")
@@ -378,7 +386,7 @@
           (statusBar
             (:shields enemyShip)
             (events/calcShieldsMax (get-in enemyShip [:systems :shields 1]))
-            "teal"
+            "shields-gradient"
             VITALITY_BAR_WIDTH
             VITALITY_BAR_HEIGHT
             "Shields:")

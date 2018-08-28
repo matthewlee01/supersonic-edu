@@ -13,9 +13,29 @@
     padding: 15px 15px;
     font-size: 35px;
     background-color: white;
-    font-family: "Comic Sans MS";
+    font-family: sans-serif;
     background-image: url("actionbutton.png");
     background-size: 100% 100%;
+}
+
+.barText {
+    text-align: center;
+    color: white;
+    font-family: sans-serif;
+    padding: 6px;
+}
+
+.barText, .optionButton {
+    font-family: sans-serif;
+    color: white;
+    text-shadow: 1px 1px black,
+                 -1px -1px black,
+                 1px -1px black,
+                 -1px 1px black,
+                 1px 0px black,
+                 0px 1px black,
+                 -1px 0px black,
+                 0px -1px black;
 }
 
 .pregameButton:hover {
@@ -108,7 +128,8 @@
 .vitalityStatusBars {
     display: flex;
     width: 390px;
-    height: 15px;
+    height: 30px;
+    margin: 10px 10px;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
@@ -128,7 +149,7 @@
     justify-content: space-around;
     align-items: center;
     width: 420px;
-    height: 340px;
+    height: 350px;
     background-image: url("spaceship.png");
     background-size: 100% 100%
 }
@@ -139,7 +160,7 @@
     justify-content: space-around;
     align-items: center;
     width: 420px;
-    height: 340px;
+    height: 350px;
     background: red;
 }
 
@@ -345,8 +366,8 @@
 
 .helpButton:link, .helpButton:visited {
     background-color: white;
-    font-family: "Comic Sans MS";
     color: black;
+    font-family: sans-serif;
     text-align: center;
     text-decoration: none;
     padding: 15px 15px;
