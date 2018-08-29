@@ -35,7 +35,11 @@
 
 (defn genMathQuestionString
   [terms operator]
-  (apply str (flatten (list (str "What is " (first terms)) (map #(str " " (OPERATOR_STRINGS operator) " "%) (rest terms)) "?"))))
+  (str (->> (rest terms)
+            (map #(str " " (OPERATOR_STRINGS operator) " " %))
+            (vector "What is " (first terms))
+            (flatten)
+            (apply str)) "?"))
   
 (defn genMathQuestionAnswer
   [terms operator]
@@ -113,7 +117,10 @@
     [:button.action {:on-click (if (and (events/getOptionVal :questions?)
                                         (or (= text "Charge Shields")
                                             (= text "Flee")))
-                                 (events/questionDispatch (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [+ * -])) [event])
+                                 (events/questionDispatch (genRandomMathQuestion 
+                                                            MATH_BASE_TERMS 
+                                                            (rand-nth [+ * -])) 
+                                                          [event])
                                  (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
@@ -154,9 +161,11 @@
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
                    :background-color (if (= colour "hp-gradient")
-                                       (getVitalityBarColour percentVal "green" "green" "yellow" "red")
+                                       (getVitalityBarColour 
+                                         percentVal "green" "green" "yellow" "red")
                                        (if (= colour "shields-gradient")
-                                         (getVitalityBarColour percentVal "blueviolet" "teal" "mediumaquamarine" "darkseagreen")
+                                         (getVitalityBarColour 
+                                           percentVal "blueviolet" "teal" "mediumaquamarine" "darkseagreen")
                                          colour))}}
      [:div.barText {:style {:width width
                             :height height}} 
@@ -185,7 +194,10 @@
      (if (= shipType :playerShip)
        (if repairing?
          {:on-click (if questions?
-                      (events/questionDispatch (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [* - +])) [:repairShip system shipType])
+                      (events/questionDispatch (genRandomMathQuestion 
+                                                 MATH_BASE_TERMS 
+                                                 (rand-nth [* - +])) 
+                                               [:repairShip system shipType])
                       (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
          (if firing?

@@ -261,7 +261,7 @@
                     (events/restoreHP)
                     (events/restoreSystem)
                     (first)
-                    (events/increaseShields randomAmount))
+                    (events/increaseShields randomAmount nil))
         newHP (:HP newShip)
         newAmmo (:ammo newShip)
         newShields (:shields newShip)
