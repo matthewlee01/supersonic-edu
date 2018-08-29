@@ -4,6 +4,19 @@
    [sonic.subs :as subs]
    [sonic.events :as events]))
 
+;the ceiling of possible numbers in math questions
+(def MATH_NUMBER_MAX 13)
+
+(def OPERATOR_STRINGS
+  {+ "+"
+   - "-"
+   / "/"
+   * "x"})
+
+;the default number of terms in math questions
+(def MATH_BASE_TERMS 2)
+
+;the % at which the vitality bar should display the "full" colour
 (def VIT_FULL_THRESHOLD 100)
 
 ;the % at which the vitality bar should switch to the "low" colour
@@ -20,6 +33,21 @@
 
 (def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
 
+(defn genMathQuestionString
+  [terms operator]
+  (apply str (flatten (list (str "What is " (first terms)) (map #(str " " (OPERATOR_STRINGS operator) " "%) (rest terms)) "?"))))
+  
+(defn genMathQuestionAnswer
+  [terms operator]
+  (reduce operator terms))
+
+;generates a random question
+(defn genRandomMathQuestion
+  [termCount operator]
+  (let [terms (repeatedly termCount #(rand-int MATH_NUMBER_MAX))]
+    [(genMathQuestionString terms operator)
+     (str (genMathQuestionAnswer terms operator))]))
+  
 ;returns the :colour of the specified ship
 (defn getShipColour
   [shipType]
@@ -85,7 +113,7 @@
     [:button.action {:on-click (if (and (events/getOptionVal :questions?)
                                         (or (= text "Charge Shields")
                                             (= text "Flee")))
-                                 (events/questionDispatch SAMPLE_QUESTION [event])
+                                 (events/questionDispatch (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [+ * -])) [event])
                                  (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
                     text]))
@@ -157,7 +185,7 @@
      (if (= shipType :playerShip)
        (if repairing?
          {:on-click (if questions?
-                      (events/questionDispatch SAMPLE_QUESTION [:repairShip system shipType])
+                      (events/questionDispatch (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [* - +])) [:repairShip system shipType])
                       (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
          (if firing?
@@ -173,7 +201,7 @@
          {:on-click 
           (if questions?
             (events/questionDispatch 
-              SAMPLE_QUESTION
+              (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [+ - *]))
               [:damageShip 
                system 
                shipType 
