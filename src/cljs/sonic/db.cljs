@@ -48,4 +48,4 @@
                :moneyGained 0
                :moneySpent 0}
    :startTime nil
-   :money 0})
+   :money 1400})

@@ -6,7 +6,7 @@
 
 (def BASE_SHIELD_MAX 100) ;starting maximum shield level
 
-(def SHIELD_UPGRADE_MULIPLIER 15) ;amount that max shields increases per rank of shield systems
+(def SHIELD_UPGRADE_MULIPLIER 20) ;amount that max shields increases per rank of shield systems
 
 (def SHIELD_RECHARGE_MULTIPLIER 8) ;multiplier for shield recharge
 
@@ -19,6 +19,8 @@
 (def MEAN_DICEROLL 3.5) ;average roll for diceRoll, used for ai
 
 (def SCORE_REDUCTION_FACTOR 500)
+
+(def MONEY_FACTOR 1.2) ;used to balance money income
 
 (def ENEMY_DIFFICULTY_LEVEL 2) ;how many phases the enemy looks ahead when deciding its move
 
@@ -33,24 +35,24 @@
 ;data required to build enemyShip
 ; :system [upgradeChance rank]
 (def ENEMY_SHIP_TEMPLATES
-  [{:lasers [90 1]
-    :missiles [50 0]
+  [{:lasers [80 1]
+    :missiles [20 0]
     :repairBay [20 0]
-    :shields [80 1]
+    :shields [70 1]
     :engines [20 1]
-    :HPfactor [60 2]}
+    :HPfactor [75 2]}
    {:lasers [0 0]
-    :missiles [95 1]
+    :missiles [70 1]
     :repairBay [40 0]
     :shields [20 0]
     :engines [50 1]
-    :HPfactor [60 1]}
+    :HPfactor [70 2]}
    {:lasers [20 1]
-    :missiles [20 0]
+    :missiles [10 0]
     :repairBay [60 0]
     :shields [80 0]
     :engines [50 0]
-    :HPfactor [70 2]}])
+    :HPfactor [85 2]}])
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -71,7 +73,7 @@
 
 (def BASE_HP 50) ;used to calculated battles won and other things
 
-(def HP_GAIN 50) ;amount of max hp increased per stage
+(def HP_GAIN 60) ;amount of max hp increased per stage
 
 (def SUPERCHARGED_MULTIPLIER 1.5) ;damage multiplier for supercharged shield effect
 
@@ -275,7 +277,7 @@
                 :gameOver? true
                 :startTime nil
                 :money (if (= loser :enemyShip)
-                         (+ battleScore (:money db))
+                         (+ (* battleScore MONEY_FACTOR) (:money db))
                          (:money db))
                 :playerDefeated? (if (= loser :playerShip)
                                    true

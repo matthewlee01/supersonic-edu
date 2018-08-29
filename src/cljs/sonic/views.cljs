@@ -25,7 +25,7 @@
 ;the % at which the vitality bar should switch to the "critical colour"
 (def VIT_CRITICAL_THRESHOLD 25)
 
-(def UPGRADE_COST_FACTOR 500)
+(def UPGRADE_COST_FACTOR 1500)
 
 (def VITALITY_BAR_WIDTH "185px")
 
