@@ -46,9 +46,7 @@
 
 (deftest fullShields
   "simulated attacks with full player shields - does not account for supercharged shields"
-  (let [sim-db db/default-db
-        playerShip (:playerShip sim-db)
-        enemyShip (:enemyShip sim-db)
+  (let [{:keys [playerShip enemyShip]} db/default-db
         DAMAGE 40
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
@@ -71,15 +69,15 @@
 
     ;checks shields of defender
    (is (= EXPECTED_SHIELDS_LASER (-> laserAttackFinal
-                                     (get 0)
+                                     (first)
                                      (:shields))))
      ;checks HP of defender
    (is (= EXPECTED_HP_LASER (-> laserAttackFinal
-                                (get 0)
+                                (first)
                                 (:HP))))
     ;checks targeted system of defender
    (is (= EXPECTED_SYSTEM_LASER (-> laserAttackFinal
-                                    (get 0)
+                                    (first)
                                     (:systems)
                                     (TARGET_SYSTEM))))
 
@@ -87,15 +85,15 @@
 
     ;checks shields of defender
    (is (= EXPECTED_SHIELDS_MISSILE (-> missileAttackFinal
-                                       (get 0)
+                                       (first)
                                        (:shields))))
     ;checks HP of defender
    (is (= EXPECTED_HP_MISSILE (-> missileAttackFinal
-                                  (get 0)
+                                  (first)
                                   (:HP))))
     ;checks systems of defender
    (is (= EXPECTED_SYSTEM_MISSILE (-> missileAttackFinal
-                                      (get 0)
+                                      (first)
                                       (:systems)
                                       (TARGET_SYSTEM))))))
 
@@ -120,8 +118,7 @@
                             :maxHP 100
                             :ammo 2
                             :shields 20}}
-        playerShip (:playerShip sim-db)
-        enemyShip (:enemyShip sim-db)
+        {:keys [playerShip enemyShip]} sim-db
         DAMAGE 40
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
@@ -144,15 +141,15 @@
 
     ;checks shields of defender
     (is (= EXPECTED_SHIELDS_LASER (-> laserAttackFinal
-                                      (get 0)
+                                      (first)
                                       (:shields))))
      ;checks HP of defender
     (is (= EXPECTED_HP_LASER (-> laserAttackFinal
-                                 (get 0)
+                                 (first)
                                  (:HP))))
     ;checks targeted system of defender
     (is (= EXPECTED_SYSTEM_LASER (-> laserAttackFinal
-                                     (get 0)
+                                     (first)
                                      (:systems)
                                      (TARGET_SYSTEM))))
 
@@ -160,15 +157,15 @@
 
     ;checks shields of defender
     (is (= EXPECTED_SHIELDS_MISSILE (-> missileAttackFinal
-                                        (get 0)
+                                        (first)
                                         (:shields))))
     ;checks HP of defender
     (is (= EXPECTED_HP_MISSILE (-> missileAttackFinal
-                                   (get 0)
+                                   (first)
                                    (:HP))))
     ;checks systems of defender
     (is (= EXPECTED_SYSTEM_MISSILE (-> missileAttackFinal
-                                       (get 0)
+                                       (first)
                                        (:systems)
                                        (TARGET_SYSTEM))))))
 
@@ -191,8 +188,7 @@
                             :HP 100
                             :shields 0
                             :ammo 2}}
-        playerShip (:playerShip sim-db)
-        enemyShip (:enemyShip sim-db)
+        {:keys [playerShip enemyShip]} sim-db
         DAMAGE 40
         TARGET_SYSTEM :engines
         laserAttackInit [playerShip enemyShip TARGET_SYSTEM DAMAGE :lasers]
