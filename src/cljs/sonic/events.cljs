@@ -457,8 +457,8 @@
         score (->> [lasers missiles missiles repairBay engines]
                    (map (fn [[hp rank]] (* hp rank AI_SYSTEM_STRENGTH_FACTOR)))
                    (reduce +)
-                   (+ shieldsCapacity 300)
-                   (* superchargedFactor 2)
+                   (+ shieldsCapacity)
+                   (* superchargedFactor)
                    (* HP))]
     ;(devLog score)
     score))
