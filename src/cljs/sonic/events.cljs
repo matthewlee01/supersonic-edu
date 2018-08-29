@@ -6,7 +6,7 @@
 
 (def BASE_SHIELD_MAX 100) ;starting maximum shield level
 
-(def SHIELD_UPGRADE_MULIPLIER 15) ;amount that max shields increases per rank of shield systems
+(def SHIELD_UPGRADE_MULIPLIER 20) ;amount that max shields increases per rank of shield systems
 
 (def SHIELD_RECHARGE_MULTIPLIER 8) ;multiplier for shield recharge
 
@@ -20,7 +20,7 @@
 
 (def SCORE_REDUCTION_FACTOR 500)
 
-(def MONEY_FACTOR 1.25) ;used to balance money income
+(def MONEY_FACTOR 1.2) ;used to balance money income
 
 (def ENEMY_DIFFICULTY_LEVEL 2) ;how many phases the enemy looks ahead when deciding its move
 
@@ -73,7 +73,7 @@
 
 (def BASE_HP 50) ;used to calculated battles won and other things
 
-(def HP_GAIN 50) ;amount of max hp increased per stage
+(def HP_GAIN 60) ;amount of max hp increased per stage
 
 (def SUPERCHARGED_MULTIPLIER 1.5) ;damage multiplier for supercharged shield effect
 
