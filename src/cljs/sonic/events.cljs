@@ -136,7 +136,7 @@
 ;dispatches :damageShip with the targeted system and ship
 (defn damageDispatch
   [system shipType firingType]
-  (fn [] (rf/dispatch [:damageShip system shipType firingType (diceRoll) false])))
+  (fn [] (rf/dispatch [:damageShip system shipType firingType (diceRoll)])))
 
 ;dispatches :repairShip with the targeted system and ship
 (defn repairDispatch
@@ -319,7 +319,7 @@
                            LASER_DAMAGE_MULIPLIER
                            MISSILE_DAMAGE_MULTIPLIER) (if (shieldsSupercharged? attacker)
                                                         SUPERCHARGED_MULTIPLIER
-                                                        1) (if (and (false? simulation?)
+                                                        1) (if (and (nil? simulation?)
                                                                     (attackDodged? defender))
                                                               (do (devLog "dodged!") 0)
                                                               1))))
@@ -682,20 +682,20 @@
                                       (newHP))
         [newStatNames statChanges] (if (= shipType :playerShip)
                                      [[:damageTaken] [damage]]
-                                     (if (= firingType :missiles)
-                                       [[:damageDealt :missilesFired] [damage 1]]
-                                       [[:damageDealt :lasersFired] [damage 1]]))]
-    (if (false? simulation?)
-      (do (devLog devMsg)
-          (rf/dispatch [:updateStats newStatNames statChanges])
-          (if (false? (pos? (:HP newDefender)))
-            (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
-                                       :playerShip
-                                       :enemyShip) true]))))
-    {:db (assoc (:db cofx)
-            shipType newDefender
-            attackerType newAttacker)
-     :dispatch [:changePhase]}))
+                                     [[:damageDealt (if (= firingType :lasers)
+                                                      :lasersFired
+                                                      :missilesFired)] [damage 1]])]
+    (if (nil? simulation?)
+     (do (devLog devMsg)
+         (rf/dispatch [:updateStats newStatNames statChanges])
+         (if-not (pos? (:HP newDefender))
+           (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
+                                      :playerShip
+                                      :enemyShip) true]))))
+   {:db (assoc (:db cofx)
+           shipType newDefender
+           attackerType newAttacker)
+    :dispatch [:changePhase]}))
 
 (rf/reg-event-fx
   :damageShip
@@ -704,7 +704,7 @@
 (defn updateStats
   "takes a list of stats and corresponding changes to those stats, then updates :gameStats accordingly"
   [db [_ statNames changes]]
-  (assoc db :gameStats (merge-with + @(rf/subscribe [:gameStats]) (zipmap statNames changes))))
+  (update db :gameStats (partial merge-with +) (zipmap statNames changes)))
 
 (rf/reg-event-db
   :updateStats
@@ -715,7 +715,7 @@
   (* repairRank multiplier REPAIR_STRENGTH_MULTIPLIER))
 
 (defn createRepairedSystem
-  [systemRank]
+  [[_ systemRank]]
   [(inc systemRank) systemRank])
 
 (defn restoreHP
@@ -729,9 +729,7 @@
 
 (defn restoreSystem
   [[ship systemType]]
-  (let [[_ systemRank] (-> ship :systems systemType)
-        newSystem (createRepairedSystem systemRank)]
-    [(assoc-in ship [:systems systemType] newSystem) systemType]))
+  [(update-in ship [:systems systemType] createRepairedSystem) systemType])
 
 (defn repairShip
   [cofx [_ systemType shipType multiplier simulation?]]
@@ -823,8 +821,8 @@
 
 ;creates a nested structure of all possible next steps+1 phases
 (defn generateFutures
-  [[action cofx future] steps]
-  (let [[newAction newCofx newFuture] (updateFuture [action cofx future])]
+  [actionVector steps]
+  (let [[newAction newCofx newFuture] (updateFuture actionVector)]
     [newAction newCofx (if (= steps 0)
                          newFuture
                          (mapv generateFutures newFuture (repeat (dec steps))))]))
@@ -864,8 +862,8 @@
 (defn chooseActionFromList
  [shipType actionList]
  (-> #(let [choice (chooseAction shipType %)]
-           (do (println (first choice))
-               (println (calcActionScore choice))
+           (do (devLog (first choice))
+               (devLog (calcActionScore choice))
                choice))
      (map actionList)
      (pickBestAction shipType)
@@ -875,7 +873,7 @@
 (defn updateActionForDispatch
  [action]
  (case (first action)
-  :damageShip (assoc action 4 (diceRoll) 5 false)
+  :damageShip (assoc action 4 (diceRoll) 5 nil)
   :chargeShields (assoc action 2 (diceRoll) 3 nil)
   :repairShip (assoc action 3 (diceRoll) 4 nil)
   nil [:changePhase]))
