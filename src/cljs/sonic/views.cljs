@@ -40,7 +40,7 @@
             (vector "What is " (first terms))
             (flatten)
             (apply str)) "?"))
-  
+
 ;generates the answer to the math question
 (defn genMathQuestionAnswer
   [terms operator]
@@ -52,7 +52,36 @@
   (let [terms (repeatedly termCount #(rand-int MATH_NUMBER_MAX))]
     [(genMathQuestionString terms operator)
      (str (genMathQuestionAnswer terms operator))]))
-  
+
+(def STATE_CAPITALS [["New York" "Albany"] ["Washington" "Olympia"] ["Alaska" "Juneau"] ["Hawaii" "Honolulu"]])
+
+
+(defn genCapitalQuestion
+  []
+  (let [[state capital] (rand-nth STATE_CAPITALS)]
+   [(str "What is the capital of " state "?") capital]))
+
+(defn genStateQuestion
+  []
+  (let [[state capital] (rand-nth STATE_CAPITALS)]
+   [(str "What state is " capital " the capital of?") state]))
+
+(defn genRandomQuestion
+  []
+  (case (rand-int 5)
+    0 (genRandomMathQuestion
+        MATH_BASE_TERMS
+        +)
+    1 (genRandomMathQuestion
+        MATH_BASE_TERMS
+        *)
+    2 (genRandomMathQuestion
+        MATH_BASE_TERMS
+        -)
+    3 (genStateQuestion)
+    4 (genCapitalQuestion)))
+
+
 ;returns the :colour of the specified ship
 (defn getShipColour
   [shipType]
@@ -118,9 +147,7 @@
     [:button.action {:on-click (if (and (events/getOptionVal :questions?)
                                         (or (= text "Charge Shields")
                                             (= text "Flee")))
-                                 (events/questionDispatch (genRandomMathQuestion 
-                                                            MATH_BASE_TERMS 
-                                                            (rand-nth [+ * -])) 
+                                 (events/questionDispatch (genRandomQuestion)
                                                           [event])
                                  (events/actionDispatch event))
                      :disabled (actionDisabled? text requiredSystem)}
@@ -138,8 +165,8 @@
     true
     false))
 
-;determines the colour of a vitality status bar 
-(defn getVitalityBarColour 
+;determines the colour of a vitality status bar
+(defn getVitalityBarColour
   [percentVal fullColour highColour lowColour critColour]
   (if (>= percentVal VIT_FULL_THRESHOLD)
     fullColour
@@ -148,7 +175,7 @@
       (if (> percentVal VIT_CRITICAL_THRESHOLD)
         lowColour
         critColour))))
-      
+
 ;a progress bar to display the status of a % value
 (defn statusBar
   [currentVal maxVal colour width height text]
@@ -162,14 +189,14 @@
     [:div {:style {:width (str percentVal "%")
                    :height "100%"
                    :background-color (if (= colour "hp-gradient")
-                                       (getVitalityBarColour 
+                                       (getVitalityBarColour
                                          percentVal "green" "green" "yellow" "red")
                                        (if (= colour "shields-gradient")
-                                         (getVitalityBarColour 
+                                         (getVitalityBarColour
                                            percentVal "blueviolet" "teal" "mediumaquamarine" "darkseagreen")
                                          colour))}}
      [:div.barText {:style {:width width
-                            :height height}} 
+                            :height height}}
       (str text " " currentVal "/" maxVal)]]]))
 
 ;contains the system buttons for the ships and all corresponding logic
@@ -195,9 +222,7 @@
      (if (= shipType :playerShip)
        (if repairing?
          {:on-click (if questions?
-                      (events/questionDispatch (genRandomMathQuestion 
-                                                 MATH_BASE_TERMS 
-                                                 (rand-nth [* - +])) 
+                      (events/questionDispatch (genRandomQuestion)
                                                [:repairShip system shipType])
                       (events/repairDispatch system shipType))
           :style {:background-color shieldedStatus}}
@@ -211,15 +236,15 @@
               {:style {:background-color "grey"}})
              {:style {:background-color shieldedStatus}})))
        (if firing?
-         {:on-click 
+         {:on-click
           (if questions?
-            (events/questionDispatch 
-              (genRandomMathQuestion MATH_BASE_TERMS (rand-nth [+ - *]))
-              [:damageShip 
-               system 
-               shipType 
-               @(rf/subscribe [:firingType]) 
-               (events/diceRoll)]) 
+            (events/questionDispatch
+              (genRandomQuestion)
+              [:damageShip
+               system
+               shipType
+               @(rf/subscribe [:firingType])
+               (events/diceRoll)])
             (events/damageDispatch
               system
               shipType
@@ -337,12 +362,12 @@
          [:button.statsButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :stats-screen]))}
           "View Statistics"]]
         [:div.menuButtons
-         [:button.menuButton 
+         [:button.menuButton
           {:on-click (fn [] (rf/dispatch [::events/gameStart]))
-           :disabled playerDefeated?} 
+           :disabled playerDefeated?}
           "Next Battle"]
-         [:button.menuButton 
-          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))} 
+         [:button.menuButton
+          {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
           "Restart Game"]]]]))
 
 ;screen that displays when stats button is clicked from management
