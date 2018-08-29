@@ -29,7 +29,7 @@
        MISSILE_DAMAGE_ROLL 8
        SHIELD_ROLL 5
        REPAIR_ROLL 4
-       DAMAGED_SYSTEM_RANK 3
+       DAMAGED_SYSTEM [1 3]
 
        EXPECTED_LASER_DAMAGE 40
        EXPECTED_MISSILE_DAMAGE 80
@@ -41,7 +41,7 @@
    (is (= EXPECTED_SHIELDS_MAX (events/calcShieldsMax SHIELDS_RANK)))
    (is (= EXPECTED_SHIELD_STRENGTH (events/calcShieldsStrength SHIELDS_RANK SHIELD_ROLL)))
    (is (= EXPECTED_REPAIR_STRENGTH (events/calcRepairStrength REPAIR_RANK REPAIR_ROLL)))
-   (is (= EXPECTED_REPAIRED_SYSTEM (events/createRepairedSystem DAMAGED_SYSTEM_RANK)))))
+   (is (= EXPECTED_REPAIRED_SYSTEM (events/createRepairedSystem DAMAGED_SYSTEM)))))
 
 
 (deftest fullShields

@@ -31,8 +31,6 @@
 
 (def VITALITY_BAR_HEIGHT "30px")
 
-(def SAMPLE_QUESTION ["What is 2 + 2?" "4"])
-
 (defn genMathQuestionString
   [terms operator]
   (str (->> (rest terms)
@@ -218,8 +216,7 @@
                system 
                shipType 
                @(rf/subscribe [:firingType]) 
-               (events/diceRoll) 
-               false])
+               (events/diceRoll)]) 
             (events/damageDispatch
               system
               shipType
