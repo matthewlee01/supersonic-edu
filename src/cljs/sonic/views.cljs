@@ -31,6 +31,8 @@
 
 (def VITALITY_BAR_HEIGHT "30px")
 
+;generates the prompt for the question from the terms and the operator
+;returns a string in the form of "What is 1 + 3 + 4...?"
 (defn genMathQuestionString
   [terms operator]
   (str (->> (rest terms)
@@ -39,11 +41,12 @@
             (flatten)
             (apply str)) "?"))
   
+;generates the answer to the math question
 (defn genMathQuestionAnswer
   [terms operator]
   (reduce operator terms))
 
-;generates a random question
+;generates a random math question in the form of ["question" "answer"]
 (defn genRandomMathQuestion
   [termCount operator]
   (let [terms (repeatedly termCount #(rand-int MATH_NUMBER_MAX))]
