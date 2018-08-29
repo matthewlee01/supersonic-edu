@@ -848,15 +848,18 @@
 ;accesses nested data structure creasted by generateFutures to select the best action for either :playerShip or :enemyShip
 (defn chooseAction
  [shipType [action cofx future]]
- (if (or (empty? future)
-         (nil? future))
-   [action cofx]
-   [action (-> (partial chooseAction (if (= shipType :playerShip)
-                                       :enemyShip
-                                       :playerShip))
-               (map future)
-               (pickBestAction shipType)
-               (second))]))
+ (let [{:keys [playerShip enemyShip]} (-> cofx :db)]
+  (if (or (empty? future)
+          (nil? future)
+          (false? (and (pos? (:HP playerShip))
+                       (pos? (:HP enemyShip)))))
+    [action cofx]
+    [action (-> (partial chooseAction (if (= shipType :playerShip)
+                                        :enemyShip
+                                        :playerShip))
+                (map future)
+                (pickBestAction shipType)
+                (second))])))
 
 ;compares the possible actions for a ship, and outputs the best dispatchable vector
 (defn chooseActionFromList
