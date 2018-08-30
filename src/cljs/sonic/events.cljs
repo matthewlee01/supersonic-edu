@@ -16,13 +16,23 @@
 
 (def AI_SYSTEM_STRENGTH_FACTOR 300) ;coefficient for ai formula
 
-(def MEAN_DICEROLL 3.5) ;average roll for diceRoll, used for ai
+(def LOW_DICEROLL 3) ;minimum roll for diceRoll
 
-(def SCORE_REDUCTION_FACTOR 500)
+(def DICEROLL_RANGE 2) ;the range above LOW_DICEROLL that diceRoll will go
+
+(def MEAN_DICEROLL (+ (/ DICEROLL_RANGE 2) LOW_DICEROLL)) ;average roll for diceRoll, used for ai
+
+(def SCORE_REDUCTION_FACTOR 500) ;used to reduce the score calculation to prevent excessively large (unreadable) numbers
+
+(def PERCENTAGE_CEILING 100) ;used to generate a number from 0 - PERCENTAGE_CEILING for random rolls
 
 (def MONEY_FACTOR 1.2) ;used to balance money income
 
 (def ENEMY_DIFFICULTY_LEVEL 2) ;how many phases the enemy looks ahead when deciding its move
+
+(def PLAYER_PHASE 0) ;used to check whose phase it currently is
+
+(def ENEMY_PHASE 1)
 
 ;required system for each corresponding action
 (def SYSTEMS_LIST
@@ -57,7 +67,7 @@
 ;selects a random number from 1-6
 (defn diceRoll
   []
-  (+ 1 (rand-int 6)))
+  (+ LOW_DICEROLL (rand-int DICEROLL_RANGE)))
 
 ;gets current time as a javascript Date object
 (defn getCurrentTime
@@ -489,7 +499,7 @@
     (->> shipTemplate
          (map upgradeEnemySystem (repeat randInt))
          (into {})
-         (recur (rand-int 100) (dec recursions)))
+         (recur (rand-int PERCENTAGE_CEILING) (dec recursions)))
     shipTemplate))
 
 ;uses a shipTemplate to construct a ship data structure
@@ -521,7 +531,7 @@
                           (shipReset HP_GAIN))
         newEnemyShip (->> ENEMY_SHIP_TEMPLATES
                           (rand-nth)
-                          (generateEnemyShip (rand-int 100) (-> cofx :db :gameStats :enemiesDefeated))
+                          (generateEnemyShip (rand-int PERCENTAGE_CEILING) (-> cofx :db :gameStats :enemiesDefeated))
                           (randShipColour))]
    {:db (assoc (:db cofx)
                :playerShip newPlayerShip
@@ -529,7 +539,7 @@
                :gameOver? false
                :turn 0
                :history []
-               :phase 0
+               :phase PLAYER_PHASE
                :battleScore (calcScore newEnemyShip)
                :upgradingSystems? false)
      :dispatch [:playerPhase]}))
@@ -543,13 +553,16 @@
   [cofx [_ simulation?]]
   (if (false? (:gameOver? (:db cofx)))
     (do (if (nil? simulation?) (devLog "changing phase"))
-        (if (zero? (:phase (:db cofx)))
+        (if (= PLAYER_PHASE (:phase (:db cofx)))
           {:db (assoc (:db cofx)
-                      :phase 1
+                      :phase ENEMY_PHASE
                       :firing? false
                       :repairing? false)
            :dispatch [:enemyPhase]}
-          {:db (assoc (:db cofx) :phase 0 :firing? false :repairing? false)
+          {:db (assoc (:db cofx) 
+                      :phase PLAYER_PHASE 
+                      :firing? false 
+                      :repairing? false)
            :dispatch [:playerPhase]}))))
 
 (rf/reg-event-fx
@@ -694,7 +707,7 @@
      (do (devLog devMsg)
          (rf/dispatch [:updateStats newStatNames statChanges])
          (if-not (pos? (:HP newDefender))
-           (rf/dispatch [:gameEnd (if (= 1 @(rf/subscribe [:phase]))
+           (rf/dispatch [:gameEnd (if (= ENEMY_PHASE @(rf/subscribe [:phase]))
                                       :playerShip
                                       :enemyShip) true]))))
    {:db (assoc (:db cofx)
@@ -749,6 +762,10 @@
                            (restoreSystem))]
     {:db (assoc (:db cofx) shipType repairedShip)
      :dispatch [:changePhase]}))
+
+(rf/reg-event-fx
+  :repairShip
+  repairShip)
 
 ;maps actions to corresponding functions
 (def ACTION->FUNCTION
@@ -820,7 +837,7 @@
   [[action cofx future]]
   [action
    cofx
-   (makeActionArray cofx (if (= (-> cofx :db :phase) 0)
+   (makeActionArray cofx (if (= (-> cofx :db :phase) PLAYER_PHASE)
                              :playerShip
                              :enemyShip))])
 
@@ -942,9 +959,6 @@
 ;
 
 
-(rf/reg-event-fx
-  :repairShip
-  repairShip)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;obsolete functions
 ;(defn setSystemRank
