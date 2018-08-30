@@ -53,33 +53,78 @@
     [(genMathQuestionString terms operator)
      (str (genMathQuestionAnswer terms operator))]))
 
-(def STATE_CAPITALS [["New York" "Albany"] ["Washington" "Olympia"] ["Alaska" "Juneau"] ["Hawaii" "Honolulu"]])
+;states and their capitals for question creation
+(def STATE_CAPITALS [["Alabama" "Montgomery"]
+                     ["Alaska" "Juneau"]
+                     ["Arizona" "Phoenix"]
+                     ["Arkansas" "Little Rock"]
+                     ["California" "Sacramento"]
+                     ["Colorado" "Denver"]
+                     ["Connecticut" "Hartford"]
+                     ["Delaware" "Dover"]
+                     ["Florida" "Tallahassee"]
+                     ["Georgia" "Atlanta"]
+                     ["Hawaii" "Honolulu"]
+                     ["Idaho" "Boise"]
+                     ["Illinois" "Springfield"]
+                     ["Indiana" "Indianapolis"]
+                     ["Iowa" "Des Moines"]
+                     ["Kansas" "Topeka"]
+                     ["Kentucky" "Frankfort"]
+                     ["Louisiana" "Baton Rouge"]
+                     ["Maine" "Augusta"]
+                     ["Maryland" "Annapolis"]
+                     ["Massachusetts" "Boston"]
+                     ["Michigan" "Lansing"]
+                     ["Minnesota" "St. Paul"]
+                     ["Mississippi" "Jackson"]
+                     ["Missouri" "Jefferson City"]
+                     ["Montana" "Helena"]
+                     ["Nebraska" "Lincoln"]
+                     ["Nevada" "Carson City"]
+                     ["New Hampshire" "Concord"]
+                     ["New Jersey" "Trenton"]
+                     ["New Mexico" "Santa Fe"]
+                     ["New York" "Albany"]
+                     ["North Carolina" "Raleigh"]
+                     ["North Dakota" "Bismarck"]
+                     ["Ohio" "Columbus"]
+                     ["Oklahoma" "Oklahoma City"]
+                     ["Oregon" "Salem"]
+                     ["Pennsylvania" "Harrisburg"]
+                     ["Rhode Island" "Providence"]
+                     ["South Carolina" "Columbia"]
+                     ["South Dakota" "Pierre"]
+                     ["Tennessee" "Nashville"]
+                     ["Texas" "Austin"]
+                     ["Utah" "Salt Lake City"]
+                     ["Vermont" "Montpelier"]
+                     ["Virginia" "Richmond"]
+                     ["Washington" "Olympia"]
+                     ["West Virginia" "Charleston"]
+                     ["Wisconsin" "Madison"]
+                     ["Wyoming" "Cheyenne"]])
 
-
+;prompts for the capital of a state
 (defn genCapitalQuestion
   []
   (let [[state capital] (rand-nth STATE_CAPITALS)]
    [(str "What is the capital of " state "?") capital]))
 
+;prompts for the state that corresponds to a capital
 (defn genStateQuestion
   []
   (let [[state capital] (rand-nth STATE_CAPITALS)]
    [(str "What state is " capital " the capital of?") state]))
 
+;generates a random question from the active question types
 (defn genRandomQuestion
   []
-  (case (rand-int 5)
-    0 (genRandomMathQuestion
-        MATH_BASE_TERMS
-        +)
-    1 (genRandomMathQuestion
-        MATH_BASE_TERMS
-        *)
-    2 (genRandomMathQuestion
-        MATH_BASE_TERMS
-        -)
-    3 (genStateQuestion)
-    4 (genCapitalQuestion)))
+  (rand-nth (concat (if (events/getOptionVal :mathQuestionsOn?) [(genRandomMathQuestion MATH_BASE_TERMS +)
+                                                                 (genRandomMathQuestion MATH_BASE_TERMS *)
+                                                                 (genRandomMathQuestion MATH_BASE_TERMS -)])
+                    (if (events/getOptionVal :stateQuestionsOn?) [(genStateQuestion)])
+                    (if (events/getOptionVal :capitalQuestionsOn?) [(genCapitalQuestion)]))))
 
 
 ;returns the :colour of the specified ship
@@ -313,7 +358,14 @@
                  :padding "30px 30px"}} "Options"]
    [:div.optionsButtonBox
     (optionButton "Dodging" :dodgeOn?)
-    (optionButton "Questions" :questions?)]
+    [:div {:style {:font-size "30px"
+                   :font-family "sans-serif"}}
+     (str "Questions: " (if (events/getOptionVal :questions?)
+                          "on"
+                          "off"))]
+    (optionButton "Math Questions" :mathQuestionsOn?)
+    (optionButton "State Questions" :stateQuestionsOn?)
+    (optionButton "Capital Questions" :capitalQuestionsOn?)]
    [:button.optionsExitButton {:on-click (fn [] (rf/dispatch [::events/changeScreen :pregame-screen]))}
     "Return to Menu"]])
 
