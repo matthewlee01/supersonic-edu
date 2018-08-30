@@ -119,7 +119,7 @@
 ;returns a name for the turn display based on the current phase
 (defn getPhaseName
   [phase]
-  (if (= phase 0)
+  (if (= phase events/PLAYER_PHASE)
     @(rf/subscribe [:playerName])
     "Enemy"))
 
@@ -407,7 +407,7 @@
                                          "Game End!"
                                          (str (getPhaseName phase) "'s Turn"))
                                 :readOnly true
-                                :style {:color (if (= phase 0)
+                                :style {:color (if (= phase events/PLAYER_PHASE)
                                                  "blue"
                                                  "red")}}]
         [:textarea.infoDisplay {:value (str "Turn #: " @(rf/subscribe [:turn]))
