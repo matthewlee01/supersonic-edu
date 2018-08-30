@@ -277,7 +277,10 @@
                 :gameOver? true
                 :startTime nil
                 :money (if (= loser :enemyShip)
-                         (+ (* battleScore MONEY_FACTOR) (:money db))
+                         (-> battleScore
+                             (* MONEY_FACTOR)
+                             (+ (:money db))
+                             (int))
                          (:money db))
                 :playerDefeated? (if (= loser :playerShip)
                                    true
