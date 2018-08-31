@@ -6,7 +6,7 @@
 
 (def BASE_SHIELD_MAX 100) ;starting maximum shield level
 
-(def SHIELD_UPGRADE_MULIPLIER 20) ;amount that max shields increases per rank of shield systems
+(def SHIELD_UPGRADE_MULIPLIER 60) ;amount that max shields increases per rank of shield systems
 
 (def SHIELD_RECHARGE_MULTIPLIER 8) ;multiplier for shield recharge
 
@@ -18,15 +18,15 @@
 
 (def LOW_DICEROLL 3) ;minimum roll for diceRoll
 
-(def DICEROLL_RANGE 2) ;the range above LOW_DICEROLL that diceRoll will go
+(def DICEROLL_RANGE 3) ;the range above LOW_DICEROLL that diceRoll will go
 
-(def MEAN_DICEROLL (+ (/ DICEROLL_RANGE 2) LOW_DICEROLL)) ;average roll for diceRoll, used for ai
+(def MEAN_DICEROLL (+ (/ (- DICEROLL_RANGE 1) 2) LOW_DICEROLL)) ;average roll for diceRoll, used for ai
 
 (def SCORE_REDUCTION_FACTOR 500) ;used to reduce the score calculation to prevent excessively large (unreadable) numbers
 
 (def PERCENTAGE_CEILING 100) ;used to generate a number from 0 - PERCENTAGE_CEILING for random rolls
 
-(def MONEY_FACTOR 1.2) ;used to balance money income
+(def MONEY_FACTOR 0.75) ;used to balance money income
 
 (def ENEMY_DIFFICULTY_LEVEL 2) ;how many phases the enemy looks ahead when deciding its move
 
@@ -45,24 +45,41 @@
 ;data required to build enemyShip
 ; :system [upgradeChance rank]
 (def ENEMY_SHIP_TEMPLATES
-  [{:lasers [80 1]
-    :missiles [20 0]
-    :repairBay [20 0]
-    :shields [70 1]
-    :engines [20 1]
-    :HPfactor [75 2]}
+  [;+lasers-missiles 270
+   {:lasers [80 1]
+    :missiles [10 1]
+    :repairBay [20 1]
+    :shields [35 1]
+    :engines [40 1]
+    :HPfactor [85 2]}
+   ;+missiles--lasers-engines 270
    {:lasers [0 0]
-    :missiles [70 1]
-    :repairBay [40 0]
-    :shields [20 0]
-    :engines [50 1]
+    :missiles [80 1]
+    :repairBay [25 1]
+    :shields [55 0]
+    :engines [40 1]
     :HPfactor [70 2]}
-   {:lasers [20 1]
-    :missiles [10 0]
-    :repairBay [60 0]
-    :shields [80 0]
+   ;+hp+shields+repair-lasers-missiles 310
+   {:lasers [15 1]
+    :missiles [10 1]
+    :repairBay [60 1]
+    :shields [80 1]
     :engines [50 0]
-    :HPfactor [85 2]}])
+    :HPfactor [95 2]}
+   ;average 270
+   {:lasers [30 1]
+    :missiles [35 1]
+    :repairBay [40 1]
+    :shields [55 1]
+    :engines [50 1]
+    :HPfactor [60 2]}
+   ;no repair 270
+   {:lasers [40 1]
+    :missiles [25 1]
+    :repairBay [0 0]
+    :shields [95 2]
+    :engines [20 0]
+    :HPfactor [90 3]}])
 
 ;selects a random number from 1-6
 (defn diceRoll
@@ -83,7 +100,7 @@
 
 (def BASE_HP 50) ;used to calculated battles won and other things
 
-(def HP_GAIN 60) ;amount of max hp increased per stage
+(def HP_GAIN 80) ;amount of max hp increased per stage
 
 (def SUPERCHARGED_MULTIPLIER 1.5) ;damage multiplier for supercharged shield effect
 
