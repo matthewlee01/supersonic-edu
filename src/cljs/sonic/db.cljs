@@ -36,7 +36,10 @@
    :battleScore 0
    :activeScreen :pregame-screen
    :gameOptions {:dodgeOn? false
-                 :questions? false}
+                 :questions? false
+                 :stateQuestionsOn? false
+                 :capitalQuestionsOn? false
+                 :mathQuestionsOn? false}
    :gameStats {:totalScore 0
                :damageDealt 0
                :damageTaken 0

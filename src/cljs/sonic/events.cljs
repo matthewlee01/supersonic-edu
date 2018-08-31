@@ -141,7 +141,9 @@
 (defn passedQuestion?
   [[query answer]]
   (if-some [response (js/prompt query)]
-    (= response answer)))
+    (do (js/alert (str "ANSWER: " answer))
+        (devLog (str "ANSWER: " answer))
+        (= response answer))))
 
 ;asks the player a question and dispatches the requested event if they answer correctly
 (rf/reg-event-fx
@@ -644,9 +646,15 @@
  [db [_ value]]
  (update db value not))
 
+;changes a option to its opposite value. Updates :questions? based on other question related options
 (defn toggleOptionVal
  [db [_ option]]
- (update-in db [:gameOptions option] not))
+ (let [{{:keys [mathQuestionsOn? stateQuestionsOn? capitalQuestionsOn?]} :gameOptions :as db} (update-in db [:gameOptions option] not)]
+   (if (or mathQuestionsOn?
+           stateQuestionsOn?
+           capitalQuestionsOn?)
+     (assoc-in db [:gameOptions :questions?] true)
+     (assoc-in db [:gameOptions :questions?] false))))
 
 (rf/reg-event-db
   ::toggleVal
