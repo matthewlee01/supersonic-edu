@@ -1,7 +1,9 @@
 # Supersonic Education Game
 
-A collaborative project with [@kevinyeeeee](https://gitlab.com/kevinye88)
+
 A turn-based, rogue-like, education game with spaceships
+
+(collaborative project with [@kevinyeeeee](https://gitlab.com/kevinye88))
 
 ## Docs
 
